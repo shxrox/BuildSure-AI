@@ -1,0 +1,25 @@
+# Node & Dependencies (Frontend/Backend)
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+# Python & AI Engine
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env_python/
+
+# Environment Variables (CRITICAL: Never upload secret keys!)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# OS Generated Files
+.DS_Store
+Thumbs.db

@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Line, Circle, Rect, Text as KonvaText, Transformer } from 'react-konva';
 import { useCanvasStore, type CanvasItem, type CanvasText } from '../store/useCanvasStore';
 
-const SNAP_RADIUS = 20;
+const SNAP_RADIUS = 20 / 1; // Base radius, effectively changes with zoom
 
 export default function CanvasWorkspace() {
   const { 
     walls, items, texts, selectedId, 
+    activeTool, wallThickness, exportTrigger, // NEW: Brought in from the Brain
     addWall, addItem, addText, updateText, updateItem, setSelectedId 
   } = useCanvasStore();
   
@@ -20,17 +21,37 @@ export default function CanvasWorkspace() {
   const [snapPoint, setSnapPoint] = useState<{ x: number; y: number } | null>(null);
   const [editingText, setEditingText] = useState<{ id: string; x: number; y: number; text: string } | null>(null);
 
-  // --- Transformer Attachment Logic ---
-  // Whenever the selectedId changes, attach the transformer box to that specific item
+  // --- 1. Export Engine ---
   useEffect(() => {
-    if (selectedId && trRef.current && stageRef.current) {
+    if (exportTrigger > 0 && stageRef.current) {
+      // Temporarily hide the transformer box so it doesn't show in the download
+      setSelectedId(null);
+      
+      setTimeout(() => {
+        const uri = stageRef.current.toDataURL({ pixelRatio: 2 }); // High-Res export
+        const link = document.createElement('a');
+        link.download = 'BuildSure_Blueprint.png';
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, 100);
+    }
+  }, [exportTrigger]);
+
+  // --- 2. Transformer Attachment ---
+  useEffect(() => {
+    if (selectedId && trRef.current && stageRef.current && activeTool === 'select') {
       const node = stageRef.current.findOne(`#${selectedId}`);
       if (node) {
         trRef.current.nodes([node]);
         trRef.current.getLayer().batchDraw();
       }
+    } else if (trRef.current) {
+      // Detach if not selecting
+      trRef.current.nodes([]);
     }
-  }, [selectedId, items, texts]);
+  }, [selectedId, items, texts, activeTool]);
 
   // --- Coordinate & Snap Logic ---
   const getSnapCoordinates = (mouseX: number, mouseY: number) => {
@@ -45,61 +66,101 @@ export default function CanvasWorkspace() {
     return { x: mouseX, y: mouseY, isSnapped: false };
   };
 
+  // --- Mouse & Tool Handling Logic ---
   const handleMouseDown = (e: any) => {
-    // 1. Check what we clicked on
-    const clickedNode = e.target;
-    const clickedOnEmpty = clickedNode === clickedNode.getStage();
-    
-    // 2. If we clicked a draggable item or text, select it and STOP drawing logic
-    if (clickedNode.name() === 'item' || clickedNode.name() === 'text') {
-      setSelectedId(clickedNode.id());
-      return;
-    }
-
-    // 3. If we clicked empty space, deselect current item
-    if (clickedOnEmpty) {
-      setSelectedId(null);
-    }
-
-    // Prevent drawing if editing text
+    if (activeTool === 'pan') return; // Handled natively by Konva's draggable Stage
     if (editingText) return;
 
-    // 4. Proceed with Wall Drawing Logic
-    const rawPos = clickedNode.getStage().getPointerPosition();
-    if (!rawPos) return;
+    const clickedNode = e.target;
+    const clickedOnEmpty = clickedNode === clickedNode.getStage();
+    const isItemOrText = clickedNode.name() === 'item' || clickedNode.name() === 'text';
 
-    const { x, y } = getSnapCoordinates(rawPos.x, rawPos.y);
+    // TOOL: Select
+    if (activeTool === 'select') {
+      if (isItemOrText) {
+        setSelectedId(clickedNode.id());
+      } else if (clickedOnEmpty) {
+        setSelectedId(null);
+      }
+      return; // Do not draw when selecting
+    }
 
-    if (!isDrawing) {
-      setIsDrawing(true);
-      setStartPoint({ x, y });
-      setCurrentMousePos({ x, y });
-    } else if (startPoint) {
-      addWall({
-        id: crypto.randomUUID(),
-        startX: startPoint.x,
-        startY: startPoint.y,
-        endX: x,
-        endY: y,
-        thickness: 9,
-        height: 120,
-        type: 'external'
-      });
-      setIsDrawing(false);
-      setStartPoint(null);
-      setCurrentMousePos(null);
-      setSnapPoint(null);
+    // TOOL: Draw Wall
+    if (activeTool === 'draw_wall') {
+      // Prevent selecting when drawing
+      setSelectedId(null);
+
+      const rawPos = clickedNode.getStage().getPointerPosition();
+      // Adjust for pan and zoom to get relative coordinates
+      const transform = clickedNode.getStage().getAbsoluteTransform().copy();
+      transform.invert();
+      const pos = transform.point(rawPos);
+      
+      const { x, y } = getSnapCoordinates(pos.x, pos.y);
+
+      if (!isDrawing) {
+        setIsDrawing(true);
+        setStartPoint({ x, y });
+        setCurrentMousePos({ x, y });
+      } else if (startPoint) {
+        addWall({
+          id: crypto.randomUUID(),
+          startX: startPoint.x,
+          startY: startPoint.y,
+          endX: x,
+          endY: y,
+          thickness: wallThickness, // NEW: Uses the exact thickness from the sidebar!
+          height: 120,
+          type: wallThickness === 9 ? 'external' : 'internal'
+        });
+        setIsDrawing(false);
+        setStartPoint(null);
+        setCurrentMousePos(null);
+        setSnapPoint(null);
+      }
     }
   };
 
   const handleMouseMove = (e: any) => {
+    if (activeTool !== 'draw_wall') return;
+
     const rawPos = e.target.getStage().getPointerPosition();
     if (!rawPos) return;
 
-    const { x, y, isSnapped } = getSnapCoordinates(rawPos.x, rawPos.y);
+    const transform = e.target.getStage().getAbsoluteTransform().copy();
+    transform.invert();
+    const pos = transform.point(rawPos);
+
+    const { x, y, isSnapped } = getSnapCoordinates(pos.x, pos.y);
     setSnapPoint(isSnapped ? { x, y } : null);
     
     if (isDrawing) setCurrentMousePos({ x, y });
+  };
+
+  // --- Zoom Logic (Mouse Wheel) ---
+  const handleWheel = (e: any) => {
+    e.evt.preventDefault();
+    const scaleBy = 1.1;
+    const stage = e.target.getStage();
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+
+    if (!pointer) return;
+
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    // Zoom in on Scroll Up, out on Scroll Down
+    const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    stage.scale({ x: newScale, y: newScale });
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+    stage.position(newPos);
   };
 
   // --- Drag and Drop Logic ---
@@ -111,13 +172,17 @@ export default function CanvasWorkspace() {
     if (!itemType || !stageRef.current) return;
 
     stageRef.current.setPointersPositions(e);
-    const dropPos = stageRef.current.getPointerPosition();
+    const rawPos = stageRef.current.getPointerPosition();
     
-    if (dropPos) {
+    if (rawPos) {
+      // Adjust for pan and zoom when dropping
+      const transform = stageRef.current.getAbsoluteTransform().copy();
+      transform.invert();
+      const dropPos = transform.point(rawPos);
+
       if (itemType === 'text') {
         addText({ id: crypto.randomUUID(), x: dropPos.x, y: dropPos.y, text: "New Label", fontSize: 20 });
       } else {
-        // Define default sizes based on type
         let width = 40, height = 40;
         if (itemType === 'window') { width = 60; height = 10; }
         if (itemType === 'electrical') { width = 20; height = 20; }
@@ -144,50 +209,57 @@ export default function CanvasWorkspace() {
     }
   };
 
-  // Map item types to your professional color palette
   const getItemColor = (type: string) => {
     switch(type) {
-      case 'door': return '#f59e0b'; // Amber
-      case 'window': return '#3b82f6'; // Blue
-      case 'plumbing': return '#06b6d4'; // Cyan
-      case 'electrical': return '#eab308'; // Yellow
-      case 'furniture': return '#6366f1'; // Indigo
+      case 'door': return '#f59e0b';
+      case 'window': return '#3b82f6';
+      case 'plumbing': return '#06b6d4';
+      case 'electrical': return '#eab308';
+      case 'furniture': return '#6366f1';
       default: return '#94a3b8';
     }
   };
 
+  // --- Dynamic Cursor UI ---
+  const getCursorStyle = () => {
+    if (activeTool === 'pan') return 'cursor-grab active:cursor-grabbing';
+    if (activeTool === 'draw_wall') return 'cursor-crosshair';
+    return 'cursor-default';
+  };
+
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="mb-4 w-full flex justify-between items-center text-slate-600">
+    <div className="w-full h-full flex flex-col">
+      <div className="mb-4 w-full flex justify-between items-center text-slate-600 shrink-0">
         <h2 className="text-lg font-bold">Blueprint Canvas</h2>
-        <span className="text-xs bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm font-semibold">
-          Objects: {walls.length + items.length + texts.length}
+        <span className="text-xs bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm font-semibold text-slate-500">
+          Scroll wheel to zoom • Drag to pan
         </span>
       </div>
       
       <div 
-        className="w-full max-w-4xl h-[600px] bg-white rounded-xl overflow-hidden border border-slate-200 cursor-crosshair shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative"
+        className={`flex-1 w-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative ${getCursorStyle()}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
-        {/* Light Theme Grid Background */}
         <div className="absolute inset-0 opacity-40 pointer-events-none" 
-             style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+             style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
         <Stage
           ref={stageRef}
-          width={896}
-          height={600}
+          width={window.innerWidth - 350} // Responsive to sidebar width
+          height={window.innerHeight - 150} // Responsive to header heights
+          draggable={activeTool === 'pan'} // ONLY draggable if Pan tool is active
+          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
         >
           <Layer>
-            {/* 1. Render Walls */}
+            {/* Render Walls */}
             {walls.map((wall) => (
               <Line
                 key={wall.id}
                 points={[wall.startX, wall.startY, wall.endX, wall.endY]}
-                stroke="#2965a2" // Your primary corporate blue for walls!
+                stroke="#2965a2"
                 strokeWidth={wall.thickness}
                 lineCap="round"
                 lineJoin="round"
@@ -196,12 +268,12 @@ export default function CanvasWorkspace() {
               />
             ))}
 
-            {/* 2. Render Interactive Items */}
+            {/* Render Interactive Items */}
             {items.map((item) => (
               <Rect
                 key={item.id}
-                id={item.id} // ID is required for Transformer to find it
-                name="item"  // Name is required for click selection
+                id={item.id}
+                name="item"
                 x={item.x}
                 y={item.y}
                 width={item.width}
@@ -210,22 +282,16 @@ export default function CanvasWorkspace() {
                 fill={getItemColor(item.type)}
                 stroke="#ffffff"
                 strokeWidth={2}
-                shadowBlur={4}
-                shadowColor="rgba(0,0,0,0.2)"
-                draggable
-                onDragStart={() => setSelectedId(item.id)}
+                draggable={activeTool === 'select'} // Only draggable if select tool is active
+                onDragStart={() => activeTool === 'select' && setSelectedId(item.id)}
                 onDragEnd={(e) => updateItem(item.id, { x: e.target.x(), y: e.target.y() })}
                 onTransformEnd={(e) => {
-                  // Konva transforms by scaling. We convert scale back to width/height to keep data clean
                   const node = e.target;
                   const scaleX = node.scaleX();
                   const scaleY = node.scaleY();
-                  node.scaleX(1);
-                  node.scaleY(1);
+                  node.scaleX(1); node.scaleY(1);
                   updateItem(item.id, {
-                    x: node.x(),
-                    y: node.y(),
-                    rotation: node.rotation(),
+                    x: node.x(), y: node.y(), rotation: node.rotation(),
                     width: Math.max(5, node.width() * scaleX),
                     height: Math.max(5, node.height() * scaleY),
                   });
@@ -233,7 +299,7 @@ export default function CanvasWorkspace() {
               />
             ))}
 
-            {/* 3. Render Texts */}
+            {/* Render Texts */}
             {texts.map((textItem) => (
               <KonvaText
                 key={textItem.id}
@@ -246,52 +312,33 @@ export default function CanvasWorkspace() {
                 fontFamily="sans-serif"
                 fontStyle="bold"
                 fill={editingText?.id === textItem.id ? 'transparent' : '#334155'}
-                draggable
-                onDragStart={() => setSelectedId(textItem.id)}
+                draggable={activeTool === 'select'}
+                onDragStart={() => activeTool === 'select' && setSelectedId(textItem.id)}
                 onDragEnd={(e) => updateText(textItem.id, { x: e.target.x(), y: e.target.y() })}
                 onDblClick={() => setEditingText({ id: textItem.id, x: textItem.x, y: textItem.y, text: textItem.text })}
-                onTransformEnd={(e) => {
-                  const node = e.target;
-                  const scaleX = node.scaleX();
-                  node.scaleX(1);
-                  node.scaleY(1);
-                  updateText(textItem.id, {
-                    x: node.x(),
-                    y: node.y(),
-                    rotation: node.rotation(),
-                    fontSize: Math.max(10, textItem.fontSize * scaleX),
-                  });
-                }}
               />
             ))}
 
             {/* Ghost Wall */}
-            {isDrawing && startPoint && currentMousePos && (
-              <Line points={[startPoint.x, startPoint.y, currentMousePos.x, currentMousePos.y]} stroke="#60a5fa" strokeWidth={9} dash={[15, 10]} lineCap="round" />
+            {isDrawing && startPoint && currentMousePos && activeTool === 'draw_wall' && (
+              <Line points={[startPoint.x, startPoint.y, currentMousePos.x, currentMousePos.y]} stroke="#60a5fa" strokeWidth={wallThickness} dash={[15, 10]} lineCap="round" />
             )}
             
             {/* Snap Indicator */}
-            {snapPoint && <Circle x={snapPoint.x} y={snapPoint.y} radius={8} stroke="#2965a2" strokeWidth={2} fill="rgba(41, 101, 162, 0.2)" />}
+            {snapPoint && activeTool === 'draw_wall' && <Circle x={snapPoint.x} y={snapPoint.y} radius={8} stroke="#2965a2" strokeWidth={2} fill="rgba(41, 101, 162, 0.2)" />}
 
-            {/* 4. The Transformer (Handles Resizing and Rotation) */}
-            {selectedId && (
+            {/* The Transformer */}
+            {selectedId && activeTool === 'select' && (
               <Transformer 
                 ref={trRef} 
-                boundBoxFunc={(oldBox, newBox) => {
-                  // Prevent resizing smaller than 5x5 pixels
-                  if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) return oldBox;
-                  return newBox;
-                }}
-                anchorStroke="#2965a2"
-                anchorFill="#ffffff"
-                anchorSize={8}
-                borderStroke="#2965a2"
+                boundBoxFunc={(oldBox, newBox) => (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) ? oldBox : newBox}
+                anchorStroke="#2965a2" anchorFill="#ffffff" anchorSize={8} borderStroke="#2965a2"
               />
             )}
           </Layer>
         </Stage>
 
-        {/* HTML Input Overlay for Editing Text */}
+        {/* HTML Input Overlay */}
         {editingText && (
           <input
             type="text"
@@ -300,7 +347,7 @@ export default function CanvasWorkspace() {
             onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
             onBlur={finishEditingText}
             onKeyDown={(e) => e.key === 'Enter' && finishEditingText()}
-            style={{ position: 'absolute', top: `${editingText.y}px`, left: `${editingText.x}px` }}
+            style={{ position: 'absolute', top: `50px`, left: `50px` }} // Fixed to top left to avoid zoom coordinate math for HTML
             className="bg-white text-slate-800 border-2 border-blue-500 rounded px-2 py-1 outline-none font-sans font-bold shadow-lg z-50"
           />
         )}

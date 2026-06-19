@@ -1,34 +1,37 @@
-import { useState } from 'react';
+import CanvasWorkspace from './components/CanvasWorkspace';
+import { useCanvasStore } from './store/useCanvasStore';
 
 export default function App() {
-  const [testStatus, setTestStatus] = useState<string>("Click to verify system");
+  // Bring in the clear function from our global store
+  const { clearCanvas } = useCanvasStore();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 text-slate-100 p-6 font-sans">
-      <div className="w-full max-w-md rounded-2xl bg-slate-800 p-8 shadow-2xl border border-slate-700 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-emerald-400 mb-2">
-          BuildSure-AI
-        </h1>
-        <p className="text-sm text-slate-400 mb-6">
-          SaaS-Based Digital Architect & Live Quantity Surveyor
-        </p>
-        
-        <div className="rounded-lg bg-slate-950 p-4 border border-slate-800 mb-6">
-          <span className="text-xs uppercase tracking-wider text-slate-500 block mb-1">
-            Tailwind v4 Engine Status
-          </span>
-          <p className="text-sm font-mono text-emerald-300">
-            {testStatus}
-          </p>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
+      {/* Top Navigation Header */}
+      <header className="w-full bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-md">
+        <div>
+          <h1 className="text-2xl font-bold text-emerald-400 tracking-tight">BuildSure-AI</h1>
+          <p className="text-xs text-slate-400 uppercase tracking-wider">Digital Site Supervisor</p>
         </div>
+        
+        <div className="flex gap-4">
+          <button 
+            onClick={clearCanvas}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 cursor-pointer rounded-lg text-sm font-medium transition-colors border border-slate-700"
+          >
+            Clear Canvas
+          </button>
+          <button className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 cursor-pointer text-slate-950 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-emerald-500/20">
+            Calculate BoQ (Coming Soon)
+          </button>
+        </div>
+      </header>
 
-        <button
-          onClick={() => setTestStatus("Tailwind v4 & React-TS Active ✓")}
-          className="w-full cursor-pointer rounded-xl bg-emerald-500 py-3 px-4 font-semibold text-slate-950 transition-colors hover:bg-emerald-400 active:bg-emerald-600"
-        >
-          Test Configuration
-        </button>
-      </div>
+      {/* Main Workspace Area */}
+      <main className="flex-1 p-6 flex justify-center items-start overflow-auto">
+        {/* Render our interactive 2D Konva Canvas here */}
+        <CanvasWorkspace />
+      </main>
     </div>
   );
 }

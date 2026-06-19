@@ -1,4 +1,5 @@
-import { Wall } from '../store/useCanvasStore';
+// FIX: Added 'type' keyword so Vite knows to erase this during compilation
+import type { Wall } from '../store/useCanvasStore';
 
 // --- Scale & Conversion Constants ---
 // We assume 100 pixels on our canvas equals 1 real-world meter

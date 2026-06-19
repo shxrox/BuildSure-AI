@@ -2,28 +2,59 @@ import CanvasWorkspace from './components/CanvasWorkspace';
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar';
 import { useCanvasStore } from './store/useCanvasStore';
-import { Trash2, ArrowUpToLine, ArrowDownToLine, Download, RefreshCcw } from 'lucide-react';
+import { calculateBoQ } from './utils/volumetricEngine'; // NEW: Importing our QS Engine
+import { Trash2, ArrowUpToLine, ArrowDownToLine, Download, RefreshCcw, HardHat } from 'lucide-react';
 
 export default function App() {
-  // Bring in all our global functions, including the new triggerDownload
-  const { clearCanvas, selectedId, deleteSelected, bringToFront, sendToBack, triggerDownload } = useCanvasStore();
+  // Bring in 'walls' so we can feed it to the math engine
+  const { walls, clearCanvas, selectedId, deleteSelected, bringToFront, sendToBack, triggerDownload } = useCanvasStore();
+
+  // NEW: Calculate the real-time Bill of Quantities every time the screen renders
+  const boq = calculateBoQ(walls);
 
   return (
     <div className="min-h-screen flex flex-col h-screen overflow-hidden font-sans text-slate-800" style={{ backgroundColor: '#f9f9f8' }}>
       
       {/* Top Navigation Header */}
-      <header className="w-full p-4 flex justify-between items-center shadow-md z-20 shrink-0 relative" style={{ backgroundColor: '#2965a2' }}>
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">BuildSure-AI</h1>
-          <p className="text-xs text-blue-200 uppercase tracking-wider">Digital Site Supervisor</p>
+      <header className="w-full p-3 flex justify-between items-center shadow-md z-20 shrink-0 relative" style={{ backgroundColor: '#2965a2' }}>
+        
+        {/* Left Side: Brand & Live Estimation Scoreboard */}
+        <div className="flex items-center gap-8">
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">BuildSure-AI</h1>
+            <p className="text-[10px] text-blue-200 uppercase tracking-wider font-semibold">Digital Site Supervisor</p>
+          </div>
+
+          {/* Live BoQ Scoreboard */}
+          <div className="hidden lg:flex items-center gap-4 bg-black/20 px-5 py-1.5 rounded-lg border border-white/10 shadow-inner">
+            <div className="flex items-center gap-2">
+              <HardHat size={18} className="text-amber-400" />
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Live BoQ</span>
+            </div>
+            <div className="w-px h-6 bg-white/20 mx-1"></div>
+            
+            <div className="flex gap-6">
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] text-blue-200 font-semibold uppercase">Total Bricks</span>
+                <span className="text-sm font-bold text-white">{boq.totalBricks.toLocaleString()}</span>
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] text-blue-200 font-semibold uppercase">Cement (50kg Bags)</span>
+                <span className="text-sm font-bold text-white">{boq.cementBags.toLocaleString()}</span>
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] text-blue-200 font-semibold uppercase">Sand (Cubes)</span>
+                <span className="text-sm font-bold text-white">{boq.sandCubes}</span>
+              </div>
+            </div>
+          </div>
         </div>
         
-        {/* Advanced Action Toolbar */}
+        {/* Right Side: Advanced Action Toolbar */}
         <div className="flex items-center gap-2 bg-white/10 p-1.5 rounded-lg backdrop-blur-sm border border-white/20">
           
           <button 
-            onClick={bringToFront}
-            disabled={!selectedId}
+            onClick={bringToFront} disabled={!selectedId}
             className="p-2 text-white hover:bg-white/20 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             title="Bring to Front"
           >
@@ -31,8 +62,7 @@ export default function App() {
           </button>
           
           <button 
-            onClick={sendToBack}
-            disabled={!selectedId}
+            onClick={sendToBack} disabled={!selectedId}
             className="p-2 text-white hover:bg-white/20 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             title="Send to Back"
           >
@@ -42,8 +72,7 @@ export default function App() {
           <div className="w-px h-6 bg-white/30 mx-1"></div>
 
           <button 
-            onClick={deleteSelected}
-            disabled={!selectedId}
+            onClick={deleteSelected} disabled={!selectedId}
             className="p-2 text-red-300 hover:bg-red-500 hover:text-white rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             title="Delete Selected Item"
           >
@@ -52,7 +81,6 @@ export default function App() {
 
           <div className="w-px h-6 bg-white/30 mx-1"></div>
 
-          {/* Connected the real export engine here! */}
           <button 
             onClick={triggerDownload}
             className="p-2 text-white hover:bg-white/20 rounded-md transition-all"
@@ -73,18 +101,11 @@ export default function App() {
 
       {/* Main Dashboard Layout: Three-Pane Split Screen */}
       <div className="flex flex-1 overflow-hidden relative">
-        
-        {/* 1. Left Tools Sidebar */}
         <Sidebar />
-
-        {/* 2. Center Infinite Canvas */}
         <main className="flex-1 p-4 flex justify-center items-center overflow-hidden bg-[#f9f9f8]">
           <CanvasWorkspace />
         </main>
-
-        {/* 3. Right Properties Sidebar */}
         <RightSidebar />
-        
       </div>
     </div>
   );

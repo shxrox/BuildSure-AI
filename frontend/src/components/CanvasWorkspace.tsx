@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Line, Circle, Rect, Text as KonvaText, Transformer, Group, Arc, Ellipse } from 'react-konva';
 import { useCanvasStore, type CanvasItem, type CanvasText, type Wall } from '../store/useCanvasStore';
+import { create } from 'zustand';
 
 const SNAP_RADIUS = 20;
 const PIXELS_PER_METER = 100; // Conversion rate
@@ -172,6 +173,7 @@ export default function CanvasWorkspace() {
       setEditingText(null);
     }
   };
+  
 
   const getItemColor = (type: string) => {
     switch(type) {

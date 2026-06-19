@@ -4,9 +4,28 @@ import RightSidebar from './components/RightSidebar';
 import { useCanvasStore } from './store/useCanvasStore';
 import { calculateBoQ } from './utils/volumetricEngine'; // NEW: Importing our QS Engine
 import { Trash2, ArrowUpToLine, ArrowDownToLine, Download, RefreshCcw, HardHat } from 'lucide-react';
+import { useEffect } from 'react';
+
 
 export default function App() {
-  // Bring in 'walls' so we can feed it to the math engine
+  useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    // Check for Ctrl+Z (Undo)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault();
+      useCanvasStore.getState().undo();
+    }
+    // Check for Ctrl+Y (Redo)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+      e.preventDefault();
+      useCanvasStore.getState().redo();
+    }
+  };
+
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, []);
+
   const { walls, clearCanvas, selectedId, deleteSelected, bringToFront, sendToBack, triggerDownload } = useCanvasStore();
 
   // NEW: Calculate the real-time Bill of Quantities every time the screen renders

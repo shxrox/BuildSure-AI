@@ -1,20 +1,24 @@
 import { useState, useRef } from 'react';
 import { Stage, Layer, Line, Circle, Rect, Text as KonvaText } from 'react-konva';
-import { useCanvasStore, CanvasItem } from '../store/useCanvasStore';
+// FIX: We added the 'type' keyword before CanvasItem and CanvasText
+import { useCanvasStore, type CanvasItem, type CanvasText } from '../store/useCanvasStore';
 
 const SNAP_RADIUS = 20;
 
 export default function CanvasWorkspace() {
-  const { walls, items, texts, addWall, addItem } = useCanvasStore();
-  
-  // We need a reference to the Stage to calculate drop coordinates accurately
+  const { walls, items, texts, addWall, addItem, addText, updateText } = useCanvasStore();
   const stageRef = useRef<any>(null);
 
+  // Drawing State
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [currentMousePos, setCurrentMousePos] = useState<{ x: number; y: number } | null>(null);
   const [snapPoint, setSnapPoint] = useState<{ x: number; y: number } | null>(null);
 
+  // Text Editing State (Overlay)
+  const [editingText, setEditingText] = useState<{ id: string; x: number; y: number; text: string } | null>(null);
+
+  // --- Coordinate & Snap Logic ---
   const getSnapCoordinates = (mouseX: number, mouseY: number) => {
     for (const wall of walls) {
       if (Math.hypot(wall.startX - mouseX, wall.startY - mouseY) < SNAP_RADIUS) {
@@ -27,8 +31,10 @@ export default function CanvasWorkspace() {
     return { x: mouseX, y: mouseY, isSnapped: false };
   };
 
-  // --- Wall Drawing Logic ---
   const handleMouseDown = (e: any) => {
+    // Prevent drawing a wall if we are just clicking to edit text or move an item
+    if (e.target.className === 'Text' || e.target.className === 'Rect' || editingText) return;
+
     const rawPos = e.target.getStage().getPointerPosition();
     if (!rawPos) return;
 
@@ -67,18 +73,13 @@ export default function CanvasWorkspace() {
   };
 
   // --- Drag and Drop Logic ---
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Required to allow dropping
-  };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    
-    // Get the data payload we set in the Sidebar
     const itemType = e.dataTransfer.getData('application/buildsure-item');
     if (!itemType || !stageRef.current) return;
 
-    // Calculate exact canvas coordinates relative to the window
     stageRef.current.setPointersPositions(e);
     const dropPos = stageRef.current.getPointerPosition();
     
@@ -86,16 +87,32 @@ export default function CanvasWorkspace() {
       if (itemType === 'door' || itemType === 'window') {
         const newItem: CanvasItem = {
           id: crypto.randomUUID(),
-          x: dropPos.x - 20, // Center the item on the mouse
-          y: dropPos.y - 20,
+          x: dropPos.x - 20,
+          y: dropPos.y - 10,
           type: itemType as 'door' | 'window',
           rotation: 0,
           width: itemType === 'door' ? 40 : 60,
           height: itemType === 'door' ? 40 : 10,
         };
         addItem(newItem);
+      } else if (itemType === 'text') {
+        const newText: CanvasText = {
+          id: crypto.randomUUID(),
+          x: dropPos.x,
+          y: dropPos.y,
+          text: "Double-click to edit",
+          fontSize: 20,
+        };
+        addText(newText);
       }
-      // Note: Text dropping logic will be handled in the next step!
+    }
+  };
+
+  // --- Text Edit Save Handler ---
+  const finishEditingText = () => {
+    if (editingText) {
+      updateText(editingText.id, { text: editingText.text });
+      setEditingText(null);
     }
   };
 
@@ -108,15 +125,13 @@ export default function CanvasWorkspace() {
         </span>
       </div>
       
-      {/* The Wrapper DIV handles the browser's Drop Event */}
       <div 
         className="w-full max-w-4xl h-[600px] bg-slate-900 rounded-xl overflow-hidden border-2 border-slate-700 cursor-crosshair shadow-2xl relative"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
         <div className="absolute inset-0 opacity-20 pointer-events-none" 
-             style={{ backgroundImage: 'radial-gradient(#334155 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-        </div>
+             style={{ backgroundImage: 'radial-gradient(#334155 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
         <Stage
           ref={stageRef}
@@ -126,7 +141,7 @@ export default function CanvasWorkspace() {
           onMouseMove={handleMouseMove}
         >
           <Layer>
-            {/* Render Saved Walls */}
+            {/* 1. Render Walls */}
             {walls.map((wall) => (
               <Line
                 key={wall.id}
@@ -135,13 +150,12 @@ export default function CanvasWorkspace() {
                 strokeWidth={wall.thickness}
                 lineCap="round"
                 lineJoin="round"
-                shadowColor="#000"
                 shadowBlur={4}
                 shadowOpacity={0.2}
               />
             ))}
 
-            {/* Render Dropped Items (Doors and Windows) */}
+            {/* 2. Render Doors and Windows */}
             {items.map((item) => (
               <Rect
                 key={item.id}
@@ -150,37 +164,58 @@ export default function CanvasWorkspace() {
                 width={item.width}
                 height={item.height}
                 rotation={item.rotation}
-                fill={item.type === 'door' ? '#f59e0b' : '#3b82f6'} // Amber for Door, Blue for Window
+                fill={item.type === 'door' ? '#f59e0b' : '#3b82f6'}
                 stroke="#0f172a"
                 strokeWidth={2}
-                draggable // Native Konva drag so you can move it after dropping!
-                onDragEnd={(e) => {
-                   // Update Zustand when user moves the item on the canvas
-                   useCanvasStore.getState().updateItem(item.id, {
-                     x: e.target.x(),
-                     y: e.target.y()
-                   });
+                draggable
+                onDragEnd={(e) => useCanvasStore.getState().updateItem(item.id, { x: e.target.x(), y: e.target.y() })}
+              />
+            ))}
+
+            {/* 3. Render Texts */}
+            {texts.map((textItem) => (
+              <KonvaText
+                key={textItem.id}
+                x={textItem.x}
+                y={textItem.y}
+                text={textItem.text}
+                fontSize={textItem.fontSize}
+                fontFamily="serif"
+                fill={editingText?.id === textItem.id ? 'transparent' : '#fbbf24'} // Hide Konva text while HTML input is active
+                draggable
+                onDragEnd={(e) => useCanvasStore.getState().updateText(textItem.id, { x: e.target.x(), y: e.target.y() })}
+                onDblClick={() => {
+                  setEditingText({ id: textItem.id, x: textItem.x, y: textItem.y, text: textItem.text });
                 }}
               />
             ))}
 
-            {/* Render Active Ghost Wall */}
+            {/* Ghost Wall */}
             {isDrawing && startPoint && currentMousePos && (
-              <Line
-                points={[startPoint.x, startPoint.y, currentMousePos.x, currentMousePos.y]}
-                stroke="#34d399"
-                strokeWidth={9}
-                dash={[15, 10]}
-                lineCap="round"
-              />
+              <Line points={[startPoint.x, startPoint.y, currentMousePos.x, currentMousePos.y]} stroke="#34d399" strokeWidth={9} dash={[15, 10]} lineCap="round" />
             )}
-
-            {/* Render Snap Indicator */}
-            {snapPoint && (
-              <Circle x={snapPoint.x} y={snapPoint.y} radius={8} stroke="#fbbf24" strokeWidth={2} fill="rgba(251, 191, 36, 0.3)" />
-            )}
+            {/* Snap Indicator */}
+            {snapPoint && <Circle x={snapPoint.x} y={snapPoint.y} radius={8} stroke="#fbbf24" strokeWidth={2} fill="rgba(251, 191, 36, 0.3)" />}
           </Layer>
         </Stage>
+
+        {/* HTML Input Overlay for Editing Text */}
+        {editingText && (
+          <input
+            type="text"
+            value={editingText.text}
+            autoFocus
+            onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
+            onBlur={finishEditingText}
+            onKeyDown={(e) => e.key === 'Enter' && finishEditingText()}
+            style={{
+              position: 'absolute',
+              top: `${editingText.y - 2}px`,
+              left: `${editingText.x - 2}px`,
+            }}
+            className="bg-slate-800 text-amber-400 border border-amber-500 rounded px-1 outline-none font-serif text-[20px] z-50 shadow-lg"
+          />
+        )}
       </div>
     </div>
   );

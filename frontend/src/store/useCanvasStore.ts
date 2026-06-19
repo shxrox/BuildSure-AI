@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 
+// --- Types ---
+export type ToolType = 'select' | 'draw_wall' | 'pan';
+
 export interface Wall {
   id: string;
   startX: number;
   startY: number;
   endX: number;
   endY: number;
-  thickness: number;
+  thickness: number; // Acts as our "Pen Size"
   height: number;
   type: 'external' | 'internal';
 }
@@ -29,12 +32,19 @@ export interface CanvasText {
   fontSize: number;
 }
 
+// --- Store Interface ---
 interface CanvasState {
+  // Data
   walls: Wall[];
   items: CanvasItem[];
   texts: CanvasText[];
-  selectedId: string | null; // Tracks which item the user has clicked on
+  selectedId: string | null;
   
+  // draw.io Style Tool Settings
+  activeTool: ToolType;
+  wallThickness: number; 
+  exportTrigger: number; // A counter used to trigger the PNG download
+
   // Base Actions
   addWall: (wall: Wall) => void;
   updateWall: (id: string, updates: Partial<Wall>) => void;
@@ -43,19 +53,30 @@ interface CanvasState {
   addText: (text: CanvasText) => void;
   updateText: (id: string, updates: Partial<CanvasText>) => void;
   
-  // Advanced Actions
+  // Advanced Arrange/Edit Actions
   setSelectedId: (id: string | null) => void;
   deleteSelected: () => void;
   bringToFront: () => void;
   sendToBack: () => void;
   clearCanvas: () => void;
+
+  // Tool & Export Actions
+  setActiveTool: (tool: ToolType) => void;
+  setWallThickness: (thickness: number) => void;
+  triggerDownload: () => void;
 }
 
+// --- Implementation ---
 export const useCanvasStore = create<CanvasState>((set) => ({
   walls: [],
   items: [],
   texts: [],
   selectedId: null,
+
+  // Defaults
+  activeTool: 'draw_wall', 
+  wallThickness: 9, // Default to 9-inch load-bearing wall
+  exportTrigger: 0,
 
   addWall: (wall) => set((state) => ({ walls: [...state.walls, wall] })),
   updateWall: (id, updates) => set((state) => ({
@@ -72,10 +93,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     texts: state.texts.map((t) => t.id === id ? { ...t, ...updates } : t),
   })),
 
-  // --- Advanced Tools ---
   setSelectedId: (id) => set({ selectedId: id }),
 
-  // Deletes whatever is currently selected
   deleteSelected: () => set((state) => ({
     walls: state.walls.filter(w => w.id !== state.selectedId),
     items: state.items.filter(i => i.id !== state.selectedId),
@@ -83,17 +102,14 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     selectedId: null 
   })),
 
-  // Moves selected item to the end of the array so it renders on top
   bringToFront: () => set((state) => {
     if (!state.selectedId) return state;
-    
     const itemIndex = state.items.findIndex(i => i.id === state.selectedId);
     if (itemIndex > -1) {
       const newItems = [...state.items];
       newItems.push(newItems.splice(itemIndex, 1)[0]);
       return { items: newItems };
     }
-
     const textIndex = state.texts.findIndex(t => t.id === state.selectedId);
     if (textIndex > -1) {
       const newTexts = [...state.texts];
@@ -103,17 +119,14 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     return state;
   }),
 
-  // Moves selected item to the beginning of the array so it renders underneath
   sendToBack: () => set((state) => {
     if (!state.selectedId) return state;
-    
     const itemIndex = state.items.findIndex(i => i.id === state.selectedId);
     if (itemIndex > -1) {
       const newItems = [...state.items];
       newItems.unshift(newItems.splice(itemIndex, 1)[0]);
       return { items: newItems };
     }
-
     const textIndex = state.texts.findIndex(t => t.id === state.selectedId);
     if (textIndex > -1) {
       const newTexts = [...state.texts];
@@ -124,4 +137,9 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   }),
 
   clearCanvas: () => set({ walls: [], items: [], texts: [], selectedId: null }),
+
+  // Tool Logic Implementation
+  setActiveTool: (tool) => set({ activeTool: tool, selectedId: null }),
+  setWallThickness: (thickness) => set({ wallThickness: thickness }),
+  triggerDownload: () => set((state) => ({ exportTrigger: state.exportTrigger + 1 })),
 }));

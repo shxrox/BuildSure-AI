@@ -1,16 +1,18 @@
 import CanvasWorkspace from './components/CanvasWorkspace';
 import Sidebar from './components/Sidebar';
+import RightSidebar from './components/RightSidebar';
 import { useCanvasStore } from './store/useCanvasStore';
 import { Trash2, ArrowUpToLine, ArrowDownToLine, Download, RefreshCcw } from 'lucide-react';
 
 export default function App() {
-  const { clearCanvas, selectedId, deleteSelected, bringToFront, sendToBack } = useCanvasStore();
+  // Bring in all our global functions, including the new triggerDownload
+  const { clearCanvas, selectedId, deleteSelected, bringToFront, sendToBack, triggerDownload } = useCanvasStore();
 
   return (
     <div className="min-h-screen flex flex-col h-screen overflow-hidden font-sans text-slate-800" style={{ backgroundColor: '#f9f9f8' }}>
       
-      {/* Top Navigation Header - Using your Primary Blue (#2965a2) */}
-      <header className="w-full p-4 flex justify-between items-center shadow-md z-10 shrink-0" style={{ backgroundColor: '#2965a2' }}>
+      {/* Top Navigation Header */}
+      <header className="w-full p-4 flex justify-between items-center shadow-md z-20 shrink-0 relative" style={{ backgroundColor: '#2965a2' }}>
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">BuildSure-AI</h1>
           <p className="text-xs text-blue-200 uppercase tracking-wider">Digital Site Supervisor</p>
@@ -19,7 +21,6 @@ export default function App() {
         {/* Advanced Action Toolbar */}
         <div className="flex items-center gap-2 bg-white/10 p-1.5 rounded-lg backdrop-blur-sm border border-white/20">
           
-          {/* Layering Controls */}
           <button 
             onClick={bringToFront}
             disabled={!selectedId}
@@ -40,7 +41,6 @@ export default function App() {
 
           <div className="w-px h-6 bg-white/30 mx-1"></div>
 
-          {/* Delete Control */}
           <button 
             onClick={deleteSelected}
             disabled={!selectedId}
@@ -52,9 +52,9 @@ export default function App() {
 
           <div className="w-px h-6 bg-white/30 mx-1"></div>
 
-          {/* Export & Reset Controls */}
+          {/* Connected the real export engine here! */}
           <button 
-            onClick={() => alert("The Download engine will be wired up directly to the Canvas in the next steps!")}
+            onClick={triggerDownload}
             className="p-2 text-white hover:bg-white/20 rounded-md transition-all"
             title="Download PDF/Image"
           >
@@ -71,15 +71,20 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Dashboard Layout: Split Screen */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
+      {/* Main Dashboard Layout: Three-Pane Split Screen */}
+      <div className="flex flex-1 overflow-hidden relative">
+        
+        {/* 1. Left Tools Sidebar */}
         <Sidebar />
 
-        {/* Right Workspace Area */}
-        <main className="flex-1 p-6 flex justify-center items-start overflow-auto">
+        {/* 2. Center Infinite Canvas */}
+        <main className="flex-1 p-4 flex justify-center items-center overflow-hidden bg-[#f9f9f8]">
           <CanvasWorkspace />
         </main>
+
+        {/* 3. Right Properties Sidebar */}
+        <RightSidebar />
+        
       </div>
     </div>
   );

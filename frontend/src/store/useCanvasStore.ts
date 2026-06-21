@@ -3,6 +3,8 @@ import { createHistory } from './history';
 
 export type ToolType = 'select' | 'draw_wall' | 'pan';
 
+
+
 export interface Wall {
   id: string;
   startX: number;
@@ -14,15 +16,16 @@ export interface Wall {
   type: 'external' | 'internal';
 }
 
-export interface CanvasItem {
+export type CanvasItem = {
   id: string;
   x: number;
   y: number;
-  type: 'door' | 'window' | 'plumbing' | 'electrical' | 'furniture';
-  rotation: number;
   width: number;
   height: number;
-}
+  rotation: number;
+
+  type: 'window' | 'door' | 'electrical' | 'plumbing' | 'furniture' | 'bed' | 'stove' | 'sink' | 'toilet' | 'stairs';
+};
 
 export interface CanvasText {
   id: string;
@@ -95,9 +98,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   exportTrigger: 0,
 
-  // ---------------------------
-  // HISTORY CORE
-  // ---------------------------
   save: () => {
     const { walls, items, texts } = get();
 

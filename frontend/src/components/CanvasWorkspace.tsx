@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Line, Circle, Rect, Text as KonvaText, Transformer, Group, Arc, Ellipse } from 'react-konva';
 import { useCanvasStore, type CanvasItem, type CanvasText, type Wall } from '../store/useCanvasStore';
-import { create } from 'zustand';
 
 const SNAP_RADIUS = 20;
 const PIXELS_PER_METER = 100; // Conversion rate
@@ -49,7 +48,7 @@ export default function CanvasWorkspace() {
     } else if (trRef.current) {
       trRef.current.nodes([]);
     }
-  }, [selectedId, items, texts, walls, activeTool]); // Added walls to dependency array
+  }, [selectedId, items, texts, walls, activeTool]);
 
   // --- Coordinate Logic ---
   const getSnapCoordinates = (mouseX: number, mouseY: number) => {
@@ -70,7 +69,7 @@ export default function CanvasWorkspace() {
     const clickedNode = e.target;
     const clickedGroup = clickedNode.findAncestor('.item-group');
     const clickedText = clickedNode.name() === 'text';
-    const clickedWall = clickedNode.name() === 'wall'; // NEW: Detect Wall Clicks
+    const clickedWall = clickedNode.name() === 'wall'; 
     const clickedOnEmpty = clickedNode === clickedNode.getStage();
 
     if (activeTool === 'select') {
@@ -154,9 +153,15 @@ export default function CanvasWorkspace() {
       } else {
         let width = 40, height = 40;
         if (itemType === 'window') { width = 60; height = 15; }
+        if (itemType === 'door') { width = 40; height = 40; }
         if (itemType === 'electrical') { width = 20; height = 20; }
-        if (itemType === 'furniture') { width = 60; height = 60; }
         if (itemType === 'plumbing') { width = 30; height = 40; }
+        if (itemType === 'furniture') { width = 60; height = 60; }
+        if (itemType === 'bed') { width = 80; height = 100; }
+        if (itemType === 'stove') { width = 40; height = 40; }
+        if (itemType === 'sink') { width = 40; height = 30; }
+        if (itemType === 'toilet') { width = 30; height = 40; }
+        if (itemType === 'stairs') { width = 80; height = 120; }
 
         addItem({
           id: crypto.randomUUID(),
@@ -173,7 +178,6 @@ export default function CanvasWorkspace() {
       setEditingText(null);
     }
   };
-  
 
   const getItemColor = (type: string) => {
     switch(type) {
@@ -182,18 +186,19 @@ export default function CanvasWorkspace() {
       case 'plumbing': return '#06b6d4';
       case 'electrical': return '#eab308';
       case 'furniture': return '#6366f1';
+      case 'bed': return '#818cf8';
+      case 'stove': return '#f97316';
+      case 'sink': return '#0ea5e9';
+      case 'toilet': return '#14b8a6';
+      case 'stairs': return '#57534e';
       default: return '#94a3b8';
     }
   };
 
-  // --- Helper to render Live Dimensions ---
   const renderLiveDimension = () => {
     if (!isDrawing || !startPoint || !currentMousePos || activeTool !== 'draw_wall') return null;
-    
     const lengthPx = Math.hypot(currentMousePos.x - startPoint.x, currentMousePos.y - startPoint.y);
     const lengthMeters = (lengthPx / PIXELS_PER_METER).toFixed(2);
-    
-    // Position text slightly above the midpoint of the line
     const midX = (startPoint.x + currentMousePos.x) / 2;
     const midY = (startPoint.y + currentMousePos.y) / 2;
 
@@ -236,18 +241,8 @@ export default function CanvasWorkspace() {
 
               return (
                 <Group key={wall.id}>
-                  {/* Invisible thicker line to make clicking walls easier */}
-                  <Line 
-                    id={wall.id} name="wall"
-                    points={[wall.startX, wall.startY, wall.endX, wall.endY]} 
-                    stroke="transparent" strokeWidth={20} lineCap="round" 
-                  />
-                  <Line 
-                    points={[wall.startX, wall.startY, wall.endX, wall.endY]} 
-                    stroke={isSelected ? "#f59e0b" : "#2965a2"} // Turns orange when selected!
-                    strokeWidth={wall.thickness} lineCap="round" lineJoin="round" 
-                  />
-                  {/* Static Dimensions shown only when wall is selected */}
+                  <Line id={wall.id} name="wall" points={[wall.startX, wall.startY, wall.endX, wall.endY]} stroke="transparent" strokeWidth={20} lineCap="round" />
+                  <Line points={[wall.startX, wall.startY, wall.endX, wall.endY]} stroke={isSelected ? "#f59e0b" : "#2965a2"} strokeWidth={wall.thickness} lineCap="round" lineJoin="round" />
                   {isSelected && (
                      <Group x={midX} y={midY - 20}>
                        <Rect x={-25} y={-10} width={50} height={20} fill="#f59e0b" cornerRadius={4} />
@@ -278,11 +273,19 @@ export default function CanvasWorkspace() {
                   }}
                 >
                   <Rect x={0} y={0} width={item.width} height={item.height} fill="transparent" />
+
                   {item.type === 'door' && ( <><Rect x={0} y={0} width={item.width * 0.15} height={item.height} fill={color} cornerRadius={2} /><Arc x={item.width * 0.15} y={item.height} innerRadius={item.width * 0.8} outerRadius={item.width * 0.85} angle={90} rotation={-90} fill={color} opacity={0.6} /></> )}
                   {item.type === 'window' && ( <><Rect width={item.width} height={item.height} stroke={color} strokeWidth={2} fill="#ffffff" cornerRadius={2} /><Line points={[0, item.height * 0.35, item.width, item.height * 0.35]} stroke={color} strokeWidth={1} /><Line points={[0, item.height * 0.65, item.width, item.height * 0.65]} stroke={color} strokeWidth={1} /></> )}
                   {item.type === 'furniture' && ( <><Rect x={0} y={0} width={item.width} height={item.height * 0.25} fill={color} cornerRadius={4} /><Rect x={0} y={item.height * 0.2} width={item.width * 0.2} height={item.height * 0.8} fill={color} cornerRadius={4} /><Rect x={item.width * 0.8} y={item.height * 0.2} width={item.width * 0.2} height={item.height * 0.8} fill={color} cornerRadius={4} /><Rect x={item.width * 0.2} y={item.height * 0.25} width={item.width * 0.6} height={item.height * 0.75} fill="#f1f5f9" cornerRadius={2} /></> )}
                   {item.type === 'plumbing' && ( <><Rect x={item.width * 0.1} y={0} width={item.width * 0.8} height={item.height * 0.35} fill={color} cornerRadius={3} /><Ellipse x={item.width / 2} y={item.height * 0.65} radiusX={item.width * 0.35} radiusY={item.height * 0.3} fill="#ffffff" stroke={color} strokeWidth={2} /></> )}
                   {item.type === 'electrical' && ( <><Circle x={item.width / 2} y={item.height / 2} radius={Math.min(item.width, item.height) / 2} fill="#ffffff" stroke={color} strokeWidth={2} /><Line points={[item.width * 0.55, item.height * 0.2, item.width * 0.4, item.height * 0.55, item.width * 0.6, item.height * 0.55, item.width * 0.45, item.height * 0.8]} stroke={color} strokeWidth={1.5} /></> )}
+
+                  {item.type === 'bed' && ( <><Rect x={0} y={0} width={item.width} height={item.height} fill="#f8fafc" stroke={color} strokeWidth={2} cornerRadius={4} /><Rect x={item.width * 0.1} y={item.height * 0.1} width={item.width * 0.35} height={item.height * 0.2} fill={color} opacity={0.5} cornerRadius={2} /><Rect x={item.width * 0.55} y={item.height * 0.1} width={item.width * 0.35} height={item.height * 0.2} fill={color} opacity={0.5} cornerRadius={2} /><Line points={[0, item.height * 0.4, item.width, item.height * 0.4]} stroke={color} strokeWidth={1} /></> )}
+                  {item.type === 'stove' && ( <><Rect x={0} y={0} width={item.width} height={item.height} fill="#f1f5f9" stroke={color} strokeWidth={2} cornerRadius={2} /><Circle x={item.width * 0.25} y={item.height * 0.25} radius={item.width * 0.15} fill="transparent" stroke={color} strokeWidth={1.5} /><Circle x={item.width * 0.75} y={item.height * 0.25} radius={item.width * 0.15} fill="transparent" stroke={color} strokeWidth={1.5} /><Circle x={item.width * 0.25} y={item.height * 0.75} radius={item.width * 0.15} fill="transparent" stroke={color} strokeWidth={1.5} /><Circle x={item.width * 0.75} y={item.height * 0.75} radius={item.width * 0.15} fill="transparent" stroke={color} strokeWidth={1.5} /></> )}
+                  {item.type === 'sink' && ( <><Rect x={0} y={0} width={item.width} height={item.height} fill="#f8fafc" stroke={color} strokeWidth={2} cornerRadius={2} /><Rect x={item.width * 0.1} y={item.height * 0.1} width={item.width * 0.8} height={item.height * 0.6} fill="#e2e8f0" cornerRadius={4} /><Circle x={item.width * 0.5} y={item.height * 0.85} radius={item.height * 0.08} fill={color} /></> )}
+                  {item.type === 'toilet' && ( <><Rect x={item.width * 0.15} y={0} width={item.width * 0.7} height={item.height * 0.3} fill={color} cornerRadius={2} /><Ellipse x={item.width * 0.5} y={item.height * 0.65} radiusX={item.width * 0.35} radiusY={item.height * 0.35} fill="#ffffff" stroke={color} strokeWidth={2} /></> )}
+                  {item.type === 'stairs' && ( <><Rect x={0} y={0} width={item.width} height={item.height} stroke={color} strokeWidth={2} fill="transparent" />{[1, 2, 3, 4, 5, 6, 7].map((i) => <Line key={i} points={[0, item.height * (i/8), item.width, item.height * (i/8)]} stroke={color} strokeWidth={1} />)}<Line points={[item.width * 0.5, item.height * 0.1, item.width * 0.5, item.height * 0.9]} stroke={color} strokeWidth={2} /><Line points={[item.width * 0.4, item.height * 0.2, item.width * 0.5, item.height * 0.1, item.width * 0.6, item.height * 0.2]} stroke={color} strokeWidth={2} /></> )}
+
                 </Group>
               );
             })}
@@ -297,7 +300,7 @@ export default function CanvasWorkspace() {
                 onDblClick={() => setEditingText({ id: textItem.id, x: textItem.x, y: textItem.y, text: textItem.text })}
                 onTransformEnd={(e) => {
                   const node = e.target; const scaleX = node.scaleX(); node.scaleX(1); node.scaleY(1);
-                  updateText(textItem.id, { x: node.x(), y: node.y(), rotation: node.rotation(), fontSize: Math.max(10, textItem.fontSize * scaleX) });
+                  updateText(textItem.id, { x: node.x(), y: node.y(), fontSize: Math.max(10, textItem.fontSize * scaleX) });
                 }}
               />
             ))}
@@ -313,7 +316,7 @@ export default function CanvasWorkspace() {
             {snapPoint && activeTool === 'draw_wall' && <Circle x={snapPoint.x} y={snapPoint.y} radius={8} stroke="#2965a2" strokeWidth={2} fill="rgba(41, 101, 162, 0.2)" />}
 
             {/* Transformer */}
-            {selectedId && activeTool === 'select' && !walls.find(w => w.id === selectedId) && ( // Ensure transformer doesn't attach to walls
+            {selectedId && activeTool === 'select' && !walls.find(w => w.id === selectedId) && ( 
               <Transformer ref={trRef} boundBoxFunc={(oldBox, newBox) => (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) ? oldBox : newBox} anchorStroke="#2965a2" anchorFill="#ffffff" anchorSize={8} borderStroke="#2965a2" />
             )}
           </Layer>

@@ -1,9 +1,8 @@
 import { create } from 'zustand';
 import { createHistory } from './history';
+import { detectRooms, type Room } from '../utils/roomEngine';
 
 export type ToolType = 'select' | 'draw_wall' | 'pan';
-
-
 
 export interface Wall {
   id: string;
@@ -23,8 +22,17 @@ export type CanvasItem = {
   width: number;
   height: number;
   rotation: number;
-
-  type: 'window' | 'door' | 'electrical' | 'plumbing' | 'furniture' | 'bed' | 'stove' | 'sink' | 'toilet' | 'stairs';
+  type:
+    | 'window'
+    | 'door'
+    | 'electrical'
+    | 'plumbing'
+    | 'furniture'
+    | 'bed'
+    | 'stove'
+    | 'sink'
+    | 'toilet'
+    | 'stairs';
 };
 
 export interface CanvasText {
@@ -41,11 +49,11 @@ interface Snapshot {
   texts: CanvasText[];
 }
 
-// --- Store Interface ---
 interface CanvasState {
   walls: Wall[];
   items: CanvasItem[];
   texts: CanvasText[];
+  rooms: Room[];
 
   selectedId: string | null;
 
@@ -54,12 +62,10 @@ interface CanvasState {
 
   exportTrigger: number;
 
-  // history
   save: () => void;
   undo: () => void;
   redo: () => void;
 
-  // actions
   addWall: (wall: Wall) => void;
   updateWall: (id: string, updates: Partial<Wall>) => void;
 
@@ -81,15 +87,17 @@ interface CanvasState {
   setWallThickness: (t: number) => void;
 
   triggerDownload: () => void;
+
+  autoDetectRooms: () => void;
 }
 
 const history = createHistory();
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
-
   walls: [],
   items: [],
   texts: [],
+  rooms: [],
 
   selectedId: null,
 
@@ -144,9 +152,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     });
   },
 
-  // ---------------------------
-  // WALLS
-  // ---------------------------
   addWall: (wall) => {
     get().save();
     set((state) => ({
@@ -163,9 +168,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }));
   },
 
-  // ---------------------------
-  // ITEMS
-  // ---------------------------
   addItem: (item) => {
     get().save();
     set((state) => ({
@@ -182,9 +184,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }));
   },
 
-  // ---------------------------
-  // TEXT
-  // ---------------------------
   addText: (text) => {
     get().save();
     set((state) => ({
@@ -201,9 +200,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }));
   },
 
-  // ---------------------------
-  // SELECTION
-  // ---------------------------
   setSelectedId: (id) => set({ selectedId: id }),
 
   deleteSelected: () => {
@@ -219,33 +215,21 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }));
   },
 
-  // ---------------------------
-  // ARRANGE (PLACEHOLDERS)
-  // ---------------------------
-  bringToFront: () => {
-    // implement z-index system later if needed
-  },
+  bringToFront: () => {},
 
-  sendToBack: () => {
-    // implement z-index system later if needed
-  },
+  sendToBack: () => {},
 
-  // ---------------------------
-  // CLEAR
-  // ---------------------------
   clearCanvas: () => {
     get().save();
     set({
       walls: [],
       items: [],
       texts: [],
+      rooms: [],
       selectedId: null,
     });
   },
 
-  // ---------------------------
-  // TOOLING
-  // ---------------------------
   setActiveTool: (tool) => set({ activeTool: tool }),
 
   setWallThickness: (t) => set({ wallThickness: t }),
@@ -254,4 +238,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set((state) => ({
       exportTrigger: state.exportTrigger + 1,
     })),
+
+  autoDetectRooms: () => {
+    const { walls } = get();
+    const detectedRooms = detectRooms(walls);
+    set({ rooms: detectedRooms });
+  },
 }));

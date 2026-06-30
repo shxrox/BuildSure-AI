@@ -1,4 +1,4 @@
-import { Wall } from '../store/useCanvasStore';
+import type { Wall } from '../store/useCanvasStore';
 
 export interface Room {
   id: string;

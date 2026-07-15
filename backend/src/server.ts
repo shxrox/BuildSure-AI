@@ -1,12 +1,19 @@
 import dotenv from "dotenv";
 import app from "./app";
+import connectDatabase from "./config/database";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
-app.listen(PORT, () => {
-  console.log(
-    `BuildSure-AI Server running on port ${PORT}`
-  );
-});
+const startServer = async (): Promise<void> => {
+  await connectDatabase();
+
+  app.listen(PORT, () => {
+    console.log(
+      `BuildSure-AI Server running on port ${PORT}`
+    );
+  });
+};
+
+startServer();

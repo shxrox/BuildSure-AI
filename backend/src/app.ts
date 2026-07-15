@@ -3,6 +3,12 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
+import { API_PREFIX } from "./config/constants";
+import routes from "./routes";
+
+import notFoundMiddleware from "./middleware/notFound.middleware";
+import errorMiddleware from "./middleware/error.middleware";
+
 const app = express();
 
 app.use(
@@ -13,16 +19,17 @@ app.use(
 );
 
 app.use(helmet());
+
 app.use(morgan("dev"));
 
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/api/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "BuildSure-AI Backend Running",
-  });
-});
+app.use(`${API_PREFIX}`, routes);
+
+app.use(notFoundMiddleware);
+
+app.use(errorMiddleware);
 
 export default app;

@@ -1,11 +1,32 @@
+import {
+  SignIn,
+} from "@clerk/clerk-react";
+
+
 function Login() {
 
+
   return (
-    <h1>
-      Login Page
-    </h1>
+
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+
+      <SignIn
+        signUpUrl="/register"
+        fallbackRedirectUrl="/homeowner"
+      />
+
+    </div>
+
   );
 
 }
+
 
 export default Login;

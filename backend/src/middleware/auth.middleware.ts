@@ -1,12 +1,53 @@
+// import {
+//   Request,
+//   Response,
+//   NextFunction,
+// } from "express";
+
+// import {
+//   getAuth,
+// } from "@clerk/express";
+
+
+// const authMiddleware = (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+
+//   const auth = getAuth(req);
+
+
+//   if (!auth.userId) {
+
+//     return res.status(401).json({
+//       success: false,
+//       message: "Unauthorized",
+//     });
+
+//   }
+
+
+//   req.auth = auth;
+
+//   next();
+
+// };
+
+
+// export default authMiddleware;
+
 import {
   Request,
   Response,
   NextFunction,
 } from "express";
 
+
 import {
   getAuth,
 } from "@clerk/express";
+
 
 
 const authMiddleware = (
@@ -15,24 +56,35 @@ const authMiddleware = (
   next: NextFunction
 ) => {
 
+
   const auth = getAuth(req);
+
 
 
   if (!auth.userId) {
 
+
     return res.status(401).json({
+
       success: false,
+
       message: "Unauthorized",
+
     });
+
 
   }
 
 
+
   req.auth = auth;
+
 
   next();
 
+
 };
+
 
 
 export default authMiddleware;

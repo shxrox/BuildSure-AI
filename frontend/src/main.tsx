@@ -6,7 +6,8 @@ import {
 } from "@clerk/clerk-react";
 
 
-import App from "./App";
+import AppRoutes from "./routes/AppRoutes";
+
 
 import {
   AuthProvider,
@@ -14,21 +15,8 @@ import {
 
 
 
-
-
-
-const clerkKey =
+const CLERK_KEY =
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-
-
-if (!clerkKey) {
-
-  throw new Error(
-    "Missing Clerk Publishable Key"
-  );
-
-}
 
 
 
@@ -39,23 +27,17 @@ ReactDOM.createRoot(
 
   <React.StrictMode>
 
-
     <ClerkProvider
-      publishableKey={clerkKey}
+      publishableKey={CLERK_KEY}
     >
-
 
       <AuthProvider>
 
-
-        <App />
-
+        <AppRoutes />
 
       </AuthProvider>
 
-
     </ClerkProvider>
-
 
   </React.StrictMode>
 

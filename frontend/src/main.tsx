@@ -5,29 +5,58 @@ import {
   ClerkProvider,
 } from "@clerk/clerk-react";
 
+
 import App from "./App";
-import "./styles/index.css";
 
 import {
-  clerkPublishableKey,
-} from "./config/clerk";
+  AuthProvider,
+} from "./context/AuthContext";
 
 
-if (!clerkPublishableKey) {
+
+
+
+
+const clerkKey =
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+
+
+if (!clerkKey) {
+
   throw new Error(
     "Missing Clerk Publishable Key"
   );
+
 }
+
 
 
 ReactDOM.createRoot(
   document.getElementById("root")!
-).render(
+)
+.render(
+
   <React.StrictMode>
+
+
     <ClerkProvider
-      publishableKey={clerkPublishableKey}
+      publishableKey={clerkKey}
     >
-      <App />
+
+
+      <AuthProvider>
+
+
+        <App />
+
+
+      </AuthProvider>
+
+
     </ClerkProvider>
+
+
   </React.StrictMode>
+
 );

@@ -32,7 +32,9 @@ export const getCurrentUser = async (
       user
     );
 
-  } catch (error) {
+    } catch (error) {
+
+    console.error("GET CURRENT USER ERROR:", error);
 
     return res.status(500).json({
       success: false,

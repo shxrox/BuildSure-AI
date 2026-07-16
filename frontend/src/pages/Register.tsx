@@ -1,11 +1,11 @@
-import { SignUp } from "@clerk/clerk-react";
-
 function Register() {
+
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <SignUp />
-    </div>
+    <h1>
+      Register Page
+    </h1>
   );
+
 }
 
 export default Register;

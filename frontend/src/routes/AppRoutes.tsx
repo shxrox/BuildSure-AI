@@ -8,9 +8,14 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
+import HomeownerDashboard from "../pages/homeowner/HomeownerDashboard";
+
+import RoleRoute from "./RoleRoute";
 
 function AppRoutes() {
+
   return (
+
     <BrowserRouter>
 
       <Routes>
@@ -30,10 +35,23 @@ function AppRoutes() {
           element={<Register />}
         />
 
+        <Route
+          path="/homeowner"
+          element={
+            <RoleRoute
+              allowedRoles={["HOMEOWNER"]}
+            >
+              <HomeownerDashboard />
+            </RoleRoute>
+          }
+        />
+
       </Routes>
 
     </BrowserRouter>
+
   );
+
 }
 
 export default AppRoutes;

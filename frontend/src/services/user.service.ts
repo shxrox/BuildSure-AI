@@ -1,12 +1,14 @@
-import api from "../api/axios";
+import api from "./api";
 
 
 export interface UserProfile {
+
   _id: string;
-  clerkId: string;
+
   email: string;
 
   firstName: string;
+
   lastName: string;
 
   imageUrl: string;
@@ -14,24 +16,23 @@ export interface UserProfile {
   role: string;
 
   subscription: string;
+
 }
 
 
-export const getCurrentUser = async (
-  token: string
-) => {
+
+
+export const getCurrentUser =
+async (): Promise<UserProfile> => {
+
 
   const response =
     await api.get(
-      "/users/me",
-      {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
-      }
+      "/users/me"
     );
 
 
-  return response.data;
+  return response.data.data;
+
+
 };

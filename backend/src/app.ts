@@ -1,22 +1,46 @@
 import express from "express";
 import cors from "cors";
+import morgan from "morgan";
 
-import authMiddleware from "./middleware/auth.middleware";
-import routes from "./routes";
+import {
+  clerkMiddleware,
+} from "@clerk/express";
+
+
+import apiRoutes from "./routes";
 
 
 const app = express();
 
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
-app.use(express.json());
+
+app.use(
+  express.json()
+);
 
 
-app.use(authMiddleware);
+app.use(
+  morgan("dev")
+);
 
 
-app.use("/api/v1", routes);
+// Clerk MUST come before protected routes
+app.use(
+  clerkMiddleware()
+);
+
+
+app.use(
+  "/api/v1",
+  apiRoutes
+);
 
 
 export default app;

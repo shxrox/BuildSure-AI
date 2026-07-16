@@ -1,30 +1,38 @@
 import {
-  clerkMiddleware,
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
+import {
   getAuth,
 } from "@clerk/express";
 
-import { Request, Response, NextFunction } from "express";
+
+const authMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+
+  const auth = getAuth(req);
 
 
-const authMiddleware = [
-  clerkMiddleware({
-    publishableKey:
-      process.env.CLERK_PUBLISHABLE_KEY,
-    secretKey:
-      process.env.CLERK_SECRET_KEY,
-  }),
+  if (!auth.userId) {
 
-  (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ) => {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
 
-    req.auth = getAuth(req);
+  }
 
-    next();
-  },
-];
+
+  req.auth = auth;
+
+  next();
+
+};
 
 
 export default authMiddleware;

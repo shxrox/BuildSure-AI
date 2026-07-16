@@ -10,33 +10,53 @@ const api = axios.create({
 
 
 
-export const setupAxiosInterceptors = async (
+let interceptorAdded = false;
+
+
+
+export const setupAxiosInterceptors =
+async (
   getToken: () => Promise<string | null>
 ) => {
 
 
+  if(interceptorAdded) return;
+
+
   api.interceptors.request.use(
+
     async (config) => {
 
 
-      const token = await getToken();
+      const token =
+        await getToken();
+
 
 
       if(token){
 
+
         config.headers.Authorization =
           `Bearer ${token}`;
+
 
       }
 
 
+
       return config;
 
+
     }
+
   );
 
 
+  interceptorAdded = true;
+
+
 };
+
 
 
 

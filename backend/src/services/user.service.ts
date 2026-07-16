@@ -1,8 +1,13 @@
-import { clerkClient } from "@clerk/express";
+import { createClerkClient } from "@clerk/backend";
 
 import User from "../models/user.model";
 import { UserRole } from "../enums/user-role.enum";
 import { SubscriptionPlan } from "../enums/subscription.enum";
+
+
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
 
 
 interface CreateUserData {
@@ -14,14 +19,15 @@ const createOrGetUser = async (
   data: CreateUserData
 ) => {
 
-  const existingUser = await User.findOne({
+  const existingUser =
+  await User.findOne({
     clerkId: data.clerkId,
   });
 
 
-  if (existingUser) {
-    return existingUser;
-  }
+if (existingUser) {
+  return existingUser;
+}
 
 
   const clerkUser =
@@ -31,8 +37,24 @@ const createOrGetUser = async (
 
 
   const email =
-    clerkUser.emailAddresses[0]?.emailAddress;
+    clerkUser.emailAddresses[0]
+      ?.emailAddress;
+  const existingEmailUser =
+  await User.findOne({
+    email,
+  });
 
+
+if (existingEmailUser) {
+
+  existingEmailUser.clerkId =
+    data.clerkId;
+
+  await existingEmailUser.save();
+
+  return existingEmailUser;
+
+}
 
   if (!email) {
     throw new Error(
@@ -41,31 +63,34 @@ const createOrGetUser = async (
   }
 
 
-  const newUser = await User.create({
+  const newUser =
+    await User.create({
 
-    clerkId: clerkUser.id,
+      clerkId:
+        clerkUser.id,
 
-    email,
+      email,
 
-    firstName:
-      clerkUser.firstName || "",
+      firstName:
+        clerkUser.firstName || "",
 
-    lastName:
-      clerkUser.lastName || "",
+      lastName:
+        clerkUser.lastName || "",
 
-    imageUrl:
-      clerkUser.imageUrl || "",
+      imageUrl:
+        clerkUser.imageUrl || "",
 
-    role:
-      UserRole.HOMEOWNER,
+      role:
+        UserRole.HOMEOWNER,
 
-    subscription:
-      SubscriptionPlan.FREE,
+      subscription:
+        SubscriptionPlan.FREE,
 
-  });
+    });
 
 
   return newUser;
+
 };
 
 

@@ -1,93 +1,25 @@
-import {
-  SignedIn,
-  SignedOut,
-  UserButton,
-  useAuth,
-} from "@clerk/clerk-react";
-
-import {
-  getCurrentUser,
-} from "../services/user.service";
-
+import { useUserContext } from "../context/AuthContext";
 
 function Home() {
 
-  const { getToken } = useAuth();
-
-
-  const handleProfile = async () => {
-
-    try {
-
-      const token =
-        await getToken();
-
-
-      if (!token) {
-        throw new Error(
-          "No token found"
-        );
-      }
-
-
-      const user =
-        await getCurrentUser(
-          token
-        );
-
-
-      console.log(
-        "BuildSure User:",
-        user
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        error
-      );
-
-    }
-
-  };
-
+  const { user } = useUserContext();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6">
+    <div>
 
+      <h1>Home</h1>
 
-      <h1 className="text-4xl font-bold">
-        BuildSure-AI
-      </h1>
+      <p>
+        {user?.firstName}
+      </p>
 
-
-      <SignedOut>
-        <p>
-          Please login first
-        </p>
-      </SignedOut>
-
-
-      <SignedIn>
-
-        <UserButton />
-
-
-        <button
-          onClick={handleProfile}
-          className="bg-blue-600 text-white px-5 py-2 rounded"
-        >
-          Load My Profile
-        </button>
-
-
-      </SignedIn>
-
+      <p>
+        {user?.role}
+      </p>
 
     </div>
   );
-}
 
+}
 
 export default Home;

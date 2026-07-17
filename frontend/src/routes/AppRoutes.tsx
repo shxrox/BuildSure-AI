@@ -1,23 +1,18 @@
+
 import {
   BrowserRouter,
   Routes,
   Route,
 } from "react-router-dom";
 
-
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
-
 import HomeownerDashboard from "../pages/homeowner/HomeownerDashboard";
-
 
 import RoleRoute from "./RoleRoute";
 
-
-
 function AppRoutes() {
-
 
   return (
 
@@ -25,55 +20,33 @@ function AppRoutes() {
 
       <Routes>
 
-
-        {/* Default Login Page */}
         <Route
           path="/"
-          element={
-            <Login />
-          }
+          element={<Login />}
         />
 
-
-
-        {/* Register */}
         <Route
           path="/register"
-          element={
-            <Register />
-          }
+          element={<Register />}
         />
 
-
-
-        {/* Homeowner Dashboard */}
         <Route
           path="/homeowner"
           element={
-
             <RoleRoute
-              allowedRoles={[
-                "HOMEOWNER"
-              ]}
+              allowedRoles={["HOMEOWNER"]}
             >
-
               <HomeownerDashboard />
-
             </RoleRoute>
-
           }
         />
 
-
-
       </Routes>
-
 
     </BrowserRouter>
 
   );
 
 }
-
 
 export default AppRoutes;

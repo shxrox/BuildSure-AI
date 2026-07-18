@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useState,
 } from "react";
 
@@ -8,6 +9,17 @@ import {
 } from "../../context/AuthContext";
 
 
+import {
+  createProject,
+  getProjects,
+} from "../../services/project.service";
+
+
+import type {
+  Project,
+} from "../../services/project.service";
+
+
 
 function HomeownerDashboard() {
 
@@ -15,6 +27,13 @@ function HomeownerDashboard() {
   const {
     user,
   } = useUserContext();
+
+
+
+  const [
+    projects,
+    setProjects,
+  ] = useState<Project[]>([]);
 
 
 
@@ -46,31 +65,125 @@ function HomeownerDashboard() {
 
 
 
-  const handleCreateProject = () => {
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
 
-    console.log(
-      {
-        projectName,
-        location,
-        description,
+
+
+
+  useEffect(() => {
+
+    loadProjects();
+
+  }, []);
+
+
+
+
+
+
+  const loadProjects =
+    async () => {
+
+
+      try {
+
+
+        const data =
+          await getProjects();
+
+
+        setProjects(
+          data
+        );
+
+
+      } catch(error) {
+
+
+        console.log(
+          "Failed to load projects",
+          error
+        );
+
+
       }
-    );
+
+    };
 
 
-    alert(
-      "Project form submitted"
-    );
 
 
-    setProjectName("");
-    setLocation("");
-    setDescription("");
-
-    setShowForm(false);
 
 
-  };
+
+  const handleCreateProject =
+    async () => {
+
+
+      try {
+
+
+        setLoading(true);
+
+
+
+        await createProject({
+
+          projectName,
+
+          location,
+
+          description,
+
+        });
+
+
+
+        await loadProjects();
+
+
+
+        setProjectName("");
+
+        setLocation("");
+
+        setDescription("");
+
+        setShowForm(false);
+
+
+
+      } catch(error) {
+
+
+        console.log(
+          "Project creation failed",
+          error
+        );
+
+
+        alert(
+          "Failed to create project"
+        );
+
+
+      } finally {
+
+
+        setLoading(false);
+
+
+      }
+
+
+    };
+
+
+
 
 
 
@@ -94,9 +207,11 @@ function HomeownerDashboard() {
       </h2>
 
 
+
       <p>
         Email: {user?.email}
       </p>
+
 
 
       <p>
@@ -115,6 +230,7 @@ function HomeownerDashboard() {
 
 
 
+
       <button
         onClick={() =>
           setShowForm(true)
@@ -122,6 +238,67 @@ function HomeownerDashboard() {
       >
         + Create New Project
       </button>
+
+
+
+
+
+      <hr />
+
+
+
+
+
+      {
+        projects.length === 0 ? (
+
+          <p>
+            No projects created yet.
+          </p>
+
+        ) : (
+
+          projects.map(
+            (project) => (
+
+              <div
+                key={project._id}
+              >
+
+                <h3>
+                  {project.projectName}
+                </h3>
+
+
+                <p>
+                  Location: {project.location}
+                </p>
+
+
+                <p>
+                  Description: {project.description}
+                </p>
+
+
+                <p>
+                  Status: {project.status}
+                </p>
+
+
+                <hr />
+
+              </div>
+
+            )
+
+          )
+
+        )
+
+      }
+
+
+
 
 
 
@@ -148,6 +325,8 @@ function HomeownerDashboard() {
               }
             />
 
+
+
             <br />
 
 
@@ -161,6 +340,8 @@ function HomeownerDashboard() {
                 )
               }
             />
+
+
 
             <br />
 
@@ -177,6 +358,7 @@ function HomeownerDashboard() {
             />
 
 
+
             <br />
 
 
@@ -185,8 +367,15 @@ function HomeownerDashboard() {
               onClick={
                 handleCreateProject
               }
+              disabled={loading}
             >
-              Create Project
+
+              {
+                loading
+                ? "Creating..."
+                : "Create Project"
+              }
+
             </button>
 
 

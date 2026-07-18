@@ -1,5 +1,9 @@
+
+
 import express from "express";
+
 import cors from "cors";
+
 import morgan from "morgan";
 
 import {
@@ -8,21 +12,31 @@ import {
 
 
 import projectRoutes from "./routes/project.routes";
+
 import userRoutes from "./routes/user.routes";
 
 
-const app = express();
+
+const app =
+  express();
 
 
 
-// Middleware
 
 app.use(
+
   cors({
-    origin: "http://localhost:5173",
-    credentials: true,
+
+    origin:
+      "http://localhost:5173",
+
+    credentials:true,
+
   })
+
 );
+
+
 
 
 app.use(
@@ -30,13 +44,15 @@ app.use(
 );
 
 
+
 app.use(
   morgan("dev")
 );
 
 
-// IMPORTANT
-// Clerk must come before routes
+
+
+// Clerk MUST come before routes
 app.use(
   clerkMiddleware()
 );
@@ -44,12 +60,12 @@ app.use(
 
 
 
-// Routes
 
 app.use(
   "/api/v1/users",
   userRoutes
 );
+
 
 
 app.use(
@@ -58,24 +74,6 @@ app.use(
 );
 
 
-
-
-// Health check
-
-app.get(
-  "/",
-  (
-    req,
-    res
-  ) => {
-
-    res.json({
-      success: true,
-      message: "BuildSure-AI API running",
-    });
-
-  }
-);
 
 
 

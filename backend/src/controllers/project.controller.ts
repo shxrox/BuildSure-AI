@@ -3,14 +3,12 @@ import {
   Response,
 } from "express";
 
-import {
-  getAuth,
-} from "@clerk/express";
-
 
 import Project from "../models/project.model";
 
 import User from "../models/user.model";
+
+
 
 
 
@@ -31,9 +29,22 @@ async (
 
 
 
-    const {
-      userId,
-    } = getAuth(req);
+    console.log(
+      "CREATE PROJECT BODY:",
+      req.body
+    );
+
+
+
+    const userId =
+      req.auth?.userId;
+
+
+
+    console.log(
+      "CLERK USER ID:",
+      userId
+    );
 
 
 
@@ -57,6 +68,13 @@ async (
         clerkId:userId,
 
       });
+
+
+
+    console.log(
+      "DATABASE USER:",
+      user
+    );
 
 
 
@@ -89,6 +107,13 @@ async (
 
 
 
+    console.log(
+      "CREATED PROJECT:",
+      project
+    );
+
+
+
     return res.status(201).json({
 
       success:true,
@@ -102,7 +127,13 @@ async (
 
 
 
-  } catch(error) {
+  } catch(error:any) {
+
+
+    console.log(
+      "CREATE PROJECT ERROR:",
+      error.message
+    );
 
 
     return res.status(500).json({
@@ -111,6 +142,9 @@ async (
 
       message:
         "Failed to create project",
+
+      error:
+        error.message,
 
     });
 
@@ -124,19 +158,28 @@ async (
 
 
 
+
+
+
+
 export const getProjects =
 async (
   req: Request,
   res: Response
 ) => {
 
-
   try {
 
 
-    const {
-      userId,
-    } = getAuth(req);
+    const userId =
+      req.auth?.userId;
+
+
+
+    console.log(
+      "GET PROJECT USER:",
+      userId
+    );
 
 
 
@@ -196,7 +239,14 @@ async (
 
 
 
-  } catch(error) {
+  } catch(error:any) {
+
+
+    console.log(
+      "GET PROJECTS ERROR:",
+      error.message
+    );
+
 
 
     return res.status(500).json({
@@ -206,12 +256,17 @@ async (
       message:
         "Failed to fetch projects",
 
+      error:
+        error.message,
+
     });
 
 
   }
 
 };
+
+
 
 
 
@@ -231,7 +286,9 @@ async (
 
     const project =
       await Project.findById(
+
         req.params.id
+
       );
 
 
@@ -263,7 +320,14 @@ async (
 
 
 
-  } catch(error) {
+  } catch(error:any) {
+
+
+    console.log(
+      "GET PROJECT BY ID ERROR:",
+      error.message
+    );
+
 
 
     return res.status(500).json({
@@ -273,12 +337,16 @@ async (
       message:
         "Failed to fetch project",
 
+      error:
+        error.message,
+
     });
 
 
   }
 
 };
+
 
 
 
@@ -297,13 +365,13 @@ async (
   try {
 
 
-    const {
-      userId,
-    } = getAuth(req);
+    const userId =
+      req.auth?.userId;
 
 
 
     if (!userId) {
+
 
       return res.status(401).json({
 
@@ -312,6 +380,7 @@ async (
         message:"Unauthorized",
 
       });
+
 
     }
 
@@ -328,6 +397,7 @@ async (
 
     if (!user) {
 
+
       return res.status(404).json({
 
         success:false,
@@ -335,6 +405,7 @@ async (
         message:"User not found",
 
       });
+
 
     }
 
@@ -361,7 +432,14 @@ async (
 
 
 
-  } catch(error) {
+  } catch(error:any) {
+
+
+    console.log(
+      "DELETE PROJECT ERROR:",
+      error.message
+    );
+
 
 
     return res.status(500).json({
@@ -370,6 +448,9 @@ async (
 
       message:
         "Failed to delete project",
+
+      error:
+        error.message,
 
     });
 

@@ -4,7 +4,7 @@ import {
   Routes,
   Route,
 } from "react-router-dom";
-
+import ProjectDetails from "../pages/homeowner/ProjectDetails";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
@@ -38,6 +38,13 @@ function AppRoutes() {
             >
               <HomeownerDashboard />
             </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/projects/:id"
+          element={
+            <ProjectDetails />
           }
         />
 

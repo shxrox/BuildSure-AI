@@ -4,6 +4,9 @@ import {
   useState,
 } from "react";
 
+import {
+  useNavigate,
+} from "react-router-dom";
 
 import {
   useClerk,
@@ -58,7 +61,7 @@ function HomeownerDashboard() {
   ] = useState<Project[]>([]);
 
 
-
+  const navigate = useNavigate();
 
 
   const [
@@ -133,40 +136,40 @@ function HomeownerDashboard() {
 
 
   const loadProjects =
-  async () => {
+    async () => {
 
 
-    try {
+      try {
 
 
-      const data =
-        await getProjects();
+        const data =
+          await getProjects();
 
 
-      setProjects(
-        data
-      );
+        setProjects(
+          data
+        );
 
 
-    } catch(error) {
+      } catch (error) {
 
 
-      console.log(
-        "Failed to load projects",
-        error
-      );
+        console.log(
+          "Failed to load projects",
+          error
+        );
 
 
-    } finally {
+      } finally {
 
 
-      setLoading(false);
+        setLoading(false);
 
 
-    }
+      }
 
 
-  };
+    };
 
 
 
@@ -188,17 +191,17 @@ function HomeownerDashboard() {
 
 
   const handleLogout =
-  async () => {
+    async () => {
 
 
-    await signOut({
+      await signOut({
 
-      redirectUrl:"/",
+        redirectUrl: "/",
 
-    });
+      });
 
 
-  };
+    };
 
 
 
@@ -208,73 +211,73 @@ function HomeownerDashboard() {
 
 
   const handleCreateProject =
-  async () => {
+    async () => {
 
 
-    if (
-      !projectName ||
-      !location ||
-      !description
-    ) {
+      if (
+        !projectName ||
+        !location ||
+        !description
+      ) {
 
-      return;
+        return;
 
-    }
-
-
-
-    try {
-
-
-      setCreatingProject(true);
+      }
 
 
 
-      await createProject({
+      try {
 
-        projectName,
 
-        location,
-
-        description,
-
-      });
+        setCreatingProject(true);
 
 
 
+        await createProject({
 
-      setProjectName("");
+          projectName,
 
-      setLocation("");
+          location,
 
-      setDescription("");
+          description,
 
-
-
-      await loadProjects();
+        });
 
 
 
 
-    } catch(error) {
+        setProjectName("");
+
+        setLocation("");
+
+        setDescription("");
 
 
-      console.log(
-        "Failed to create project",
-        error
-      );
+
+        await loadProjects();
 
 
-    } finally {
 
 
-      setCreatingProject(false);
+      } catch (error) {
 
 
-    }
+        console.log(
+          "Failed to create project",
+          error
+        );
 
 
-  };
+      } finally {
+
+
+        setCreatingProject(false);
+
+
+      }
+
+
+    };
 
 
 
@@ -284,54 +287,54 @@ function HomeownerDashboard() {
 
 
   const handleDeleteAccount =
-  async () => {
+    async () => {
 
 
-    if (
-      deleteConfirmText !== "DELETE"
-    ) {
+      if (
+        deleteConfirmText !== "DELETE"
+      ) {
 
-      return;
+        return;
 
-    }
-
-
-
-    try {
-
-
-      setDeleting(true);
+      }
 
 
 
-      await deleteAccount();
+      try {
+
+
+        setDeleting(true);
 
 
 
-      await signOut({
-
-        redirectUrl:"/",
-
-      });
+        await deleteAccount();
 
 
 
-    } catch(error) {
+        await signOut({
+
+          redirectUrl: "/",
+
+        });
 
 
-      console.log(
-        "Failed to delete account",
-        error
-      );
+
+      } catch (error) {
 
 
-      setDeleting(false);
+        console.log(
+          "Failed to delete account",
+          error
+        );
 
 
-    }
+        setDeleting(false);
 
 
-  };
+      }
+
+
+    };
 
 
 
@@ -468,7 +471,7 @@ function HomeownerDashboard() {
 
           value={projectName}
 
-          onChange={(e)=>
+          onChange={(e) =>
             setProjectName(
               e.target.value
             )
@@ -488,7 +491,7 @@ function HomeownerDashboard() {
 
           value={location}
 
-          onChange={(e)=>
+          onChange={(e) =>
             setLocation(
               e.target.value
             )
@@ -508,7 +511,7 @@ function HomeownerDashboard() {
 
           value={description}
 
-          onChange={(e)=>
+          onChange={(e) =>
             setDescription(
               e.target.value
             )
@@ -601,20 +604,28 @@ function HomeownerDashboard() {
       {
         projects.map(
 
-          (project)=>(
+          (project) => (
 
 
             <div
 
               key={project._id}
 
+              onClick={() =>
+                navigate(
+                  `/projects/${project._id}`
+                )
+              }
+
               style={{
 
-                border:"1px solid black",
+                border: "1px solid black",
 
-                padding:"15px",
+                padding: "15px",
 
-                margin:"15px 0",
+                margin: "15px 0",
+
+                cursor: "pointer",
 
               }}
 
@@ -698,11 +709,11 @@ function HomeownerDashboard() {
 
         style={{
 
-          background:"red",
+          background: "red",
 
-          color:"white",
+          color: "white",
 
-          padding:"10px",
+          padding: "10px",
 
         }}
 
@@ -733,7 +744,7 @@ function HomeownerDashboard() {
 
               value={deleteConfirmText}
 
-              onChange={(e)=>
+              onChange={(e) =>
                 setDeleteConfirmText(
                   e.target.value
                 )

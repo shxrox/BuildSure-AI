@@ -10,6 +10,9 @@ import User from "../models/user.model";
 
 
 
+import {
+  successResponse
+} from "../utils/apiResponse";
 
 
 export const createProject =
@@ -274,78 +277,78 @@ async (
 
 
 
-export const getProjectById =
-async (
-  req: Request,
-  res: Response
-) => {
+// export const getProjectById =
+// async (
+//   req: Request,
+//   res: Response
+// ) => {
 
 
-  try {
+//   try {
 
 
-    const project =
-      await Project.findById(
+//     const project =
+//       await Project.findById(
 
-        req.params.id
+//         req.params.id
 
-      );
-
-
-
-    if (!project) {
-
-
-      return res.status(404).json({
-
-        success:false,
-
-        message:
-          "Project not found",
-
-      });
-
-
-    }
+//       );
 
 
 
-    return res.json({
-
-      success:true,
-
-      data:project,
-
-    });
+//     if (!project) {
 
 
+//       return res.status(404).json({
 
-  } catch(error:any) {
+//         success:false,
+
+//         message:
+//           "Project not found",
+
+//       });
 
 
-    console.log(
-      "GET PROJECT BY ID ERROR:",
-      error.message
-    );
+//     }
 
 
 
-    return res.status(500).json({
+//     return res.json({
 
-      success:false,
+//       success:true,
 
-      message:
-        "Failed to fetch project",
+//       data:project,
 
-      error:
-        error.message,
-
-    });
+//     });
 
 
-  }
 
-};
+//   } catch(error:any) {
+
+
+//     console.log(
+//       "GET PROJECT BY ID ERROR:",
+//       error.message
+//     );
+
+
+
+//     return res.status(500).json({
+
+//       success:false,
+
+//       message:
+//         "Failed to fetch project",
+
+//       error:
+//         error.message,
+
+//     });
+
+
+//   }
+
+// };
 
 
 
@@ -451,6 +454,126 @@ async (
 
       error:
         error.message,
+
+    });
+
+
+  }
+
+};
+
+
+
+
+
+export const getProjectById = async (
+  req: Request,
+  res: Response
+) => {
+
+  try {
+
+    const clerkId =
+      req.auth.userId;
+
+
+    if (!clerkId) {
+
+      return res.status(401).json({
+
+        success:false,
+
+        message:"Unauthorized",
+
+      });
+
+    }
+
+
+
+    const user =
+      await User.findOne({
+
+        clerkId,
+
+      });
+
+
+
+    if (!user) {
+
+      return res.status(404).json({
+
+        success:false,
+
+        message:"User not found",
+
+      });
+
+    }
+
+
+
+
+
+    const project =
+      await Project.findOne({
+
+        _id:req.params.id,
+
+        ownerId:user._id,
+
+      });
+
+
+
+
+
+    if (!project) {
+
+      return res.status(404).json({
+
+        success:false,
+
+        message:"Project not found",
+
+      });
+
+    }
+
+
+
+
+
+    return successResponse(
+
+      res,
+
+      "Project fetched successfully",
+
+      project
+
+    );
+
+
+
+  } catch(error) {
+
+
+    console.error(
+      "GET PROJECT BY ID ERROR:",
+      error
+    );
+
+
+    return res.status(500).json({
+
+      success:false,
+
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch project",
 
     });
 

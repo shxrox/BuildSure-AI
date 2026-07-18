@@ -3,6 +3,7 @@ import {
 } from "express";
 
 
+
 import {
 
   createProject,
@@ -31,7 +32,11 @@ router.post(
   createProject
 );
 
-
+router.get(
+  "/:id",
+  authMiddleware,
+  getProjectById
+);
 
 router.get(
   "/",

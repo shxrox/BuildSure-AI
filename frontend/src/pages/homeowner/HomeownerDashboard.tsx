@@ -255,12 +255,19 @@ import {
 
 import {
   getProjects,
+  createProject,
 } from "../../services/project.service";
+
+
+import {
+  deleteAccount,
+} from "../../services/user.service";
 
 
 import type {
   Project,
 } from "../../services/project.service";
+
 
 
 
@@ -274,9 +281,11 @@ function HomeownerDashboard() {
 
 
 
+
   const {
     signOut,
   } = useClerk();
+
 
 
 
@@ -285,6 +294,8 @@ function HomeownerDashboard() {
     projects,
     setProjects,
   ] = useState<Project[]>([]);
+
+
 
 
 
@@ -297,50 +308,117 @@ function HomeownerDashboard() {
 
 
 
+  const [
+    projectName,
+    setProjectName,
+  ] = useState("");
+
+
+
+  const [
+    location,
+    setLocation,
+  ] = useState("");
+
+
+
+  const [
+    description,
+    setDescription,
+  ] = useState("");
+
+
+
+
+
+  const [
+    creatingProject,
+    setCreatingProject,
+  ] = useState(false);
+
+
+
+
+
+  const [
+    showDeleteModal,
+    setShowDeleteModal,
+  ] = useState(false);
+
+
+
+
+
+  const [
+    deleteConfirmText,
+    setDeleteConfirmText,
+  ] = useState("");
+
+
+
+
+
+  const [
+    deleting,
+    setDeleting,
+  ] = useState(false);
+
+
+
+
+
+
+
+
+  const loadProjects =
+  async () => {
+
+
+    try {
+
+
+      const data =
+        await getProjects();
+
+
+      setProjects(
+        data
+      );
+
+
+    } catch(error) {
+
+
+      console.log(
+        "Failed to load projects",
+        error
+      );
+
+
+    } finally {
+
+
+      setLoading(false);
+
+
+    }
+
+
+  };
+
+
+
+
+
+
   useEffect(() => {
-
-
-    const loadProjects =
-    async () => {
-
-
-      try {
-
-
-        const data =
-          await getProjects();
-
-
-        setProjects(
-          data
-        );
-
-
-      } catch(error) {
-
-
-        console.log(
-          "Failed to load projects",
-          error
-        );
-
-
-      } finally {
-
-
-        setLoading(false);
-
-
-      }
-
-
-    };
 
 
     loadProjects();
 
 
   }, []);
+
 
 
 
@@ -366,6 +444,141 @@ function HomeownerDashboard() {
 
 
 
+
+  const handleCreateProject =
+  async () => {
+
+
+    if (
+      !projectName ||
+      !location ||
+      !description
+    ) {
+
+      return;
+
+    }
+
+
+
+    try {
+
+
+      setCreatingProject(true);
+
+
+
+      await createProject({
+
+        projectName,
+
+        location,
+
+        description,
+
+      });
+
+
+
+
+      setProjectName("");
+
+      setLocation("");
+
+      setDescription("");
+
+
+
+      await loadProjects();
+
+
+
+
+    } catch(error) {
+
+
+      console.log(
+        "Failed to create project",
+        error
+      );
+
+
+    } finally {
+
+
+      setCreatingProject(false);
+
+
+    }
+
+
+  };
+
+
+
+
+
+
+
+
+  const handleDeleteAccount =
+  async () => {
+
+
+    if (
+      deleteConfirmText !== "DELETE"
+    ) {
+
+      return;
+
+    }
+
+
+
+    try {
+
+
+      setDeleting(true);
+
+
+
+      await deleteAccount();
+
+
+
+      await signOut({
+
+        redirectUrl:"/",
+
+      });
+
+
+
+    } catch(error) {
+
+
+      console.log(
+        "Failed to delete account",
+        error
+      );
+
+
+      setDeleting(false);
+
+
+    }
+
+
+  };
+
+
+
+
+
+
+
+
+
   return (
 
     <div>
@@ -377,13 +590,17 @@ function HomeownerDashboard() {
 
 
 
+
       <hr />
+
 
 
 
       <h2>
         Welcome, {user?.firstName}
       </h2>
+
+
 
 
 
@@ -395,18 +612,27 @@ function HomeownerDashboard() {
         </h3>
 
 
+
+
         {
           user?.imageUrl && (
 
             <img
+
               src={user.imageUrl}
+
               alt="Profile"
+
               width="80"
+
               height="80"
+
             />
 
           )
         }
+
+
 
 
 
@@ -419,11 +645,15 @@ function HomeownerDashboard() {
         </p>
 
 
+
+
         <p>
           Email:
           {" "}
           {user?.email}
         </p>
+
+
 
 
         <p>
@@ -434,10 +664,119 @@ function HomeownerDashboard() {
 
 
 
+
+
         <button
           onClick={handleLogout}
         >
+
           Logout
+
+        </button>
+
+
+
+
+      </div>
+
+
+
+
+
+
+      <hr />
+
+
+
+
+
+
+      <h2>
+        Create New Project
+      </h2>
+
+
+
+
+
+      <div>
+
+
+        <input
+
+          value={projectName}
+
+          onChange={(e)=>
+            setProjectName(
+              e.target.value
+            )
+          }
+
+          placeholder="Project Name"
+
+        />
+
+
+
+        <br />
+
+
+
+        <input
+
+          value={location}
+
+          onChange={(e)=>
+            setLocation(
+              e.target.value
+            )
+          }
+
+          placeholder="Location"
+
+        />
+
+
+
+        <br />
+
+
+
+        <textarea
+
+          value={description}
+
+          onChange={(e)=>
+            setDescription(
+              e.target.value
+            )
+          }
+
+          placeholder="Description"
+
+        />
+
+
+
+        <br />
+
+
+
+        <button
+
+          onClick={handleCreateProject}
+
+          disabled={creatingProject}
+
+        >
+
+          {
+            creatingProject
+              ? "Creating..."
+              : "Create Project"
+          }
+
+
         </button>
 
 
@@ -447,13 +786,20 @@ function HomeownerDashboard() {
 
 
 
+
+
+
       <hr />
+
+
+
 
 
 
       <h2>
         My Construction Projects
       </h2>
+
 
 
 
@@ -489,24 +835,34 @@ function HomeownerDashboard() {
 
 
 
+
       {
         projects.map(
 
-          (project) => (
+          (project)=>(
+
 
             <div
+
               key={project._id}
+
               style={{
+
                 border:"1px solid black",
+
                 padding:"15px",
+
                 margin:"15px 0",
+
               }}
+
             >
 
 
               <h3>
                 {project.projectName}
               </h3>
+
 
 
               <p>
@@ -516,6 +872,7 @@ function HomeownerDashboard() {
               </p>
 
 
+
               <p>
                 Description:
                 {" "}
@@ -523,11 +880,13 @@ function HomeownerDashboard() {
               </p>
 
 
+
               <p>
                 Status:
                 {" "}
                 {project.status}
               </p>
+
 
 
               <p>
@@ -541,7 +900,9 @@ function HomeownerDashboard() {
               </p>
 
 
+
             </div>
+
 
           )
 
@@ -550,9 +911,132 @@ function HomeownerDashboard() {
 
 
 
+
+
+
+
+      <hr />
+
+
+
+
+
+
+      <h2>
+        Danger Zone
+      </h2>
+
+
+
+      <button
+
+        onClick={() =>
+          setShowDeleteModal(true)
+        }
+
+        style={{
+
+          background:"red",
+
+          color:"white",
+
+          padding:"10px",
+
+        }}
+
+      >
+
+        Delete Account
+
+      </button>
+
+
+
+
+
+
+
+      {
+        showDeleteModal && (
+
+          <div>
+
+
+            <h3>
+              Confirm Delete Account
+            </h3>
+
+
+            <input
+
+              value={deleteConfirmText}
+
+              onChange={(e)=>
+                setDeleteConfirmText(
+                  e.target.value
+                )
+              }
+
+              placeholder="Type DELETE"
+
+            />
+
+
+
+            <button
+
+              onClick={handleDeleteAccount}
+
+              disabled={
+                deleting ||
+                deleteConfirmText !== "DELETE"
+              }
+
+            >
+
+              {
+                deleting
+                  ? "Deleting..."
+                  : "Confirm Delete"
+              }
+
+
+            </button>
+
+
+
+
+            <button
+
+              onClick={() => {
+
+                setShowDeleteModal(false);
+
+                setDeleteConfirmText("");
+
+              }}
+
+            >
+
+              Cancel
+
+            </button>
+
+
+
+          </div>
+
+        )
+      }
+
+
+
+
+
     </div>
 
   );
+
 
 }
 

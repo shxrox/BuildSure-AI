@@ -1,7 +1,251 @@
+// import {
+//   useEffect,
+//   useState,
+// } from "react";
+
+
+// import {
+//   useUserContext,
+// } from "../../context/AuthContext";
+
+
+// import {
+//   getProjects,
+// } from "../../services/project.service";
+
+
+// import type {
+//   Project,
+// } from "../../services/project.service";
+
+
+
+// function HomeownerDashboard() {
+
+
+//   const {
+//     user,
+//   } = useUserContext();
+
+
+
+//   const [
+//     projects,
+//     setProjects,
+//   ] = useState<Project[]>([]);
+
+
+
+//   const [
+//     loading,
+//     setLoading,
+//   ] = useState(true);
+
+
+
+
+
+//   useEffect(() => {
+
+
+//     const loadProjects =
+//     async () => {
+
+
+//       try {
+
+
+//         const data =
+//           await getProjects();
+
+
+//         setProjects(
+//           data
+//         );
+
+
+//       } catch(error) {
+
+
+//         console.log(
+//           "Failed to load projects",
+//           error
+//         );
+
+
+//       } finally {
+
+
+//         setLoading(false);
+
+
+//       }
+
+
+//     };
+
+
+
+//     loadProjects();
+
+
+
+//   }, []);
+
+
+
+
+
+//   return (
+
+//     <div>
+
+
+//       <h1>
+//         🏠 Homeowner Dashboard
+//       </h1>
+
+
+
+//       <hr />
+
+
+
+//       <h2>
+//         Welcome, {user?.firstName}
+//       </h2>
+
+
+//       <p>
+//         Email: {user?.email}
+//       </p>
+
+
+//       <p>
+//         Role: {user?.role}
+//       </p>
+
+
+
+//       <hr />
+
+
+
+//       <h2>
+//         My Construction Projects
+//       </h2>
+
+
+
+
+//       {
+//         loading && (
+
+//           <p>
+//             Loading projects...
+//           </p>
+
+//         )
+//       }
+
+
+
+
+//       {
+//         !loading &&
+//         projects.length === 0 && (
+
+//           <p>
+//             No projects created yet.
+//           </p>
+
+//         )
+//       }
+
+
+
+
+
+//       {
+//         projects.map(
+//           (project) => (
+
+//             <div
+//               key={project._id}
+//               style={{
+//                 border:"1px solid black",
+//                 padding:"15px",
+//                 margin:"15px 0",
+//               }}
+//             >
+
+//               <h3>
+//                 {project.projectName}
+//               </h3>
+
+
+//               <p>
+//                 Location:
+//                 {" "}
+//                 {project.location}
+//               </p>
+
+
+//               <p>
+//                 Description:
+//                 {" "}
+//                 {project.description}
+//               </p>
+
+
+//               <p>
+//                 Status:
+//                 {" "}
+//                 {project.status}
+//               </p>
+
+
+//               <p>
+//                 Created:
+//                 {" "}
+//                 {
+//                   new Date(
+//                     project.createdAt
+//                   ).toLocaleDateString()
+//                 }
+//               </p>
+
+
+//             </div>
+
+//           )
+
+//         )
+//       }
+
+
+
+
+
+//     </div>
+
+//   );
+
+// }
+
+
+
+// export default HomeownerDashboard;
+
 import {
   useEffect,
   useState,
 } from "react";
+
+
+import {
+  useClerk,
+} from "@clerk/clerk-react";
 
 
 import {
@@ -10,7 +254,6 @@ import {
 
 
 import {
-  createProject,
   getProjects,
 } from "../../services/project.service";
 
@@ -18,6 +261,7 @@ import {
 import type {
   Project,
 } from "../../services/project.service";
+
 
 
 
@@ -30,6 +274,13 @@ function HomeownerDashboard() {
 
 
 
+  const {
+    signOut,
+  } = useClerk();
+
+
+
+
   const [
     projects,
     setProjects,
@@ -38,37 +289,9 @@ function HomeownerDashboard() {
 
 
   const [
-    showForm,
-    setShowForm,
-  ] = useState(false);
-
-
-
-  const [
-    projectName,
-    setProjectName,
-  ] = useState("");
-
-
-
-  const [
-    location,
-    setLocation,
-  ] = useState("");
-
-
-
-  const [
-    description,
-    setDescription,
-  ] = useState("");
-
-
-
-  const [
     loading,
     setLoading,
-  ] = useState(false);
+  ] = useState(true);
 
 
 
@@ -76,16 +299,8 @@ function HomeownerDashboard() {
 
   useEffect(() => {
 
-    loadProjects();
 
-  }, []);
-
-
-
-
-
-
-  const loadProjects =
+    const loadProjects =
     async () => {
 
 
@@ -110,67 +325,6 @@ function HomeownerDashboard() {
         );
 
 
-      }
-
-    };
-
-
-
-
-
-
-
-  const handleCreateProject =
-    async () => {
-
-
-      try {
-
-
-        setLoading(true);
-
-
-
-        await createProject({
-
-          projectName,
-
-          location,
-
-          description,
-
-        });
-
-
-
-        await loadProjects();
-
-
-
-        setProjectName("");
-
-        setLocation("");
-
-        setDescription("");
-
-        setShowForm(false);
-
-
-
-      } catch(error) {
-
-
-        console.log(
-          "Project creation failed",
-          error
-        );
-
-
-        alert(
-          "Failed to create project"
-        );
-
-
       } finally {
 
 
@@ -181,6 +335,31 @@ function HomeownerDashboard() {
 
 
     };
+
+
+    loadProjects();
+
+
+  }, []);
+
+
+
+
+
+
+  const handleLogout =
+  async () => {
+
+
+    await signOut({
+
+      redirectUrl:"/",
+
+    });
+
+
+  };
+
 
 
 
@@ -208,15 +387,63 @@ function HomeownerDashboard() {
 
 
 
-      <p>
-        Email: {user?.email}
-      </p>
+      <div>
+
+
+        <h3>
+          Profile
+        </h3>
+
+
+        {
+          user?.imageUrl && (
+
+            <img
+              src={user.imageUrl}
+              alt="Profile"
+              width="80"
+              height="80"
+            />
+
+          )
+        }
 
 
 
-      <p>
-        Role: {user?.role}
-      </p>
+        <p>
+          Name:
+          {" "}
+          {user?.firstName}
+          {" "}
+          {user?.lastName}
+        </p>
+
+
+        <p>
+          Email:
+          {" "}
+          {user?.email}
+        </p>
+
+
+        <p>
+          Role:
+          {" "}
+          {user?.role}
+        </p>
+
+
+
+        <button
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+
+
+
+      </div>
+
 
 
 
@@ -231,70 +458,30 @@ function HomeownerDashboard() {
 
 
 
-      <button
-        onClick={() =>
-          setShowForm(true)
-        }
-      >
-        + Create New Project
-      </button>
 
+      {
+        loading && (
 
+          <p>
+            Loading projects...
+          </p>
 
-
-
-      <hr />
+        )
+      }
 
 
 
 
 
       {
-        projects.length === 0 ? (
+        !loading &&
+        projects.length === 0 && (
 
           <p>
             No projects created yet.
           </p>
 
-        ) : (
-
-          projects.map(
-            (project) => (
-
-              <div
-                key={project._id}
-              >
-
-                <h3>
-                  {project.projectName}
-                </h3>
-
-
-                <p>
-                  Location: {project.location}
-                </p>
-
-
-                <p>
-                  Description: {project.description}
-                </p>
-
-
-                <p>
-                  Status: {project.status}
-                </p>
-
-
-                <hr />
-
-              </div>
-
-            )
-
-          )
-
         )
-
       }
 
 
@@ -302,88 +489,63 @@ function HomeownerDashboard() {
 
 
 
-
       {
-        showForm && (
+        projects.map(
 
-          <div>
+          (project) => (
 
-
-            <h3>
-              Create Project
-            </h3>
-
-
-
-            <input
-              placeholder="Project Name"
-              value={projectName}
-              onChange={(e) =>
-                setProjectName(
-                  e.target.value
-                )
-              }
-            />
-
-
-
-            <br />
-
-
-
-            <input
-              placeholder="Location"
-              value={location}
-              onChange={(e) =>
-                setLocation(
-                  e.target.value
-                )
-              }
-            />
-
-
-
-            <br />
-
-
-
-            <textarea
-              placeholder="Description"
-              value={description}
-              onChange={(e) =>
-                setDescription(
-                  e.target.value
-                )
-              }
-            />
-
-
-
-            <br />
-
-
-
-            <button
-              onClick={
-                handleCreateProject
-              }
-              disabled={loading}
+            <div
+              key={project._id}
+              style={{
+                border:"1px solid black",
+                padding:"15px",
+                margin:"15px 0",
+              }}
             >
 
-              {
-                loading
-                ? "Creating..."
-                : "Create Project"
-              }
 
-            </button>
+              <h3>
+                {project.projectName}
+              </h3>
 
 
+              <p>
+                Location:
+                {" "}
+                {project.location}
+              </p>
 
-          </div>
+
+              <p>
+                Description:
+                {" "}
+                {project.description}
+              </p>
+
+
+              <p>
+                Status:
+                {" "}
+                {project.status}
+              </p>
+
+
+              <p>
+                Created:
+                {" "}
+                {
+                  new Date(
+                    project.createdAt
+                  ).toLocaleDateString()
+                }
+              </p>
+
+
+            </div>
+
+          )
 
         )
-
       }
 
 
@@ -393,6 +555,7 @@ function HomeownerDashboard() {
   );
 
 }
+
 
 
 export default HomeownerDashboard;

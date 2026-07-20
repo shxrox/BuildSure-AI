@@ -11,21 +11,23 @@ import {
 
 import api from "../../services/api";
 
+import ProjectSidebar from "../../components/project/ProjectSidebar";
+
 
 
 interface Project {
 
-  _id:string;
+  _id: string;
 
-  projectName:string;
+  projectName: string;
 
-  location:string;
+  location: string;
 
-  description:string;
+  description: string;
 
-  status:string;
+  status: string;
 
-  createdAt:string;
+  createdAt: string;
 
 }
 
@@ -39,6 +41,13 @@ function ProjectWorkspace() {
   const {
     id,
   } = useParams();
+
+
+
+  const [
+    activeSection,
+    setActiveSection,
+  ] = useState("overview");
 
 
 
@@ -62,52 +71,52 @@ function ProjectWorkspace() {
 
 
     const loadProject =
-    async () => {
+      async () => {
 
 
-      try {
+        try {
 
 
-        const response =
-          await api.get(
-            `/projects/${id}`
+          const response =
+            await api.get(
+              `/projects/${id}`
+            );
+
+
+          setProject(
+            response.data.data
           );
 
 
-        setProject(
-          response.data.data
-        );
+        } catch (error) {
 
 
-      } catch(error) {
+          console.log(
+            "Failed to load workspace",
+            error
+          );
 
 
-        console.log(
-          "Failed to load workspace",
-          error
-        );
+        } finally {
 
 
-      } finally {
+          setLoading(false);
+
+        }
 
 
-        setLoading(false);
-
-      }
-
-
-    };
+      };
 
 
 
-    if(id) {
+    if (id) {
 
       loadProject();
 
     }
 
 
-  },[id]);
+  }, [id]);
 
 
 
@@ -115,7 +124,7 @@ function ProjectWorkspace() {
 
 
 
-  if(loading) {
+  if (loading) {
 
 
     return (
@@ -134,7 +143,7 @@ function ProjectWorkspace() {
 
 
 
-  if(!project) {
+  if (!project) {
 
 
     return (
@@ -156,108 +165,149 @@ function ProjectWorkspace() {
 
   return (
 
-    <div>
+    <div
 
+      style={{
 
-      <h1>
-        🏗 {project.projectName}
-      </h1>
+        display:"flex",
 
+        minHeight:"600px",
 
+      }}
 
-      <p>
-        📍 {project.location}
-      </p>
-
-
-
-      <p>
-        Status:
-        {" "}
-        {project.status}
-      </p>
+    >
 
 
 
+      <ProjectSidebar
 
-      <hr />
+        active={
+          activeSection
+        }
 
+        setActive={
+          setActiveSection
+        }
 
-
-
-
-      <h2>
-        Project Workspace
-      </h2>
+      />
 
 
 
 
-      <div>
 
 
-        <h3>
-          📋 Overview
-        </h3>
+      <div
+
+        style={{
+
+          padding:"30px",
+
+          flex:1,
+
+        }}
+
+      >
+
+
+
+        <h1>
+          🏗 {project.projectName}
+        </h1>
+
+
 
         <p>
-          {project.description}
+          📍 {project.location}
         </p>
 
 
+
+        <p>
+          Status:
+          {" "}
+          {project.status}
+        </p>
+
+
+
+
+        <hr />
+
+
+
+
+
+
+        {
+          activeSection === "overview" && (
+
+            <div>
+
+
+              <h2>
+                📋 Overview
+              </h2>
+
+
+
+              <p>
+                {project.description}
+              </p>
+
+
+
+              <p>
+                Created:
+                {" "}
+                {
+                  new Date(
+                    project.createdAt
+                  ).toLocaleDateString()
+                }
+              </p>
+
+
+
+            </div>
+
+          )
+        }
+
+
+
+
+
+
+
+
+        {
+          activeSection !== "overview" && (
+
+            <div>
+
+
+              <h2>
+                {activeSection}
+              </h2>
+
+
+
+              <p>
+                This module will be implemented soon.
+              </p>
+
+
+
+            </div>
+
+          )
+        }
+
+
+
+
+
       </div>
-
-
-
-
-
-
-      <hr />
-
-
-
-
-
-      <h2>
-        Tools
-      </h2>
-
-
-
-
-      <ul>
-
-        <li>
-          📐 Floor Plan
-        </li>
-
-
-        <li>
-          📤 Blueprint Upload
-        </li>
-
-
-        <li>
-          📦 Bill of Quantities
-        </li>
-
-
-        <li>
-          💰 Cost Estimation
-        </li>
-
-
-        <li>
-          📅 Construction Timeline
-        </li>
-
-
-        <li>
-          👥 Sharing & Collaboration
-        </li>
-
-
-      </ul>
 
 
 

@@ -20,7 +20,7 @@ import CostPage from "../pages/project/CostPage";
 import TimelinePage from "../pages/project/TimelinePage";
 import SharingPage from "../pages/project/SharingPage";
 import ProjectSettings from "../pages/project/ProjectSettings";
-
+import BlueprintPage from "../pages/project/BlueprintPage";
 
 import RoleRoute from "./RoleRoute";
 
@@ -197,8 +197,18 @@ function AppRoutes() {
           />
 
 
+          <Route
 
+            path="blueprint"
+
+            element={
+              <BlueprintPage />
+            }
+
+          />
         </Route>
+
+
 
 
 

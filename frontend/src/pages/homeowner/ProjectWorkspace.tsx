@@ -14,7 +14,7 @@ import {
 import api from "../../services/api";
 
 
-import ProjectSidebar from "../../components/project/ProjectSidebar";
+import ProjectLayout from "../../components/project/ProjectLayout";
 
 
 
@@ -22,19 +22,21 @@ import ProjectSidebar from "../../components/project/ProjectSidebar";
 
 interface Project {
 
-  _id: string;
+  _id:string;
 
-  projectName: string;
+  projectName:string;
 
-  location: string;
+  location:string;
 
-  description: string;
+  description:string;
 
-  status: string;
+  status:string;
 
-  createdAt: string;
+  createdAt:string;
 
 }
+
+
 
 
 
@@ -51,6 +53,7 @@ function ProjectWorkspace() {
 
   const location =
     useLocation();
+
 
 
 
@@ -86,6 +89,7 @@ function ProjectWorkspace() {
 
 
 
+
   useEffect(() => {
 
 
@@ -113,7 +117,7 @@ function ProjectWorkspace() {
 
 
         console.log(
-          "Failed to load workspace",
+          "Failed to load project",
           error
         );
 
@@ -131,13 +135,13 @@ function ProjectWorkspace() {
 
 
 
-    if(id) {
 
+    if(id) {
 
       loadProject();
 
-
     }
+
 
 
   },[id]);
@@ -153,7 +157,7 @@ function ProjectWorkspace() {
   useEffect(() => {
 
 
-    const path =
+    const currentPath =
       location.pathname
         .split("/")
         .pop();
@@ -162,13 +166,13 @@ function ProjectWorkspace() {
 
 
     if(
-      path &&
-      path !== id
+      currentPath &&
+      currentPath !== id
     ) {
 
 
       setActiveSection(
-        path
+        currentPath
       );
 
 
@@ -178,7 +182,6 @@ function ProjectWorkspace() {
       setActiveSection(
         "overview"
       );
-
 
     }
 
@@ -217,6 +220,7 @@ function ProjectWorkspace() {
 
 
 
+
   if(!project) {
 
 
@@ -237,160 +241,31 @@ function ProjectWorkspace() {
 
 
 
+
   return (
 
-    <div
+    <ProjectLayout
 
-      style={{
+      project={
+        project
+      }
 
-        display:"flex",
+      active={
+        activeSection
+      }
 
-        minHeight:"700px",
-
-      }}
+      setActive={
+        setActiveSection
+      }
 
     >
 
+      {/* <Outlet /> */}
 
-
-
-
-      <ProjectSidebar
-
-        active={
-          activeSection
-        }
-
-        setActive={
-          setActiveSection
-        }
-
-      />
-
-
-
-
-
-
-
-
-
-      <div
-
-        style={{
-
-          flex:1,
-
-          padding:"30px",
-
-        }}
-
-      >
-
-
-
-
-
-
-        <div
-
-          style={{
-
-            borderBottom:
-              "1px solid #ddd",
-
-            paddingBottom:
-              "20px",
-
-            marginBottom:
-              "20px",
-
-          }}
-
-        >
-
-
-
-          <h1>
-            🏗 {project.projectName}
-          </h1>
-
-
-
-
-          <p>
-            📍 {project.location}
-          </p>
-
-
-
-
-          <p>
-            Status:
-            {" "}
-            {project.status}
-          </p>
-
-
-
-
-
-
-
-          <button>
-            🔗 Share
-          </button>
-
-
-
-          {" "}
-
-
-
-          <button>
-            ✏️ Edit
-          </button>
-
-
-
-          {" "}
-
-
-
-          <button>
-            ⚙️ Settings
-          </button>
-
-
-
-
-
-        </div>
-
-
-
-
-
-
-
-
-
-        <Outlet />
-
-
-
-
-
-
-      </div>
-
-
-
-
-
-    </div>
+    </ProjectLayout>
 
   );
+
 
 }
 

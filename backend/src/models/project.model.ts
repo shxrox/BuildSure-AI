@@ -1,26 +1,32 @@
-import {
+import mongoose, {
   Schema,
   model,
   Document,
-  Types,
 } from "mongoose";
 
 
 
 export interface IProject extends Document {
 
-  ownerId: Types.ObjectId;
+
+  ownerId: mongoose.Types.ObjectId;
+
 
   projectName: string;
 
+
   location: string;
 
+
   description: string;
+
 
   status:
     | "PLANNING"
     | "IN_PROGRESS"
     | "COMPLETED";
+
+
 
   blueprint?: {
 
@@ -28,17 +34,22 @@ export interface IProject extends Document {
 
     fileType: string;
 
-    fileUrl: string;
+    fileData: Buffer;
 
     uploadedAt: Date;
 
   };
 
+
   createdAt: Date;
+
 
   updatedAt: Date;
 
+
 }
+
+
 
 
 
@@ -49,69 +60,134 @@ new Schema<IProject>(
 
 {
 
+
+
+
   ownerId: {
 
-    type: Schema.Types.ObjectId,
 
-    ref: "User",
+    type:
+      Schema.Types.ObjectId,
 
-    required: true,
+
+    ref:
+      "User",
+
+
+    required:
+      true,
+
 
   },
+
+
+
+
 
 
 
   projectName: {
 
-    type: String,
 
-    required: true,
+    type:
+      String,
 
-    trim: true,
+
+    required:
+      true,
+
+
+    trim:
+      true,
+
 
   },
+
+
+
+
 
 
 
   location: {
 
-    type: String,
 
-    required: true,
+    type:
+      String,
 
-    trim: true,
+
+    required:
+      true,
+
+
+    trim:
+      true,
+
 
   },
+
+
+
+
 
 
 
   description: {
 
-    type: String,
 
-    default: "",
+    type:
+      String,
+
+
+    default:
+      "",
+
 
   },
+
+
+
+
+
 
 
 
   status: {
 
-    type: String,
 
-    enum: [
+    type:
+      String,
+
+
+    enum:
+
+
+    [
+
 
       "PLANNING",
 
+
       "IN_PROGRESS",
+
 
       "COMPLETED",
 
+
     ],
 
-    default: "PLANNING",
+
+
+    default:
+      "PLANNING",
+
 
   },
+
+
+
+
+
 
 
 
@@ -119,41 +195,64 @@ new Schema<IProject>(
 
   blueprint: {
 
+
     fileName: {
 
-      type: String,
+
+      type:
+        String,
+
 
     },
+
 
 
     fileType: {
 
-      type: String,
+
+      type:
+        String,
+
 
     },
 
 
-    fileUrl: {
 
-      type: String,
+    fileData: {
+
+
+      type:
+        Buffer,
+
 
     },
+
 
 
     uploadedAt: {
 
-      type: Date,
+
+      type:
+        Date,
+
 
     },
+
 
   },
 
 
+
+
+
 },
+
 
 {
 
-  timestamps: true,
+  timestamps:
+    true,
+
 
 }
 
@@ -164,14 +263,21 @@ new Schema<IProject>(
 
 
 
+
+
+
 const Project =
 model<IProject>(
 
-  "Project",
+"Project",
 
-  projectSchema
+projectSchema
 
 );
+
+
+
+
 
 
 

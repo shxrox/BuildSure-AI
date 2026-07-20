@@ -17,120 +17,125 @@ import {
 
 
 
+// CREATE PROJECT
+
 export const createProject =
-async (
-  req: Request,
-  res: Response
-) => {
-
-  try {
+async(
+req:Request,
+res:Response
+)=>{
 
 
-    const {
-      projectName,
-      location,
-      description,
-    } = req.body;
+try{
 
 
-
-    const clerkId =
-      req.auth?.userId;
+const {
+  projectName,
+  location,
+  description,
+}=req.body;
 
 
 
-    if (!clerkId) {
-
-      return res.status(401).json({
-
-        success:false,
-
-        message:"Unauthorized",
-
-      });
-
-    }
+const clerkId =
+req.auth?.userId;
 
 
 
+if(!clerkId){
 
-    const user =
-      await User.findOne({
+return res.status(401).json({
 
-        clerkId,
+success:false,
 
-      });
+message:"Unauthorized"
+
+});
+
+}
 
 
 
 
-    if (!user) {
+const user =
+await User.findOne({
 
-      return res.status(404).json({
+clerkId,
 
-        success:false,
-
-        message:"User not found",
-
-      });
-
-    }
+});
 
 
 
 
+if(!user){
 
-    const project =
-      await Project.create({
+return res.status(404).json({
 
-        ownerId:user._id,
+success:false,
 
-        projectName,
+message:"User not found"
 
-        location,
+});
 
-        description,
-
-      });
+}
 
 
 
 
+const project =
+await Project.create({
 
-    return successResponse(
+ownerId:user._id,
 
-      res,
+projectName,
 
-      "Project created successfully",
+location,
 
-      project
+description,
 
-    );
-
-
-
-  } catch(error) {
-
-
-    console.error(
-      "CREATE PROJECT ERROR:",
-      error
-    );
+});
 
 
 
-    return res.status(500).json({
 
-      success:false,
 
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to create project",
+return successResponse(
 
-    });
+res,
 
-  }
+"Project created successfully",
+
+project
+
+);
+
+
+
+}
+catch(error){
+
+
+console.error(
+"CREATE PROJECT ERROR:",
+error
+);
+
+
+
+return res.status(500).json({
+
+success:false,
+
+message:
+error instanceof Error
+? error.message
+:"Failed to create project"
+
+});
+
+
+}
+
 
 };
 
@@ -141,106 +146,113 @@ async (
 
 
 
+
+
+
+
+// GET ALL PROJECTS
 
 export const getProjects =
-async (
-  req: Request,
-  res: Response
-) => {
-
-  try {
+async(
+req:Request,
+res:Response
+)=>{
 
 
-    const clerkId =
-      req.auth?.userId;
+try{
 
 
-
-    if (!clerkId) {
-
-      return res.status(401).json({
-
-        success:false,
-
-        message:"Unauthorized",
-
-      });
-
-    }
+const clerkId =
+req.auth?.userId;
 
 
 
+if(!clerkId){
 
-    const user =
-      await User.findOne({
+return res.status(401).json({
 
-        clerkId,
+success:false,
 
-      });
+message:"Unauthorized"
 
+});
 
-
-
-    if (!user) {
-
-      return res.status(404).json({
-
-        success:false,
-
-        message:"User not found",
-
-      });
-
-    }
-
-
-
-
-    const projects =
-      await Project.find({
-
-        ownerId:user._id,
-
-      });
+}
 
 
 
 
 
-    return successResponse(
+const user =
+await User.findOne({
 
-      res,
+clerkId,
 
-      "Projects fetched successfully",
-
-      projects
-
-    );
+});
 
 
 
-  } catch(error) {
+
+if(!user){
+
+return res.status(404).json({
+
+success:false,
+
+message:"User not found"
+
+});
+
+}
 
 
-    console.error(
-      "GET PROJECTS ERROR:",
-      error
-    );
+
+
+const projects =
+await Project.find({
+
+ownerId:user._id
+
+});
 
 
 
-    return res.status(500).json({
 
-      success:false,
+return successResponse(
 
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch projects",
+res,
 
-    });
+"Projects fetched successfully",
 
-  }
+projects
+
+);
+
+
+
+}
+catch(error){
+
+
+console.error(
+"GET PROJECTS ERROR:",
+error
+);
+
+
+
+return res.status(500).json({
+
+success:false,
+
+message:
+"Failed to fetch projects"
+
+});
+
+
+}
+
 
 };
 
@@ -251,124 +263,131 @@ async (
 
 
 
+
+
+
+
+// GET PROJECT BY ID
 
 export const getProjectById =
-async (
-  req: Request,
-  res: Response
-) => {
+async(
+req:Request,
+res:Response
+)=>{
 
-  try {
 
+try{
 
-    const clerkId =
-      req.auth?.userId;
 
+const clerkId =
+req.auth?.userId;
 
 
-    if (!clerkId) {
 
-      return res.status(401).json({
+if(!clerkId){
 
-        success:false,
+return res.status(401).json({
 
-        message:"Unauthorized",
+success:false,
 
-      });
+message:"Unauthorized"
 
-    }
+});
 
+}
 
 
 
-    const user =
-      await User.findOne({
 
-        clerkId,
+const user =
+await User.findOne({
 
-      });
+clerkId
 
+});
 
 
 
-    if (!user) {
 
-      return res.status(404).json({
+if(!user){
 
-        success:false,
+return res.status(404).json({
 
-        message:"User not found",
+success:false,
 
-      });
+message:"User not found"
 
-    }
+});
 
+}
 
 
 
-    const project =
-      await Project.findOne({
 
-        _id:req.params.id,
+const project =
+await Project.findOne({
 
-        ownerId:user._id,
+_id:req.params.id,
 
-      });
+ownerId:user._id
 
+});
 
 
 
 
-    if (!project) {
 
-      return res.status(404).json({
+if(!project){
 
-        success:false,
+return res.status(404).json({
 
-        message:"Project not found",
+success:false,
 
-      });
+message:"Project not found"
 
-    }
+});
 
+}
 
 
 
 
-    return successResponse(
 
-      res,
+return successResponse(
 
-      "Project fetched successfully",
+res,
 
-      project
+"Project fetched successfully",
 
-    );
+project
 
+);
 
 
-  } catch(error) {
 
+}
+catch(error){
 
-    console.error(
-      "GET PROJECT BY ID ERROR:",
-      error
-    );
 
+console.error(
+"GET PROJECT ERROR:",
+error
+);
 
 
-    return res.status(500).json({
 
-      success:false,
+return res.status(500).json({
 
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch project",
+success:false,
 
-    });
+message:
+"Failed to fetch project"
 
-  }
+});
+
+
+}
+
 
 };
 
@@ -379,124 +398,130 @@ async (
 
 
 
+
+
+
+
+// DELETE PROJECT
 
 export const deleteProject =
-async (
-  req: Request,
-  res: Response
-) => {
+async(
+req:Request,
+res:Response
+)=>{
 
-  try {
 
+try{
 
-    const clerkId =
-      req.auth?.userId;
 
+const clerkId =
+req.auth?.userId;
 
 
-    if (!clerkId) {
 
-      return res.status(401).json({
+if(!clerkId){
 
-        success:false,
+return res.status(401).json({
 
-        message:"Unauthorized",
+success:false,
 
-      });
+message:"Unauthorized"
 
-    }
+});
 
+}
 
 
 
-    const user =
-      await User.findOne({
 
-        clerkId,
+const user =
+await User.findOne({
 
-      });
+clerkId
 
+});
 
 
 
-    if (!user) {
 
-      return res.status(404).json({
+if(!user){
 
-        success:false,
+return res.status(404).json({
 
-        message:"User not found",
+success:false,
 
-      });
+message:"User not found"
 
-    }
+});
 
+}
 
 
 
 
-    const project =
-      await Project.findOneAndDelete({
 
-        _id:req.params.id,
+const project =
+await Project.findOneAndDelete({
 
-        ownerId:user._id,
+_id:req.params.id,
 
-      });
+ownerId:user._id
 
+});
 
 
 
 
-    if (!project) {
 
-      return res.status(404).json({
+if(!project){
 
-        success:false,
+return res.status(404).json({
 
-        message:"Project not found",
+success:false,
 
-      });
+message:"Project not found"
 
-    }
+});
 
+}
 
 
 
 
-    return res.json({
+return res.json({
 
-      success:true,
+success:true,
 
-      message:
-        "Project deleted successfully",
+message:
+"Project deleted successfully"
 
-    });
+});
 
 
 
-  } catch(error) {
+}
+catch(error){
 
 
-    console.error(
-      "DELETE PROJECT ERROR:",
-      error
-    );
+console.error(
+"DELETE PROJECT ERROR:",
+error
+);
 
 
 
-    return res.status(500).json({
+return res.status(500).json({
 
-      success:false,
+success:false,
 
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to delete project",
+message:
+"Failed to delete project"
 
-    });
+});
 
-  }
+
+}
+
 
 };
 
@@ -508,148 +533,320 @@ async (
 
 
 
+
+
+
+// UPLOAD BLUEPRINT TO MONGODB
+
 export const uploadBlueprint =
-async (
-  req: Request,
-  res: Response
-) => {
+async(
+req:Request,
+res:Response
+)=>{
 
-  try {
 
+try{
 
-    const clerkId =
-      req.auth?.userId;
 
+const clerkId =
+req.auth?.userId;
 
 
-    if (!clerkId) {
 
-      return res.status(401).json({
+if(!clerkId){
 
-        success:false,
+return res.status(401).json({
 
-        message:"Unauthorized",
+success:false,
 
-      });
+message:"Unauthorized"
 
-    }
+});
 
+}
 
 
 
-    const user =
-      await User.findOne({
 
-        clerkId,
+const user =
+await User.findOne({
 
-      });
+clerkId
 
+});
 
 
 
-    if (!user) {
 
-      return res.status(404).json({
+if(!user){
 
-        success:false,
+return res.status(404).json({
 
-        message:"User not found",
+success:false,
 
-      });
+message:"User not found"
 
-    }
+});
 
+}
 
 
 
-    const project =
-      await Project.findOne({
 
-        _id:req.params.id,
 
-        ownerId:user._id,
+const project =
+await Project.findOne({
 
-      });
+_id:req.params.id,
 
+ownerId:user._id
 
+});
 
 
 
-    if (!project) {
 
-      return res.status(404).json({
 
-        success:false,
+if(!project){
 
-        message:"Project not found",
+return res.status(404).json({
 
-      });
+success:false,
 
-    }
+message:"Project not found"
 
+});
 
+}
 
 
 
-    project.blueprint = {
 
-      fileName:
-        "sample-blueprint",
 
-      fileType:
-        "image/png",
+if(!req.file){
 
-      fileUrl:
-        "",
 
-      uploadedAt:
-        new Date(),
+return res.status(400).json({
 
-    };
+success:false,
 
+message:
+"Blueprint file required"
 
+});
 
 
+}
 
-    await project.save();
 
 
 
 
 
-    return successResponse(
 
-      res,
+project.blueprint = {
 
-      "Blueprint uploaded successfully",
 
-      project.blueprint
+fileName:
+req.file.originalname,
 
-    );
 
+fileType:
+req.file.mimetype,
 
 
-  } catch(error) {
+fileData:
+req.file.buffer,
 
 
-    console.error(
-      "UPLOAD BLUEPRINT ERROR:",
-      error
-    );
+uploadedAt:
+new Date()
 
 
+};
 
-    return res.status(500).json({
 
-      success:false,
 
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to upload blueprint",
 
-    });
 
-  }
+
+
+await project.save();
+
+
+
+
+
+
+return successResponse(
+
+res,
+
+"Blueprint uploaded successfully",
+
+{
+
+fileName:
+project.blueprint.fileName,
+
+
+fileType:
+project.blueprint.fileType,
+
+
+uploadedAt:
+project.blueprint.uploadedAt
+
+}
+
+);
+
+
+
+}
+catch(error){
+
+
+console.error(
+
+"UPLOAD BLUEPRINT ERROR:",
+
+error
+
+);
+
+
+
+return res.status(500).json({
+
+success:false,
+
+message:
+error instanceof Error
+? error.message
+:"Failed to upload blueprint"
+
+});
+
+
+}
+
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+// DOWNLOAD BLUEPRINT
+
+export const downloadBlueprint =
+async(
+req:Request,
+res:Response
+)=>{
+
+
+try{
+
+
+const project =
+await Project.findById(
+
+req.params.id
+
+);
+
+
+
+
+
+if(
+!project ||
+!project.blueprint
+){
+
+
+return res.status(404).json({
+
+success:false,
+
+message:
+"Blueprint not found"
+
+});
+
+
+}
+
+
+
+
+
+res.setHeader(
+
+"Content-Type",
+
+project.blueprint.fileType
+
+);
+
+
+
+
+res.setHeader(
+
+"Content-Disposition",
+
+`inline; filename="${project.blueprint.fileName}"`
+
+);
+
+
+
+
+
+
+return res.send(
+
+project.blueprint.fileData
+
+);
+
+
+
+}
+catch(error){
+
+
+console.error(
+
+"DOWNLOAD BLUEPRINT ERROR:",
+
+error
+
+);
+
+
+
+return res.status(500).json({
+
+success:false,
+
+message:
+"Failed to download blueprint"
+
+});
+
+
+}
+
 
 };

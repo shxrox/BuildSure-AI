@@ -3,24 +3,79 @@ import {
 } from "react";
 
 
+import {
+  useParams,
+} from "react-router-dom";
+
+
+import {
+  uploadBlueprint,
+} from "../../services/project.service";
 
 
 
 function BlueprintPage() {
 
 
+  const {
+    id,
+  } = useParams();
+
+
 
   const [
     file,
-    setFile,
+    setFile
   ] = useState<File | null>(null);
 
 
 
   const [
-    preview,
-    setPreview,
-  ] = useState<string | null>(null);
+    uploading,
+    setUploading
+  ] = useState(false);
+
+
+
+  const [
+    blueprint,
+    setBlueprint
+  ] = useState<any>(null);
+
+
+
+  const [
+    mode,
+    setMode
+  ] = useState<
+    "upload" | "editor"
+  >(
+    "upload"
+  );
+
+
+
+
+
+  const handleFileChange =
+  (
+    e:
+    React.ChangeEvent<HTMLInputElement>
+  ) => {
+
+
+    const selected =
+      e.target.files?.[0];
+
+
+    if(selected){
+
+      setFile(selected);
+
+    }
+
+
+  };
 
 
 
@@ -29,147 +84,64 @@ function BlueprintPage() {
 
 
   const handleUpload =
-  (
-    event:
-    React.ChangeEvent<HTMLInputElement>
-  ) => {
+  async()=>{
 
 
-    const selectedFile =
-      event.target.files?.[0];
-
-
-
-    if(!selectedFile) {
-
+    if(!id || !file)
       return;
 
-    }
+
+
+    try{
+
+
+      setUploading(true);
 
 
 
-
-
-    const allowedTypes = [
-
-      "image/png",
-
-      "image/jpeg",
-
-      "application/pdf",
-
-    ];
-
-
-
-
-    if(
-      !allowedTypes.includes(
-        selectedFile.type
-      )
-    ) {
-
-
-      alert(
-        "Only PNG, JPG and PDF files are allowed"
+      const response =
+      await uploadBlueprint(
+        id,
+        file
       );
 
 
-      return;
 
-    }
-
-
-
-
-
-    const maxSize =
-      10 * 1024 * 1024;
-
-
-
-    if(
-      selectedFile.size > maxSize
-    ) {
-
-
-      alert(
-        "File size must be less than 10MB"
+      setBlueprint(
+        response
       );
 
 
-      return;
 
-    }
+      // after upload open editor
 
-
-
-
-
-    setFile(
-      selectedFile
-    );
-
-
-
-
-
-    if(
-      selectedFile.type.startsWith(
-        "image"
-      )
-    ) {
-
-
-      const imageUrl =
-        URL.createObjectURL(
-          selectedFile
-        );
-
-
-      setPreview(
-        imageUrl
+      setMode(
+        "editor"
       );
 
 
-    } else {
-
-
-      setPreview(
-        null
-      );
 
     }
+    catch(error){
 
+
+      console.error(
+        "UPLOAD ERROR",
+        error
+      );
+
+
+    }
+    finally{
+
+
+      setUploading(false);
+
+
+    }
 
 
   };
-
-
-
-
-
-
-
-
-
-  const removeFile =
-  () => {
-
-
-    setFile(
-      null
-    );
-
-
-    setPreview(
-      null
-    );
-
-
-  };
-
-
 
 
 
@@ -179,286 +151,299 @@ function BlueprintPage() {
 
   return (
 
+<div
+style={{
+padding:"30px"
+}}
+>
 
-    <div>
 
+<h1>
+📐 Blueprint Workspace
+</h1>
 
 
-      <h2>
-        📐 Blueprint Management
-      </h2>
+<p>
+Upload your construction drawing and
+convert it into an editable digital plan.
+</p>
 
 
 
+{
+mode==="upload" && (
 
-      <p>
-        Upload your construction blueprint
-        to start planning and AI analysis.
-      </p>
+<div
+style={{
+border:"2px dashed #999",
+padding:"40px",
+borderRadius:"15px"
+}}
+>
 
 
+<h2>
+Step 1: Upload Blueprint
+</h2>
 
 
 
+<input
 
+type="file"
 
+accept="
+image/png,
+image/jpeg,
+application/pdf
+"
 
-      <div
+onChange={
+handleFileChange
+}
 
-        style={{
+/>
 
-          border:
-          "2px dashed #999",
 
-          padding:
-          "40px",
 
-          borderRadius:
-          "12px",
+{
+file && (
 
-          marginTop:
-          "20px",
+<div>
 
-        }}
+<h3>
+Selected File
+</h3>
 
-      >
 
+<p>
+{file.name}
+</p>
 
 
+<p>
+{
+(file.size/1024)
+.toFixed(2)
+}
+KB
+</p>
 
-        <input
 
-          type="file"
+</div>
 
-          accept="
-          image/png,
-          image/jpeg,
-          application/pdf
-          "
-
-          onChange={
-            handleUpload
-          }
-
-        />
-
-
-
-
-
-        {
-          file && (
-
-            <div>
-
-
-              <hr />
-
-
-
-              <h3>
-                Selected Blueprint
-              </h3>
-
-
-
-
-              <p>
-
-                File:
-                {" "}
-                {file.name}
-
-              </p>
-
-
-
-
-              <p>
-
-                Size:
-                {" "}
-                {
-                  (
-                    file.size /
-                    1024 /
-                    1024
-                  ).toFixed(2)
-                }
-                MB
-
-              </p>
-
-
-
-
-
-
-              {
-                preview && (
-
-                  <div>
-
-
-                    <h4>
-                      Preview
-                    </h4>
-
-
-
-                    <img
-
-                      src={
-                        preview
-                      }
-
-                      alt="Blueprint Preview"
-
-                      style={{
-
-                        width:
-                        "500px",
-
-                        maxWidth:
-                        "100%",
-
-                        border:
-                        "1px solid #ccc",
-
-                      }}
-
-                    />
-
-
-
-                  </div>
-
-                )
-              }
-
-
-
-
-
-
-              {
-                file.type ===
-                "application/pdf" && (
-
-                  <p>
-
-                    📄 PDF blueprint selected.
-                    Preview will be available
-                    after backend upload.
-
-                  </p>
-
-                )
-              }
-
-
-
-
-
-              <button
-
-                onClick={
-                  removeFile
-                }
-
-                style={{
-
-                  marginTop:
-                  "15px",
-
-                }}
-
-              >
-
-                Remove Blueprint
-
-              </button>
-
-
-
-
-            </div>
-
-          )
-        }
-
-
-
-
-
-      </div>
-
-
-
-
-
-
-
-
-
-      <hr />
-
-
-
-
-
-
-      <h3>
-        AI Processing Pipeline
-      </h3>
-
-
-
-
-      <ul>
-
-
-        <li>
-          ✅ Blueprint Selection
-        </li>
-
-
-        <li>
-          🔒 Upload To Server
-        </li>
-
-
-        <li>
-          🔒 Room Detection
-        </li>
-
-
-        <li>
-          🔒 Wall Extraction
-        </li>
-
-
-        <li>
-          🔒 3D Visualization
-        </li>
-
-
-      </ul>
-
-
-
-
-
-
-    </div>
-
-
-  );
-
+)
 
 }
 
 
+
+
+
+<button
+
+disabled={
+!file ||
+uploading
+}
+
+onClick={
+handleUpload
+}
+
+style={{
+marginTop:"20px",
+padding:"12px 25px"
+}}
+
+>
+
+{
+
+uploading
+
+?
+
+"Uploading..."
+
+:
+
+"Upload Blueprint"
+
+}
+
+</button>
+
+
+
+</div>
+
+)
+
+}
+
+
+
+
+
+
+
+{
+mode==="editor" && (
+
+
+<div>
+
+
+<h2>
+Step 2: Blueprint Editor
+</h2>
+
+
+
+<div
+
+style={{
+
+height:"500px",
+
+border:
+"1px solid #ccc",
+
+borderRadius:"15px",
+
+display:"flex",
+
+alignItems:"center",
+
+justifyContent:"center"
+
+}}
+
+>
+
+
+<h3>
+
+🖊 Canvas Editor Coming Next
+
+</h3>
+
+
+</div>
+
+
+
+
+
+<div
+
+style={{
+marginTop:"20px"
+}}
+
+>
+
+
+<button>
+
+➕ Add Wall
+
+</button>
+
+
+<button>
+
+🚪 Add Door
+
+</button>
+
+
+<button>
+
+🪟 Add Window
+
+</button>
+
+
+<button>
+
+📏 Add Dimension
+
+</button>
+
+
+</div>
+
+
+
+</div>
+
+
+)
+
+}
+
+
+
+
+
+
+
+<hr/>
+
+
+
+
+
+<h2>
+AI Processing Pipeline
+</h2>
+
+
+<ul>
+
+<li>
+✅ Blueprint Upload
+</li>
+
+
+<li>
+🔄 Convert Drawing To Digital Plan
+</li>
+
+
+<li>
+🔒 Room Detection
+</li>
+
+
+<li>
+🔒 Wall Extraction
+</li>
+
+
+<li>
+🔒 Material Estimation
+</li>
+
+
+<li>
+🔒 3D Visualization
+</li>
+
+
+</ul>
+
+
+
+
+</div>
+
+
+  );
+
+}
 
 
 

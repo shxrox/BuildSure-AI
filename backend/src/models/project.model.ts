@@ -1,23 +1,38 @@
-import mongoose, {
+import {
   Schema,
+  model,
   Document,
+  Types,
 } from "mongoose";
+
 
 
 export interface IProject extends Document {
 
-  ownerId: mongoose.Types.ObjectId;
+  ownerId: Types.ObjectId;
 
   projectName: string;
 
   location: string;
 
-  description?: string;
+  description: string;
 
-  status: 
+  status:
     | "PLANNING"
     | "IN_PROGRESS"
     | "COMPLETED";
+
+  blueprint?: {
+
+    fileName: string;
+
+    fileType: string;
+
+    fileUrl: string;
+
+    uploadedAt: Date;
+
+  };
 
   createdAt: Date;
 
@@ -27,60 +42,137 @@ export interface IProject extends Document {
 
 
 
+
+
 const projectSchema =
-  new Schema<IProject>(
-    {
+new Schema<IProject>(
 
-      ownerId: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
+{
 
+  ownerId: {
 
-      projectName: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+    type: Schema.Types.ObjectId,
+
+    ref: "User",
+
+    required: true,
+
+  },
 
 
-      location: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+
+  projectName: {
+
+    type: String,
+
+    required: true,
+
+    trim: true,
+
+  },
 
 
-      description: {
-        type: String,
-        default: "",
-      },
+
+  location: {
+
+    type: String,
+
+    required: true,
+
+    trim: true,
+
+  },
 
 
-      status: {
-        type: String,
-        enum: [
-          "PLANNING",
-          "IN_PROGRESS",
-          "COMPLETED",
-        ],
-        default: "PLANNING",
-      },
+
+  description: {
+
+    type: String,
+
+    default: "",
+
+  },
+
+
+
+  status: {
+
+    type: String,
+
+    enum: [
+
+      "PLANNING",
+
+      "IN_PROGRESS",
+
+      "COMPLETED",
+
+    ],
+
+    default: "PLANNING",
+
+  },
+
+
+
+
+
+  blueprint: {
+
+    fileName: {
+
+      type: String,
 
     },
-    {
-      timestamps: true,
-    }
-  );
+
+
+    fileType: {
+
+      type: String,
+
+    },
+
+
+    fileUrl: {
+
+      type: String,
+
+    },
+
+
+    uploadedAt: {
+
+      type: Date,
+
+    },
+
+  },
+
+
+},
+
+{
+
+  timestamps: true,
+
+}
+
+);
+
+
+
 
 
 
 const Project =
-  mongoose.model<IProject>(
-    "Project",
-    projectSchema
-  );
+model<IProject>(
+
+  "Project",
+
+  projectSchema
+
+);
+
 
 
 export default Project;

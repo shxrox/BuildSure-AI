@@ -3,17 +3,12 @@ import {
 } from "express";
 
 
-
 import {
-
   createProject,
-
   getProjects,
-
   getProjectById,
-
   deleteProject,
-
+  uploadBlueprint,
 } from "../controllers/project.controller";
 
 
@@ -26,17 +21,17 @@ const router =
 
 
 
+
+
 router.post(
   "/",
   authMiddleware,
   createProject
 );
 
-router.get(
-  "/:id",
-  authMiddleware,
-  getProjectById
-);
+
+
+
 
 router.get(
   "/",
@@ -46,6 +41,8 @@ router.get(
 
 
 
+
+
 router.get(
   "/:id",
   authMiddleware,
@@ -54,11 +51,25 @@ router.get(
 
 
 
+
+
 router.delete(
   "/:id",
   authMiddleware,
   deleteProject
 );
+
+
+
+
+
+router.post(
+  "/:id/blueprint",
+  authMiddleware,
+  uploadBlueprint
+);
+
+
 
 
 

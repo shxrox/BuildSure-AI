@@ -4,7 +4,7 @@ import {
   Routes,
   Route,
 } from "react-router-dom";
-import ProjectDetails from "../pages/homeowner/ProjectDetails";
+import ProjectWorkspace from "../pages/homeowner/ProjectWorkspace";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
@@ -43,9 +43,7 @@ function AppRoutes() {
 
         <Route
           path="/projects/:id"
-          element={
-            <ProjectDetails />
-          }
+          element={<ProjectWorkspace />}
         />
 
       </Routes>

@@ -7,6 +7,7 @@ import {
 import {
   Outlet,
   useParams,
+  useLocation,
 } from "react-router-dom";
 
 
@@ -21,21 +22,19 @@ import ProjectSidebar from "../../components/project/ProjectSidebar";
 
 interface Project {
 
-  _id:string;
+  _id: string;
 
-  projectName:string;
+  projectName: string;
 
-  location:string;
+  location: string;
 
-  description:string;
+  description: string;
 
-  status:string;
+  status: string;
 
-  createdAt:string;
+  createdAt: string;
 
 }
-
-
 
 
 
@@ -44,10 +43,14 @@ interface Project {
 function ProjectWorkspace() {
 
 
-
   const {
     id,
   } = useParams();
+
+
+
+  const location =
+    useLocation();
 
 
 
@@ -75,6 +78,7 @@ function ProjectWorkspace() {
     loading,
     setLoading,
   ] = useState(true);
+
 
 
 
@@ -136,8 +140,54 @@ function ProjectWorkspace() {
     }
 
 
-
   },[id]);
+
+
+
+
+
+
+
+
+
+  useEffect(() => {
+
+
+    const path =
+      location.pathname
+        .split("/")
+        .pop();
+
+
+
+
+    if(
+      path &&
+      path !== id
+    ) {
+
+
+      setActiveSection(
+        path
+      );
+
+
+    } else {
+
+
+      setActiveSection(
+        "overview"
+      );
+
+
+    }
+
+
+
+  },[
+    location.pathname,
+    id,
+  ]);
 
 
 
@@ -179,29 +229,6 @@ function ProjectWorkspace() {
     );
 
   }
-
-
-
-
-
-
-
-
-
-  const quickActions = [
-
-    "📐 Floor Plan",
-
-    "📤 Upload Blueprint",
-
-    "📦 Generate BOQ",
-
-    "💰 Cost Estimate",
-
-    "📅 Timeline",
-
-  ];
-
 
 
 
@@ -265,16 +292,18 @@ function ProjectWorkspace() {
 
 
 
-
         <div
 
           style={{
 
             borderBottom:
-            "1px solid #ddd",
+              "1px solid #ddd",
 
             paddingBottom:
-            "20px",
+              "20px",
+
+            marginBottom:
+              "20px",
 
           }}
 
@@ -301,6 +330,7 @@ function ProjectWorkspace() {
             {" "}
             {project.status}
           </p>
+
 
 
 
@@ -345,101 +375,7 @@ function ProjectWorkspace() {
 
 
 
-        {
-          activeSection === "overview" && (
-
-
-            <div>
-
-
-              <h2>
-                Quick Actions
-              </h2>
-
-
-
-
-
-              <div
-
-                style={{
-
-                  display:"grid",
-
-                  gridTemplateColumns:
-                  "repeat(3,1fr)",
-
-                  gap:"15px",
-
-                  marginTop:"20px",
-
-                }}
-
-              >
-
-
-
-                {
-                  quickActions.map(
-
-                    (action)=>(
-
-
-                      <div
-
-                        key={
-                          action
-                        }
-
-
-                        style={{
-
-                          border:
-                          "1px solid #ccc",
-
-                          padding:"20px",
-
-                          borderRadius:
-                          "8px",
-
-                        }}
-
-                      >
-
-                        {action}
-
-                      </div>
-
-
-                    )
-
-                  )
-
-                }
-
-
-
-              </div>
-
-
-
-
-
-            </div>
-
-
-          )
-
-        }
-
-
-
-
-
-
-
         <Outlet />
-
 
 
 

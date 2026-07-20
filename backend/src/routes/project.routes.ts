@@ -4,31 +4,21 @@ import {
 
 
 import {
-
   createProject,
-
   getProjects,
-
   getProjectById,
-
   deleteProject,
-
   uploadBlueprint,
-
   downloadBlueprint,
-
+  getDigitalPlan,
+  updateDigitalPlan
 } from "../controllers/project.controller";
 
 
-
-import authMiddleware 
-from "../middleware/auth.middleware";
+import authMiddleware from "../middleware/auth.middleware";
 
 
-
-import upload 
-from "../middleware/upload.middleware";
-
+import upload from "../middleware/upload.middleware";
 
 
 
@@ -41,75 +31,44 @@ Router();
 
 
 
-
-
-// Create Project
-
+// CREATE PROJECT
 router.post(
-
   "/",
-
   authMiddleware,
-
   createProject
-
 );
 
 
 
 
 
-
-
-
-// Get All Projects
-
+// GET ALL PROJECTS
 router.get(
-
   "/",
-
   authMiddleware,
-
   getProjects
-
 );
 
 
 
 
 
-
-
-
-// Get Single Project
-
+// GET PROJECT BY ID
 router.get(
-
   "/:id",
-
   authMiddleware,
-
   getProjectById
-
 );
 
 
 
 
 
-
-
-
-// Delete Project
-
+// DELETE PROJECT
 router.delete(
-
   "/:id",
-
   authMiddleware,
-
   deleteProject
-
 );
 
 
@@ -118,11 +77,7 @@ router.delete(
 
 
 
-
-
-
-// Upload Blueprint
-
+// UPLOAD BLUEPRINT
 router.post(
 
   "/:id/blueprint",
@@ -143,11 +98,7 @@ router.post(
 
 
 
-
-
-
-// Download Blueprint
-
+// DOWNLOAD / VIEW BLUEPRINT
 router.get(
 
   "/:id/blueprint",
@@ -158,6 +109,28 @@ router.get(
 
 );
 
+router.get(
+
+"/:id/digital-plan",
+
+authMiddleware,
+
+getDigitalPlan
+
+);
+
+
+
+
+router.put(
+
+"/:id/digital-plan",
+
+authMiddleware,
+
+updateDigitalPlan
+
+);
 
 
 

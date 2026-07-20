@@ -1,3 +1,4 @@
+
 import mongoose, {
   Schema,
   model,
@@ -22,25 +23,129 @@ export interface IProject extends Document {
 
 
   status:
-    | "PLANNING"
-    | "IN_PROGRESS"
-    | "COMPLETED";
+  | "PLANNING"
+  | "IN_PROGRESS"
+  | "COMPLETED";
 
 
 
   blueprint?: {
 
-
     fileName: string;
-
 
     fileType: string;
 
-
     fileData: Buffer;
 
-
     uploadedAt: Date;
+
+  };
+
+
+
+  digitalPlan?: {
+
+
+    walls: {
+
+
+      id: string;
+
+
+      start: {
+
+        x: number;
+
+        y: number;
+
+      };
+
+
+      end: {
+
+        x: number;
+
+        y: number;
+
+      };
+
+
+      thickness: number;
+
+
+    }[];
+
+
+
+    rooms: {
+
+
+      id: string;
+
+
+      name: string;
+
+
+      points: {
+
+
+        x:number;
+
+        y:number;
+
+
+      }[];
+
+
+      area?: number;
+
+
+    }[];
+
+
+
+
+
+    doors: {
+
+
+      id:string;
+
+
+      x:number;
+
+
+      y:number;
+
+
+      width:number;
+
+
+    }[];
+
+
+
+
+
+    windows: {
+
+
+      id:string;
+
+
+      x:number;
+
+
+      y:number;
+
+
+      width:number;
+
+
+    }[];
+
+
+
 
 
   };
@@ -90,21 +195,16 @@ new Schema<IProject>(
 
 
 
+  projectName:{
 
 
-  projectName: {
+    type:String,
 
 
-    type:
-      String,
+    required:true,
 
 
-    required:
-      true,
-
-
-    trim:
-      true,
+    trim:true,
 
 
   },
@@ -113,21 +213,16 @@ new Schema<IProject>(
 
 
 
+  location:{
 
 
-  location: {
+    type:String,
 
 
-    type:
-      String,
+    required:true,
 
 
-    required:
-      true,
-
-
-    trim:
-      true,
+    trim:true,
 
 
   },
@@ -136,17 +231,13 @@ new Schema<IProject>(
 
 
 
+  description:{
 
 
-  description: {
+    type:String,
 
 
-    type:
-      String,
-
-
-    default:
-      "",
+    default:"",
 
 
   },
@@ -155,31 +246,28 @@ new Schema<IProject>(
 
 
 
+  status:{
 
 
-
-  status: {
-
-
-    type:
-      String,
+    type:String,
 
 
-    enum:
+    enum:[
 
-    [
 
       "PLANNING",
 
+
       "IN_PROGRESS",
 
+
       "COMPLETED",
+
 
     ],
 
 
-    default:
-      "PLANNING",
+    default:"PLANNING",
 
 
   },
@@ -191,51 +279,140 @@ new Schema<IProject>(
 
 
 
-
-  blueprint: {
-
-
-    fileName: {
+  blueprint:{
 
 
-      type:
-        String,
+    fileName:String,
 
 
-    },
+    fileType:String,
 
 
-
-    fileType: {
-
-
-      type:
-        String,
+    fileData:Buffer,
 
 
-    },
+    uploadedAt:Date,
+
+
+  },
 
 
 
-    fileData: {
-
-
-      type:
-        Schema.Types.Buffer,
-
-
-    },
 
 
 
-    uploadedAt: {
+
+  digitalPlan:{
 
 
-      type:
-        Date,
+    walls:[{
 
 
-    },
+      id:String,
+
+
+      start:{
+
+
+        x:Number,
+
+
+        y:Number,
+
+
+      },
+
+
+      end:{
+
+
+        x:Number,
+
+
+        y:Number,
+
+
+      },
+
+
+      thickness:Number,
+
+
+    }],
+
+
+
+
+
+    rooms:[{
+
+
+      id:String,
+
+
+      name:String,
+
+
+      points:[{
+
+
+        x:Number,
+
+
+        y:Number,
+
+
+      }],
+
+
+      area:Number,
+
+
+    }],
+
+
+
+
+
+
+    doors:[{
+
+
+      id:String,
+
+
+      x:Number,
+
+
+      y:Number,
+
+
+      width:Number,
+
+
+    }],
+
+
+
+
+
+
+    windows:[{
+
+
+      id:String,
+
+
+      x:Number,
+
+
+      y:Number,
+
+
+      width:Number,
+
+
+    }],
 
 
   },
@@ -250,8 +427,7 @@ new Schema<IProject>(
 {
 
 
-  timestamps:
-    true,
+  timestamps:true,
 
 
 }
@@ -269,15 +445,11 @@ new Schema<IProject>(
 const Project =
 model<IProject>(
 
-  "Project",
+"Project",
 
-  projectSchema
+projectSchema
 
 );
-
-
-
-
 
 
 

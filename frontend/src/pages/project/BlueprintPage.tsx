@@ -1,333 +1,259 @@
+
+
 import {
-  useState,
+useEffect,
+useState
 } from "react";
 
 
 import {
-  useParams,
+useParams
 } from "react-router-dom";
 
 
 import {
-  uploadBlueprint,
+getDigitalPlan,
+updateDigitalPlan
 } from "../../services/project.service";
 
 
 
-function BlueprintPage() {
 
+function BlueprintPage(){
 
-  const {
-    id,
-  } = useParams();
 
+const {id}=useParams();
 
 
-  const [
-    file,
-    setFile
-  ] = useState<File | null>(null);
 
 
+const [plan,setPlan]=useState<any>({
 
-  const [
-    uploading,
-    setUploading
-  ] = useState(false);
+walls:[],
 
+rooms:[],
 
+doors:[],
 
-  const [
-    blueprint,
-    setBlueprint
-  ] = useState<any>(null);
+windows:[]
 
+});
 
 
-  const [
-    mode,
-    setMode
-  ] = useState<
-    "upload" | "editor"
-  >(
-    "upload"
-  );
 
+const [saving,setSaving]=useState(false);
 
 
 
 
-  const handleFileChange =
-  (
-    e:
-    React.ChangeEvent<HTMLInputElement>
-  ) => {
 
 
-    const selected =
-      e.target.files?.[0];
+useEffect(()=>{
 
 
-    if(selected){
+const loadPlan =
+async()=>{
 
-      setFile(selected);
 
-    }
+if(!id)
+return;
 
 
-  };
 
+const data =
+await getDigitalPlan(id);
 
 
 
+setPlan(data);
 
 
+};
 
-  const handleUpload =
-  async()=>{
 
 
-    if(!id || !file)
-      return;
+loadPlan();
 
 
 
-    try{
+},[id]);
 
 
-      setUploading(true);
 
 
 
-      const response =
-      await uploadBlueprint(
-        id,
-        file
-      );
 
 
 
-      setBlueprint(
-        response
-      );
 
+const savePlan =
+async()=>{
 
 
-      // after upload open editor
+if(!id)
+return;
 
-      setMode(
-        "editor"
-      );
 
 
+try{
 
-    }
-    catch(error){
 
+setSaving(true);
 
-      console.error(
-        "UPLOAD ERROR",
-        error
-      );
 
 
-    }
-    finally{
+await updateDigitalPlan(
 
+id,
 
-      setUploading(false);
+plan
 
+);
 
-    }
 
 
-  };
+alert(
+"Digital plan saved"
+);
 
 
 
+}
+catch(error){
 
 
+console.error(
+"PLAN SAVE ERROR",
+error
+);
 
 
-  return (
+}
+finally{
 
-<div
-style={{
-padding:"30px"
-}}
->
 
+setSaving(false);
 
-<h1>
-📐 Blueprint Workspace
-</h1>
 
+}
 
-<p>
-Upload your construction drawing and
-convert it into an editable digital plan.
-</p>
 
 
+};
 
-{
-mode==="upload" && (
 
-<div
-style={{
-border:"2px dashed #999",
-padding:"40px",
-borderRadius:"15px"
-}}
->
+
+
+
+
+
+
+
+return(
+
+<div>
 
 
 <h2>
-Step 1: Upload Blueprint
+📐 Blueprint Workspace
 </h2>
 
 
 
-<input
 
-type="file"
-
-accept="
-image/png,
-image/jpeg,
-application/pdf
-"
-
-onChange={
-handleFileChange
-}
-
-/>
+<p>
+Editable digital construction plan
+</p>
 
 
 
-{
-file && (
+
 
 <div>
 
+
 <h3>
-Selected File
+Walls
 </h3>
 
 
 <p>
-{file.name}
+{
+plan.walls.length
+}
+walls detected
 </p>
+
+
+
+
+<h3>
+Rooms
+</h3>
 
 
 <p>
 {
-(file.size/1024)
-.toFixed(2)
+plan.rooms.length
 }
-KB
+rooms detected
 </p>
 
 
-</div>
 
-)
 
+<h3>
+Doors
+</h3>
+
+
+<p>
+{
+plan.doors.length
 }
+doors detected
+</p>
 
+
+
+
+<h3>
+Windows
+</h3>
+
+
+<p>
+{
+plan.windows.length
+}
+windows detected
+</p>
 
 
 
 
 <button
 
-disabled={
-!file ||
-uploading
-}
+onClick={savePlan}
 
-onClick={
-handleUpload
-}
-
-style={{
-marginTop:"20px",
-padding:"12px 25px"
-}}
+disabled={saving}
 
 >
 
+
 {
-
-uploading
-
+saving
 ?
-
-"Uploading..."
-
+"Saving..."
 :
-
-"Upload Blueprint"
-
-}
-
-</button>
-
-
-
-</div>
-
-)
+"Save Digital Plan"
 
 }
 
 
 
+</button>
 
-
-
-
-{
-mode==="editor" && (
-
-
-<div>
-
-
-<h2>
-Step 2: Blueprint Editor
-</h2>
-
-
-
-<div
-
-style={{
-
-height:"500px",
-
-border:
-"1px solid #ccc",
-
-borderRadius:"15px",
-
-display:"flex",
-
-alignItems:"center",
-
-justifyContent:"center"
-
-}}
-
->
-
-
-<h3>
-
-🖊 Canvas Editor Coming Next
-
-</h3>
 
 
 </div>
@@ -336,112 +262,10 @@ justifyContent:"center"
 
 
 
-<div
-
-style={{
-marginTop:"20px"
-}}
-
->
-
-
-<button>
-
-➕ Add Wall
-
-</button>
-
-
-<button>
-
-🚪 Add Door
-
-</button>
-
-
-<button>
-
-🪟 Add Window
-
-</button>
-
-
-<button>
-
-📏 Add Dimension
-
-</button>
-
-
 </div>
 
+);
 
-
-</div>
-
-
-)
-
-}
-
-
-
-
-
-
-
-<hr/>
-
-
-
-
-
-<h2>
-AI Processing Pipeline
-</h2>
-
-
-<ul>
-
-<li>
-✅ Blueprint Upload
-</li>
-
-
-<li>
-🔄 Convert Drawing To Digital Plan
-</li>
-
-
-<li>
-🔒 Room Detection
-</li>
-
-
-<li>
-🔒 Wall Extraction
-</li>
-
-
-<li>
-🔒 Material Estimation
-</li>
-
-
-<li>
-🔒 3D Visualization
-</li>
-
-
-</ul>
-
-
-
-
-</div>
-
-
-  );
 
 }
 

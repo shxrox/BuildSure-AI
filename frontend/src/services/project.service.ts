@@ -198,3 +198,51 @@ async (
   return response.data.data;
 
 };
+
+export const getDigitalPlan =
+async(
+  projectId:string
+)=>{
+
+
+const response =
+await api.get(
+
+`/projects/${projectId}/digital-plan`
+
+);
+
+
+
+return response.data.data;
+
+};
+
+
+
+
+
+
+
+
+export const updateDigitalPlan =
+async(
+  projectId:string,
+  digitalPlan:any
+)=>{
+
+
+const response =
+await api.put(
+
+`/projects/${projectId}/digital-plan`,
+
+digitalPlan
+
+);
+
+
+
+return response.data.data;
+
+};

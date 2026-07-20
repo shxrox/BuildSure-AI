@@ -17,6 +17,7 @@ import {
 
 
 
+
 // CREATE PROJECT
 
 export const createProject =
@@ -60,7 +61,7 @@ message:"Unauthorized"
 const user =
 await User.findOne({
 
-clerkId,
+clerkId
 
 });
 
@@ -91,7 +92,7 @@ projectName,
 
 location,
 
-description,
+description
 
 });
 
@@ -150,7 +151,7 @@ error instanceof Error
 
 
 
-// GET ALL PROJECTS
+// GET PROJECTS
 
 export const getProjects =
 async(
@@ -182,11 +183,10 @@ message:"Unauthorized"
 
 
 
-
 const user =
 await User.findOne({
 
-clerkId,
+clerkId
 
 });
 
@@ -214,6 +214,7 @@ await Project.find({
 ownerId:user._id
 
 });
+
 
 
 
@@ -348,7 +349,6 @@ message:"Project not found"
 });
 
 }
-
 
 
 
@@ -536,7 +536,7 @@ message:
 
 
 
-// UPLOAD BLUEPRINT TO MONGODB
+// UPLOAD BLUEPRINT
 
 export const uploadBlueprint =
 async(
@@ -625,16 +625,13 @@ message:"Project not found"
 
 if(!req.file){
 
-
 return res.status(400).json({
 
 success:false,
 
-message:
-"Blueprint file required"
+message:"Blueprint file required"
 
 });
-
 
 }
 
@@ -642,26 +639,15 @@ message:
 
 
 
-
-
 project.blueprint = {
 
+fileName:req.file.originalname,
 
-fileName:
-req.file.originalname,
+fileType:req.file.mimetype,
 
+fileData:req.file.buffer,
 
-fileType:
-req.file.mimetype,
-
-
-fileData:
-req.file.buffer,
-
-
-uploadedAt:
-new Date()
-
+uploadedAt:new Date()
 
 };
 
@@ -669,10 +655,7 @@ new Date()
 
 
 
-
-
 await project.save();
-
 
 
 
@@ -689,10 +672,8 @@ res,
 fileName:
 project.blueprint.fileName,
 
-
 fileType:
 project.blueprint.fileType,
-
 
 uploadedAt:
 project.blueprint.uploadedAt
@@ -708,11 +689,8 @@ catch(error){
 
 
 console.error(
-
 "UPLOAD BLUEPRINT ERROR:",
-
 error
-
 );
 
 
@@ -773,16 +751,13 @@ if(
 !project.blueprint
 ){
 
-
 return res.status(404).json({
 
 success:false,
 
-message:
-"Blueprint not found"
+message:"Blueprint not found"
 
 });
-
 
 }
 
@@ -801,6 +776,7 @@ project.blueprint.fileType
 
 
 
+
 res.setHeader(
 
 "Content-Disposition",
@@ -808,7 +784,6 @@ res.setHeader(
 `inline; filename="${project.blueprint.fileName}"`
 
 );
-
 
 
 

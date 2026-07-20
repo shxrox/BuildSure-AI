@@ -30,15 +30,21 @@ export interface IProject extends Document {
 
   blueprint?: {
 
+
     fileName: string;
+
 
     fileType: string;
 
+
     fileData: Buffer;
+
 
     uploadedAt: Date;
 
+
   };
+
 
 
   createdAt: Date;
@@ -55,12 +61,12 @@ export interface IProject extends Document {
 
 
 
+
+
 const projectSchema =
 new Schema<IProject>(
 
 {
-
-
 
 
   ownerId: {
@@ -161,21 +167,15 @@ new Schema<IProject>(
 
     enum:
 
-
     [
-
 
       "PLANNING",
 
-
       "IN_PROGRESS",
-
 
       "COMPLETED",
 
-
     ],
-
 
 
     default:
@@ -183,7 +183,6 @@ new Schema<IProject>(
 
 
   },
-
 
 
 
@@ -222,7 +221,7 @@ new Schema<IProject>(
 
 
       type:
-        Buffer,
+        Schema.Types.Buffer,
 
 
     },
@@ -250,6 +249,7 @@ new Schema<IProject>(
 
 {
 
+
   timestamps:
     true,
 
@@ -269,11 +269,13 @@ new Schema<IProject>(
 const Project =
 model<IProject>(
 
-"Project",
+  "Project",
 
-projectSchema
+  projectSchema
 
 );
+
+
 
 
 

@@ -17,6 +17,14 @@ function BlueprintPage() {
 
 
 
+  const [
+    preview,
+    setPreview,
+  ] = useState<string | null>(null);
+
+
+
+
 
 
 
@@ -32,18 +40,136 @@ function BlueprintPage() {
 
 
 
-    if(selectedFile) {
+    if(!selectedFile) {
 
-
-      setFile(
-        selectedFile
-      );
-
+      return;
 
     }
 
 
+
+
+
+    const allowedTypes = [
+
+      "image/png",
+
+      "image/jpeg",
+
+      "application/pdf",
+
+    ];
+
+
+
+
+    if(
+      !allowedTypes.includes(
+        selectedFile.type
+      )
+    ) {
+
+
+      alert(
+        "Only PNG, JPG and PDF files are allowed"
+      );
+
+
+      return;
+
+    }
+
+
+
+
+
+    const maxSize =
+      10 * 1024 * 1024;
+
+
+
+    if(
+      selectedFile.size > maxSize
+    ) {
+
+
+      alert(
+        "File size must be less than 10MB"
+      );
+
+
+      return;
+
+    }
+
+
+
+
+
+    setFile(
+      selectedFile
+    );
+
+
+
+
+
+    if(
+      selectedFile.type.startsWith(
+        "image"
+      )
+    ) {
+
+
+      const imageUrl =
+        URL.createObjectURL(
+          selectedFile
+        );
+
+
+      setPreview(
+        imageUrl
+      );
+
+
+    } else {
+
+
+      setPreview(
+        null
+      );
+
+    }
+
+
+
   };
+
+
+
+
+
+
+
+
+
+  const removeFile =
+  () => {
+
+
+    setFile(
+      null
+    );
+
+
+    setPreview(
+      null
+    );
+
+
+  };
+
+
 
 
 
@@ -55,6 +181,7 @@ function BlueprintPage() {
 
 
     <div>
+
 
 
       <h2>
@@ -74,21 +201,28 @@ function BlueprintPage() {
 
 
 
+
+
       <div
 
         style={{
 
-          border:"2px dashed #aaa",
+          border:
+          "2px dashed #999",
 
-          padding:"40px",
+          padding:
+          "40px",
 
-          borderRadius:"12px",
+          borderRadius:
+          "12px",
 
-          marginTop:"20px",
+          marginTop:
+          "20px",
 
         }}
 
       >
+
 
 
 
@@ -118,29 +252,133 @@ function BlueprintPage() {
             <div>
 
 
+              <hr />
+
+
+
               <h3>
-                Uploaded File
+                Selected Blueprint
               </h3>
 
 
 
+
               <p>
+
+                File:
+                {" "}
                 {file.name}
+
               </p>
 
 
 
+
               <p>
+
                 Size:
                 {" "}
                 {
                   (
                     file.size /
+                    1024 /
                     1024
                   ).toFixed(2)
                 }
-                KB
+                MB
+
               </p>
+
+
+
+
+
+
+              {
+                preview && (
+
+                  <div>
+
+
+                    <h4>
+                      Preview
+                    </h4>
+
+
+
+                    <img
+
+                      src={
+                        preview
+                      }
+
+                      alt="Blueprint Preview"
+
+                      style={{
+
+                        width:
+                        "500px",
+
+                        maxWidth:
+                        "100%",
+
+                        border:
+                        "1px solid #ccc",
+
+                      }}
+
+                    />
+
+
+
+                  </div>
+
+                )
+              }
+
+
+
+
+
+
+              {
+                file.type ===
+                "application/pdf" && (
+
+                  <p>
+
+                    📄 PDF blueprint selected.
+                    Preview will be available
+                    after backend upload.
+
+                  </p>
+
+                )
+              }
+
+
+
+
+
+              <button
+
+                onClick={
+                  removeFile
+                }
+
+                style={{
+
+                  marginTop:
+                  "15px",
+
+                }}
+
+              >
+
+                Remove Blueprint
+
+              </button>
+
 
 
 
@@ -151,7 +389,11 @@ function BlueprintPage() {
 
 
 
+
+
       </div>
+
+
 
 
 
@@ -172,10 +414,17 @@ function BlueprintPage() {
 
 
 
+
       <ul>
 
+
         <li>
-          ⏳ Blueprint Upload
+          ✅ Blueprint Selection
+        </li>
+
+
+        <li>
+          🔒 Upload To Server
         </li>
 
 
@@ -200,6 +449,7 @@ function BlueprintPage() {
 
 
 
+
     </div>
 
 
@@ -207,6 +457,7 @@ function BlueprintPage() {
 
 
 }
+
 
 
 

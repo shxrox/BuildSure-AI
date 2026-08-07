@@ -239,7 +239,7 @@ function HomeownerDashboard() {
           </p>
         </div>
 
-        <div>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <button
             onClick={() => setShowCreateModal(true)}
             style={{
@@ -253,6 +253,20 @@ function HomeownerDashboard() {
             }}
           >
             + Create New Project
+          </button>
+          <button
+            onClick={handleLogout}
+            style={{
+              background: "#f3f4f6",
+              color: "#333",
+              border: "1px solid #ccc",
+              padding: "10px 16px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            Sign Out
           </button>
         </div>
       </div>

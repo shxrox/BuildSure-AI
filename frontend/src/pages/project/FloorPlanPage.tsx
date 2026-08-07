@@ -1,46 +1,209 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getDigitalPlan, saveDigitalPlan } from "../../services/project.service";
 
+interface Point { x: number; y: number }
+
+interface Wall {
+  id: string;
+  startX: number; startY: number;
+  endX: number;   endY: number;
+  thickness: number;
+  height: number;
+}
+
+interface Door {
+  id: string;
+  x: number; y: number;
+  width: number;
+  angle: number;
+}
+
+interface Window {
+  id: string;
+  x: number; y: number;
+  width: number;
+  angle: number;
+}
+
+interface Room {
+  id: string;
+  name: string;
+  points: Point[];
+  areaSqm: number;
+  color: string;
+}
+
+interface FurnitureItem {
+  id: string;
+  name: string;
+  category: "Living" | "Bedroom" | "Kitchen" | "Bathroom" | "Office";
+  icon: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}
+
+interface DragState {
+  type: "wall-start" | "wall-end" | "door" | "window" | "room" | "furniture" | null;
+  id: string | null;
+  offsetX: number;
+  offsetY: number;
+}
+
+type Tool = "select" | "wall" | "door" | "window" | "room" | "eraser" | "measure" | "furniture";
+
+const GRID_SIZE = 20;
+const SNAP_DIST = 12;
+const SCALE_MM_PER_PX = 100;
+const WALL_THICKNESS = 8;
+
+const ROOM_COLORS = [
+  "rgba(99,102,241,0.12)", "rgba(16,185,129,0.12)", "rgba(245,158,11,0.12)",
+  "rgba(239,68,68,0.12)", "rgba(139,92,246,0.12)", "rgba(20,184,166,0.12)",
+];
+
+const CATALOG_ITEMS: Omit<FurnitureItem, "id" | "x" | "y" | "rotation">[] = [
+  { name: "2-Seater Sofa", category: "Living", icon: "🛋️", width: 160, height: 85 },
+  { name: "3-Seater Sofa", category: "Living", icon: "🛋️", width: 210, height: 90 },
+  { name: "L-Shaped Sofa", category: "Living", icon: "🛋️", width: 270, height: 170 },
+  { name: "Armchair", category: "Living", icon: "🪑", width: 85, height: 80 },
+  { name: "Coffee Table", category: "Living", icon: "🪵", width: 110, height: 60 },
+  { name: "TV Stand", category: "Living", icon: "📺", width: 140, height: 40 },
+  { name: "Queen Bed", category: "Bedroom", icon: "🛏️", width: 160, height: 200 },
+  { name: "King Bed", category: "Bedroom", icon: "🛏️", width: 190, height: 200 },
+  { name: "Nightstand", category: "Bedroom", icon: "🗄️", width: 50, height: 50 },
+  { name: "Wardrobe", category: "Bedroom", icon: "🚪", width: 180, height: 60 },
+  { name: "Dining Table", category: "Kitchen", icon: "🍽️", width: 160, height: 90 },
+  { name: "Kitchen Island", category: "Kitchen", icon: "🍳", width: 200, height: 90 },
+  { name: "Refrigerator", category: "Kitchen", icon: "🧊", width: 70, height: 70 },
+  { name: "Toilet", category: "Bathroom", icon: "🚽", width: 50, height: 70 },
+  { name: "Bathtub", category: "Bathroom", icon: "🛁", width: 150, height: 75 },
+  { name: "Office Desk", category: "Office", icon: "🖥️", width: 140, height: 70 },
+  { name: "Office Chair", category: "Office", icon: "💺", width: 60, height: 60 },
+];
+
+function snapToGrid(v: number) { return Math.round(v / GRID_SIZE) * GRID_SIZE; }
+
+function dist(ax: number, ay: number, bx: number, by: number) {
+  return Math.hypot(bx - ax, by - ay);
+}
+
+function ptToSegDist(px: number, py: number, ax: number, ay: number, bx: number, by: number) {
+  const len2 = (bx - ax) ** 2 + (by - ay) ** 2;
+  if (len2 === 0) return dist(px, py, ax, ay);
+  let t = ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return dist(px, py, ax + t * (bx - ax), ay + t * (by - ay));
+}
+
+function wallAngle(w: Wall) { return Math.atan2(w.endY - w.startY, w.endX - w.startX); }
+function wallLength(w: Wall) { return dist(w.startX, w.startY, w.endX, w.endY); }
+
+function pxToMm(px: number) { return px * SCALE_MM_PER_PX; }
+function mmToLabel(mm: number) {
+  if (mm >= 1000) return `${(mm / 1000).toFixed(2)} m`;
+  return `${mm.toFixed(0)} mm`;
+}
+
+function polygonArea(pts: Point[]) {
+  let a = 0;
+  const n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+  }
+  return Math.abs(a / 2);
+}
+
 function FloorPlanPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading]   = useState(true);
+  const [saving, setSaving]     = useState(false);
+  const [message, setMessage]   = useState("");
 
-  const [walls, setWalls] = useState<any[]>([]);
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [doors, setDoors] = useState<any[]>([]);
-  const [windows, setWindows] = useState<any[]>([]);
+  const [walls, setWalls]       = useState<Wall[]>([]);
+  const [doors, setDoors]       = useState<Door[]>([]);
+  const [windows, setWindows]   = useState<Window[]>([]);
+  const [rooms, setRooms]       = useState<Room[]>([]);
+  const [furniture, setFurniture] = useState<FurnitureItem[]>([]);
 
-  const [tool, setTool] = useState<"wall" | "door" | "window" | "room">("wall");
-  const [drawing, setDrawing] = useState(false);
-  const [currentWallStart, setCurrentWallStart] = useState<{ x: number; y: number } | null>(null);
+  const [tool, setTool]                 = useState<Tool>("wall");
+  const [selectedId, setSelectedId]     = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<"wall" | "door" | "window" | "room" | "furniture" | null>(null);
+
+  const [drawStart, setDrawStart]   = useState<Point | null>(null);
+  const [previewEnd, setPreviewEnd] = useState<Point | null>(null);
+  const [roomPoints, setRoomPoints] = useState<Point[]>([]);
+  const [activeFurniture, setActiveFurniture] = useState<typeof CATALOG_ITEMS[0] | null>(null);
+
+  const dragRef = useRef<DragState>({ type: null, id: null, offsetX: 0, offsetY: 0 });
+
+  const [zoom, setZoom]   = useState(1);
+  const [pan, setPan]     = useState<Point>({ x: 40, y: 40 });
+  const panRef            = useRef<{ active: boolean; lastX: number; lastY: number }>({ active: false, lastX: 0, lastY: 0 });
+
+  const [canvasSize, setCanvasSize] = useState({ w: 900, h: 600 });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSidebarTab, setActiveSidebarTab] = useState<"objects" | "layers" | "settings">("objects");
+  const [showGrid, setShowGrid] = useState(true);
+  const [showDimensions, setShowDimensions] = useState(true);
 
   useEffect(() => {
-    const fetchPlan = async () => {
-      if (!id) return;
-      try {
-        setLoading(true);
-        const plan = await getDigitalPlan(id);
-        if (plan) {
-          setWalls(plan.walls || []);
-          setRooms(plan.rooms || []);
-          setDoors(plan.doors || []);
-          setWindows(plan.windows || []);
-        }
-      } catch (error) {
-        console.error("Failed to load digital floor plan", error);
-      } finally {
-        setLoading(false);
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const e of entries) {
+        const { width, height } = e.contentRect;
+        setCanvasSize({ w: Math.max(600, width - 2), h: Math.max(400, height - 2) });
       }
-    };
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
-    fetchPlan();
+  const fetchPlan = useCallback(async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      const plan = await getDigitalPlan(id);
+      if (plan) {
+        setWalls(plan.walls       || []);
+        setRooms(plan.rooms       || []);
+        setDoors(plan.doors       || []);
+        setWindows(plan.windows   || []);
+        setFurniture(plan.furniture || []);
+      }
+    } catch (e) {
+      console.error("Failed to load digital plan", e);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchPlan();
+  }, [fetchPlan]);
+
+  const toWorld = useCallback((cx: number, cy: number): Point => ({
+    x: (cx - pan.x) / zoom,
+    y: (cy - pan.y) / zoom,
+  }), [pan, zoom]);
+
+  const snapPoint = useCallback((wx: number, wy: number): Point => {
+    let sx = snapToGrid(wx), sy = snapToGrid(wy);
+    for (const w of walls) {
+      if (dist(wx, wy, w.startX, w.startY) < SNAP_DIST / zoom) { sx = w.startX; sy = w.startY; break; }
+      if (dist(wx, wy, w.endX, w.endY)     < SNAP_DIST / zoom) { sx = w.endX;   sy = w.endY;   break; }
+    }
+    return { x: sx, y: sy };
+  }, [walls, zoom]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,225 +212,631 @@ function FloorPlanPage() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = "#e2e8f0";
-    ctx.lineWidth = 1;
-    const gridSize = 40;
-    for (let x = 0; x < canvas.width; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
+    ctx.save();
+    ctx.translate(pan.x, pan.y);
+    ctx.scale(zoom, zoom);
+
+    if (showGrid) {
+      const w0 = -pan.x / zoom, h0 = -pan.y / zoom;
+      const wW = canvas.width / zoom, wH = canvas.height / zoom;
+      const startX = Math.floor(w0 / GRID_SIZE) * GRID_SIZE;
+      const startY = Math.floor(h0 / GRID_SIZE) * GRID_SIZE;
+
+      ctx.strokeStyle = "#f1f5f9";
+      ctx.lineWidth = 0.5 / zoom;
+      for (let gx = startX; gx < w0 + wW; gx += GRID_SIZE) {
+        ctx.beginPath(); ctx.moveTo(gx, h0); ctx.lineTo(gx, h0 + wH); ctx.stroke();
+      }
+      for (let gy = startY; gy < h0 + wH; gy += GRID_SIZE) {
+        ctx.beginPath(); ctx.moveTo(w0, gy); ctx.lineTo(w0 + wH, gy); ctx.stroke();
+      }
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1 / zoom;
+      for (let gx = startX; gx < w0 + wW; gx += GRID_SIZE * 5) {
+        ctx.beginPath(); ctx.moveTo(gx, h0); ctx.lineTo(gx, h0 + wH); ctx.stroke();
+      }
+      for (let gy = startY; gy < h0 + wH; gy += GRID_SIZE * 5) {
+        ctx.beginPath(); ctx.moveTo(w0, gy); ctx.lineTo(w0 + wH, gy); ctx.stroke();
+      }
     }
 
-    rooms.forEach((room) => {
-      ctx.fillStyle = "rgba(59, 130, 246, 0.08)";
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.3)";
-      ctx.lineWidth = 2;
-      if (room.points && room.points.length >= 3) {
-        ctx.beginPath();
-        ctx.moveTo(room.points[0].x, room.points[0].y);
-        for (let i = 1; i < room.points.length; i++) {
-          ctx.lineTo(room.points[i].x, room.points[i].y);
+    rooms.forEach(room => {
+      if (room.points.length < 3) return;
+      const sel = selectedType === "room" && selectedId === room.id;
+      ctx.beginPath();
+      ctx.moveTo(room.points[0].x, room.points[0].y);
+      room.points.forEach((p, i) => { if (i) ctx.lineTo(p.x, p.y); });
+      ctx.closePath();
+      ctx.fillStyle = room.color;
+      ctx.fill();
+      ctx.strokeStyle = sel ? "#3b82f6" : "rgba(59,130,246,0.3)";
+      ctx.lineWidth = (sel ? 2.5 : 1.5) / zoom;
+      ctx.stroke();
+
+      const cx = room.points.reduce((s, p) => s + p.x, 0) / room.points.length;
+      const cy = room.points.reduce((s, p) => s + p.y, 0) / room.points.length;
+      const areaSqm = polygonArea(room.points) * (SCALE_MM_PER_PX / 1000) ** 2;
+      ctx.fillStyle = "#1e293b";
+      ctx.font = `bold ${12 / zoom}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(room.name, cx, cy - 6 / zoom);
+      ctx.font = `${10 / zoom}px Inter, sans-serif`;
+      ctx.fillStyle = "#64748b";
+      ctx.fillText(`${areaSqm.toFixed(2)} m²`, cx, cy + 8 / zoom);
+    });
+
+    walls.forEach(wall => {
+      const sel = selectedType === "wall" && selectedId === wall.id;
+      const ang = wallAngle(wall);
+      const nx = -Math.sin(ang) * (WALL_THICKNESS / 2);
+      const ny =  Math.cos(ang) * (WALL_THICKNESS / 2);
+
+      ctx.beginPath();
+      ctx.moveTo(wall.startX + nx, wall.startY + ny);
+      ctx.lineTo(wall.endX   + nx, wall.endY   + ny);
+      ctx.lineTo(wall.endX   - nx, wall.endY   - ny);
+      ctx.lineTo(wall.startX - nx, wall.startY - ny);
+      ctx.closePath();
+      ctx.fillStyle = sel ? "#dbeafe" : "#f1f5f9";
+      ctx.fill();
+      ctx.strokeStyle = sel ? "#2563eb" : "#334155";
+      ctx.lineWidth = (sel ? 2 : 1.5) / zoom;
+      ctx.stroke();
+
+      if (showDimensions) {
+        const len = wallLength(wall);
+        if (len > 20 / zoom) {
+          const mx = (wall.startX + wall.endX) / 2;
+          const my = (wall.startY + wall.endY) / 2;
+          ctx.save();
+          ctx.translate(mx, my);
+          ctx.rotate(ang);
+          ctx.fillStyle = "#64748b";
+          ctx.font = `${10 / zoom}px Inter, sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillText(mmToLabel(pxToMm(len)), 0, -12 / zoom);
+          ctx.restore();
         }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
       }
     });
 
-    ctx.strokeStyle = "#1e293b";
-    ctx.lineWidth = 6;
-    walls.forEach((wall) => {
+    if (tool === "wall" && drawStart && previewEnd) {
       ctx.beginPath();
-      ctx.moveTo(wall.startX, wall.startY);
-      ctx.lineTo(wall.endX, wall.endY);
+      ctx.moveTo(drawStart.x, drawStart.y);
+      ctx.lineTo(previewEnd.x, previewEnd.y);
+      ctx.strokeStyle = "#3b82f6";
+      ctx.lineWidth = WALL_THICKNESS / zoom;
+      ctx.lineCap = "round";
+      ctx.setLineDash([6 / zoom, 4 / zoom]);
       ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineCap = "butt";
+    }
+
+    doors.forEach(door => {
+      const sel = selectedType === "door" && selectedId === door.id;
+      ctx.save();
+      ctx.translate(door.x, door.y);
+      ctx.rotate(door.angle);
+
+      ctx.fillStyle = sel ? "#bfdbfe" : "#dbeafe";
+      ctx.strokeStyle = sel ? "#2563eb" : "#3b82f6";
+      ctx.lineWidth = (sel ? 2 : 1.5) / zoom;
+      ctx.beginPath();
+      ctx.rect(-18, -3, 36, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
     });
 
-    ctx.fillStyle = "#2563eb";
-    doors.forEach((door) => {
-      ctx.fillRect(door.x - 6, door.y - 6, 12, 12);
+    windows.forEach(win => {
+      const sel = selectedType === "window" && selectedId === win.id;
+      ctx.save();
+      ctx.translate(win.x, win.y);
+      ctx.rotate(win.angle);
+
+      ctx.fillStyle = sel ? "#a7f3d0" : "#d1fae5";
+      ctx.strokeStyle = sel ? "#059669" : "#10b981";
+      ctx.lineWidth = (sel ? 2 : 1.5) / zoom;
+      ctx.beginPath();
+      ctx.rect(-20, -4, 40, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
     });
 
-    ctx.fillStyle = "#059669";
-    windows.forEach((win) => {
-      ctx.fillRect(win.x - 6, win.y - 6, 12, 12);
-    });
-  }, [walls, rooms, doors, windows]);
+    furniture.forEach(item => {
+      const sel = selectedType === "furniture" && selectedId === item.id;
+      ctx.save();
+      ctx.translate(item.x, item.y);
+      ctx.rotate(item.rotation);
 
-  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const fw = item.width / 10;
+      const fh = item.height / 10;
+
+      ctx.fillStyle = sel ? "#fef3c7" : "#f8fafc";
+      ctx.strokeStyle = sel ? "#f59e0b" : "#cbd5e1";
+      ctx.lineWidth = (sel ? 2 : 1) / zoom;
+      ctx.beginPath();
+      ctx.roundRect(-fw / 2, -fh / 2, fw, fh, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = `${16 / zoom}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(item.icon, 0, 0);
+
+      ctx.restore();
+    });
+
+    ctx.restore();
+  }, [walls, doors, windows, rooms, furniture, drawStart, previewEnd, tool, zoom, pan, canvasSize, selectedId, selectedType, showGrid, showDimensions]);
+
+  const hitTest = useCallback((wx: number, wy: number) => {
+    for (const f of [...furniture].reverse()) {
+      const fw = f.width / 10, fh = f.height / 10;
+      if (Math.abs(wx - f.x) < fw / 2 && Math.abs(wy - f.y) < fh / 2) {
+        return { type: "furniture" as const, id: f.id };
+      }
+    }
+    for (const d of [...doors].reverse()) {
+      if (dist(wx, wy, d.x, d.y) < 20) return { type: "door" as const, id: d.id };
+    }
+    for (const w of [...windows].reverse()) {
+      if (dist(wx, wy, w.x, w.y) < 20) return { type: "window" as const, id: w.id };
+    }
+    for (const w of [...walls].reverse()) {
+      if (ptToSegDist(wx, wy, w.startX, w.startY, w.endX, w.endY) < 8) {
+        return { type: "wall" as const, id: w.id };
+      }
+    }
+    for (const r of [...rooms].reverse()) {
+      if (pointInPolygon(wx, wy, r.points)) return { type: "room" as const, id: r.id };
+    }
+    return null;
+  }, [doors, windows, walls, rooms, furniture]);
+
+  function pointInPolygon(px: number, py: number, pts: Point[]) {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
+      if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+
+  const getWorld = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const r = canvasRef.current!.getBoundingClientRect();
+    return toWorld(e.clientX - r.left, e.clientY - r.top);
+  };
+
+  const handleMouseDown = async (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    if (!canvas || !id) return;
 
-    if (tool === "wall") {
-      if (!drawing) {
-        setCurrentWallStart({ x, y });
-        setDrawing(true);
-      } else {
-        if (currentWallStart) {
-          const newWall = {
-            id: Date.now().toString(),
-            startX: currentWallStart.x,
-            startY: currentWallStart.y,
-            endX: x,
-            endY: y,
-            thickness: 200,
-            height: 3.0,
-          };
-          setWalls([...walls, newWall]);
+    if (e.button === 1 || (e.shiftKey && tool === "select")) {
+      panRef.current = { active: true, lastX: e.clientX, lastY: e.clientY };
+      return;
+    }
+
+    const raw = getWorld(e);
+    const wp = snapPoint(raw.x, raw.y);
+
+    let updatedWalls = walls;
+    let updatedRooms = rooms;
+    let updatedDoors = doors;
+    let updatedWindows = windows;
+    let updatedFurniture = furniture;
+
+    if (tool === "furniture" && activeFurniture) {
+      updatedFurniture = [...furniture, {
+        id: Date.now().toString(),
+        name: activeFurniture.name,
+        category: activeFurniture.category as any,
+        icon: activeFurniture.icon,
+        x: wp.x, y: wp.y,
+        width: activeFurniture.width,
+        height: activeFurniture.height,
+        rotation: 0,
+      }];
+      setFurniture(updatedFurniture);
+      setActiveFurniture(null);
+      setTool("select");
+    } else if (tool === "select") {
+      const hit = hitTest(raw.x, raw.y);
+      if (hit) {
+        setSelectedId(hit.id);
+        setSelectedType(hit.type);
+        const obj = hit.type === "door"      ? doors.find(x => x.id === hit.id)
+                  : hit.type === "window"    ? windows.find(x => x.id === hit.id)
+                  : hit.type === "furniture" ? furniture.find(x => x.id === hit.id) : null;
+        if (obj) {
+          dragRef.current = { type: hit.type as any, id: hit.id, offsetX: raw.x - (obj as any).x, offsetY: raw.y - (obj as any).y };
         }
-        setDrawing(false);
-        setCurrentWallStart(null);
+      } else {
+        setSelectedId(null); setSelectedType(null);
+      }
+      return;
+    } else if (tool === "eraser") {
+      const hit = hitTest(raw.x, raw.y);
+      if (!hit) return;
+      if (hit.type === "wall")      updatedWalls = walls.filter(x => x.id !== hit.id);
+      if (hit.type === "door")      updatedDoors = doors.filter(x => x.id !== hit.id);
+      if (hit.type === "window")    updatedWindows = windows.filter(x => x.id !== hit.id);
+      if (hit.type === "room")      updatedRooms = rooms.filter(x => x.id !== hit.id);
+      if (hit.type === "furniture") updatedFurniture = furniture.filter(x => x.id !== hit.id);
+      setWalls(updatedWalls); setDoors(updatedDoors); setWindows(updatedWindows); setRooms(updatedRooms); setFurniture(updatedFurniture);
+    } else if (tool === "wall") {
+      if (!drawStart) { setDrawStart(wp); return; }
+      else {
+        if (dist(drawStart.x, drawStart.y, wp.x, wp.y) > 4) {
+          updatedWalls = [...walls, { id: Date.now().toString(), startX: drawStart.x, startY: drawStart.y, endX: wp.x, endY: wp.y, thickness: 200, height: 3.0 }];
+          setWalls(updatedWalls);
+          setDrawStart({ x: wp.x, y: wp.y });
+        } else {
+          return;
+        }
       }
     } else if (tool === "door") {
-      const newDoor = {
-        id: Date.now().toString(),
-        x,
-        y,
-        width: 900,
-      };
-      setDoors([...doors, newDoor]);
+      updatedDoors = [...doors, { id: Date.now().toString(), x: wp.x, y: wp.y, width: 900, angle: 0 }];
+      setDoors(updatedDoors);
     } else if (tool === "window") {
-      const newWin = {
-        id: Date.now().toString(),
-        x,
-        y,
-        width: 1200,
-      };
-      setWindows([...windows, newWin]);
+      updatedWindows = [...windows, { id: Date.now().toString(), x: wp.x, y: wp.y, width: 1200, angle: 0 }];
+      setWindows(updatedWindows);
     } else if (tool === "room") {
-      const newRoom = {
-        id: Date.now().toString(),
-        name: `Room ${rooms.length + 1}`,
-        points: [
-          { x: x - 50, y: y - 50 },
-          { x: x + 50, y: y - 50 },
-          { x: x + 50, y: y + 50 },
-          { x: x - 50, y: y + 50 },
-        ],
-        areaSqm: 25,
-      };
-      setRooms([...rooms, newRoom]);
+      if (roomPoints.length >= 3 && dist(wp.x, wp.y, roomPoints[0].x, roomPoints[0].y) < 15) {
+        const color = ROOM_COLORS[rooms.length % ROOM_COLORS.length];
+        updatedRooms = [...rooms, { id: Date.now().toString(), name: `Room ${rooms.length + 1}`, points: roomPoints, areaSqm: polygonArea(roomPoints) * (SCALE_MM_PER_PX / 1000) ** 2, color }];
+        setRooms(updatedRooms);
+        setRoomPoints([]);
+      } else {
+        setRoomPoints(p => [...p, wp]);
+        return;
+      }
+    }
+
+    // Auto-save to backend on modification
+    try {
+      await saveDigitalPlan(id, { walls: updatedWalls, rooms: updatedRooms, doors: updatedDoors, windows: updatedWindows, furniture: updatedFurniture });
+    } catch (err) {
+      console.error("Auto-save failed", err);
     }
   };
 
-  const handleSavePlan = async () => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (panRef.current.active) {
+      setPan(p => ({ x: p.x + e.movementX, y: p.y + e.movementY }));
+      return;
+    }
+    const raw = getWorld(e);
+    const wp  = snapPoint(raw.x, raw.y);
+    setPreviewEnd(wp);
+
+    const dr = dragRef.current;
+    if (dr.type === "door") {
+      setDoors(p => p.map(d => d.id === dr.id ? { ...d, x: raw.x - dr.offsetX, y: raw.y - dr.offsetY } : d));
+    } else if (dr.type === "window") {
+      setWindows(p => p.map(w => w.id === dr.id ? { ...w, x: raw.x - dr.offsetX, y: raw.y - dr.offsetY } : w));
+    } else if (dr.type === "furniture") {
+      setFurniture(p => p.map(f => f.id === dr.id ? { ...f, x: raw.x - dr.offsetX, y: raw.y - dr.offsetY } : f));
+    }
+  };
+
+  const handleMouseUp = async () => {
+    panRef.current.active = false;
+    const dr = dragRef.current;
+    dragRef.current = { type: null, id: null, offsetX: 0, offsetY: 0 };
+    if (dr.id && id) {
+      try {
+        await saveDigitalPlan(id, { walls, rooms, doors, windows, furniture });
+      } catch (err) {
+        console.error("Auto-save after drag failed", err);
+      }
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const r = canvasRef.current!.getBoundingClientRect();
+    const cx = e.clientX - r.left, cy = e.clientY - r.top;
+    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    const nz = Math.min(4, Math.max(0.2, zoom * factor));
+    setPan(p => ({ x: cx - (cx - p.x) * (nz / zoom), y: cy - (cy - p.y) * (nz / zoom) }));
+    setZoom(nz);
+  };
+
+  const handleSave = async () => {
     if (!id) return;
     try {
       setSaving(true);
-      await saveDigitalPlan(id, { walls, rooms, doors, windows });
-      setMessage("Digital floor plan saved successfully.");
+      await saveDigitalPlan(id, { walls, rooms, doors, windows, furniture });
+      setMessage("Saved successfully.");
       setTimeout(() => setMessage(""), 3000);
-    } catch (error) {
-      console.error("Failed to save digital plan", error);
-      setMessage("Failed to save plan.");
-    } finally {
-      setSaving(false);
-    }
+    } catch { setMessage("Save failed."); }
+    finally { setSaving(false); }
   };
 
-  const handleClearPlan = () => {
-    if (!window.confirm("Clear all canvas elements?")) return;
-    setWalls([]);
-    setRooms([]);
-    setDoors([]);
-    setWindows([]);
+  const handleDownloadPlan = () => {
+    const planData = JSON.stringify({ walls, rooms, doors, windows, furniture }, null, 2);
+    const blob = new Blob([planData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `floor-plan-${id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64 text-gray-500 font-medium">
-        Loading 2D floor plan canvas...
-      </div>
-    );
-  }
+  const totalWallLength = walls.reduce((s, w) => s + pxToMm(wallLength(w)), 0);
+  const totalRoomArea = rooms.reduce((s, r) => s + polygonArea(r.points) * (SCALE_MM_PER_PX / 1000) ** 2, 0);
+
+  const selectedWall      = selectedType === "wall"      ? walls.find(x => x.id === selectedId) : null;
+  const selectedRoom      = selectedType === "room"      ? rooms.find(x => x.id === selectedId) : null;
+  const selectedFurniture = selectedType === "furniture" ? furniture.find(x => x.id === selectedId) : null;
+
+  const filteredCatalog = CATALOG_ITEMS.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) return <div className="flex items-center justify-center h-screen text-slate-500 font-medium">Loading floor plan...</div>;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">📐 2D Floor Plan CAD Workspace</h2>
-          <p className="text-gray-600">
-            Design structural walls, insert door/window openings, and map rooms to compute precise BOQ.
-          </p>
+    <div className="flex flex-col h-screen bg-slate-50 font-sans select-none">
+      
+      {/* Top Header Bar */}
+      <header className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-20 shadow-xs">
+        <div className="flex items-center gap-4">
+          <h1 className="text-base font-extrabold text-slate-900">📐 Floor Plan Studio</h1>
+          <span className="text-slate-300">|</span>
+          <span className="text-xs text-slate-500 font-medium">{walls.length} Walls · {rooms.length} Rooms · {furniture.length} Objects</span>
         </div>
         <div className="flex items-center gap-3">
-          {message && <span className="text-xs font-semibold text-green-600">{message}</span>}
-          <button
-            onClick={handleClearPlan}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 cursor-pointer transition-colors"
-          >
+          {message && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">{message}</span>}
+          <button onClick={async () => {
+            if (!window.confirm("Clear canvas?")) return;
+            setWalls([]); setRooms([]); setDoors([]); setWindows([]); setFurniture([]);
+            if (id) await saveDigitalPlan(id, { walls: [], rooms: [], doors: [], windows: [], furniture: [] });
+          }}
+            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer transition-colors">
             Clear Canvas
           </button>
-          <button
-            onClick={handleSavePlan}
-            disabled={saving}
-            className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 cursor-pointer disabled:opacity-50 transition-colors"
-          >
-            {saving ? "Saving Plan..." : "Save Plan"}
+          <button onClick={handleDownloadPlan}
+            className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors">
+            Download JSON
           </button>
-          <button
-            onClick={() => navigate(`/projects/${id}/boq`)}
-            className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 cursor-pointer transition-colors"
-          >
+          <button onClick={handleSave} disabled={saving}
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors disabled:opacity-50">
+            {saving ? "Saving..." : "Save Plan"}
+          </button>
+          <button onClick={() => navigate(`/projects/${id}/boq`)}
+            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors">
             View BOQ ➔
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex gap-4 mb-4">
-        <button
-          onClick={() => setTool("wall")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
-            tool === "wall" ? "bg-blue-600 text-white" : "bg-white text-gray-700 border border-gray-300"
-          }`}
-        >
-          Draw Wall
-        </button>
-        <button
-          onClick={() => setTool("door")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
-            tool === "door" ? "bg-blue-600 text-white" : "bg-white text-gray-700 border border-gray-300"
-          }`}
-        >
-          Add Door
-        </button>
-        <button
-          onClick={() => setTool("window")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
-            tool === "window" ? "bg-blue-600 text-white" : "bg-white text-gray-700 border border-gray-300"
-          }`}
-        >
-          Add Window
-        </button>
-        <button
-          onClick={() => setTool("room")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
-            tool === "room" ? "bg-blue-600 text-white" : "bg-white text-gray-700 border border-gray-300"
-          }`}
-        >
-          Add Room Zone
-        </button>
-      </div>
+      {/* Main Content Body */}
+      <div className="flex flex-1 overflow-hidden">
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex justify-center p-4">
-        <canvas
-          ref={canvasRef}
-          width={900}
-          height={550}
-          onMouseDown={handleCanvasMouseDown}
-          className="border border-gray-300 bg-white cursor-crosshair rounded-lg"
-        />
+        {/* Left Sidebar */}
+        <aside className="w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-xs">
+          <div className="flex border-b border-slate-200 bg-slate-50 p-1">
+            {(["objects", "layers", "settings"] as const).map(tab => (
+              <button key={tab} onClick={() => setActiveSidebarTab(tab)}
+                className={`flex-1 py-2 text-xs font-bold rounded-md capitalize cursor-pointer transition-all ${activeSidebarTab === tab ? "bg-white text-blue-600 shadow-xs" : "text-slate-500 hover:text-slate-800"}`}>
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {activeSidebarTab === "objects" && (
+            <div className="flex flex-col flex-1 p-4 overflow-y-auto gap-4">
+              <div className="relative">
+                <input type="text" placeholder="Search catalog..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-blue-500" />
+                <span className="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
+              </div>
+
+              {activeFurniture && (
+                <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-xs text-amber-800 flex justify-between items-center">
+                  <span>Placing: <b>{activeFurniture.name}</b></span>
+                  <button onClick={() => setActiveFurniture(null)} className="font-bold text-amber-600 hover:text-amber-900 cursor-pointer">✕</button>
+                </div>
+              )}
+
+              <div>
+                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">Structure Tools</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: "wall", label: "Wall", icon: "🧱" },
+                    { key: "door", label: "Door", icon: "🚪" },
+                    { key: "window", label: "Window", icon: "🪟" },
+                    { key: "room", label: "Room", icon: "⬡" },
+                  ].map(t => (
+                    <button key={t.key} onClick={() => { setTool(t.key as Tool); setActiveFurniture(null); }}
+                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 cursor-pointer transition-all ${tool === t.key ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs" : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"}`}>
+                      <span className="text-lg">{t.icon}</span>
+                      <span className="text-xs font-bold">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex-1">
+                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">Furniture & Fixtures</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {filteredCatalog.map(item => (
+                    <div key={item.name} onClick={() => { setActiveFurniture(item); setTool("furniture"); }}
+                      className={`p-3 rounded-xl border text-left flex flex-col gap-1.5 cursor-pointer transition-all bg-white hover:border-blue-400 hover:shadow-xs ${activeFurniture?.name === item.name ? "border-blue-500 bg-blue-50/50" : "border-slate-200"}`}>
+                      <div className="text-2xl">{item.icon}</div>
+                      <div className="text-xs font-bold text-slate-800">{item.name}</div>
+                      <div className="text-[10px] text-slate-400">{item.width} × {item.height} cm</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSidebarTab === "layers" && (
+            <div className="p-4 flex-1 overflow-y-auto space-y-1 text-xs">
+              <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">Canvas Elements</h4>
+              {walls.map((w, i) => (
+                <div key={w.id} onClick={() => { setSelectedId(w.id); setSelectedType("wall"); }}
+                  className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${selectedId === w.id ? "bg-blue-50 text-blue-700 font-bold" : "hover:bg-slate-50 text-slate-700"}`}>
+                  <span>🧱 Wall #{i + 1}</span>
+                  <span className="text-[10px] text-slate-400">{mmToLabel(pxToMm(wallLength(w)))}</span>
+                </div>
+              ))}
+              {rooms.map(r => (
+                <div key={r.id} onClick={() => { setSelectedId(r.id); setSelectedType("room"); }}
+                  className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${selectedId === r.id ? "bg-blue-50 text-blue-700 font-bold" : "hover:bg-slate-50 text-slate-700"}`}>
+                  <span>⬡ {r.name}</span>
+                  <span className="text-[10px] text-slate-400">{(polygonArea(r.points) * (SCALE_MM_PER_PX / 1e6)).toFixed(2)} m²</span>
+                </div>
+              ))}
+              {furniture.map(f => (
+                <div key={f.id} onClick={() => { setSelectedId(f.id); setSelectedType("furniture"); }}
+                  className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${selectedId === f.id ? "bg-blue-50 text-blue-700 font-bold" : "hover:bg-slate-50 text-slate-700"}`}>
+                  <span>{f.icon} {f.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeSidebarTab === "settings" && (
+            <div className="p-4 space-y-4 text-xs">
+              <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Preferences</h4>
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-slate-700 font-medium">Show Grid Lines</span>
+                <input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} className="rounded text-blue-600 focus:ring-0 w-4 h-4" />
+              </label>
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-slate-700 font-medium">Show Dimensions</span>
+                <input type="checkbox" checked={showDimensions} onChange={e => setShowDimensions(e.target.checked)} className="rounded text-blue-600 focus:ring-0 w-4 h-4" />
+              </label>
+            </div>
+          )}
+        </aside>
+
+        {/* Center Canvas Area (Properly centered & aligned) */}
+        <main ref={containerRef} className="flex-1 relative overflow-hidden bg-slate-100 flex items-center justify-center p-4">
+          <canvas
+            ref={canvasRef}
+            width={canvasSize.w}
+            height={canvasSize.h}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onWheel={handleWheel}
+            className="shadow-md rounded-2xl bg-white border border-slate-200"
+            style={{ cursor: tool === "select" ? "default" : tool === "eraser" ? "cell" : "crosshair" }}
+          />
+
+          {/* Floating Tool Bar */}
+          <div className="absolute top-6 bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-2xl p-1.5 flex items-center gap-1 z-10">
+            {[
+              { key: "select", icon: "↖", label: "Select" },
+              { key: "wall", icon: "🧱", label: "Wall" },
+              { key: "door", icon: "🚪", label: "Door" },
+              { key: "window", icon: "🪟", label: "Window" },
+              { key: "room", icon: "⬡", label: "Room" },
+              { key: "eraser", icon: "✕", label: "Eraser" },
+            ].map(t => (
+              <button key={t.key} onClick={() => { setTool(t.key as Tool); setActiveFurniture(null); }} title={t.label}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold cursor-pointer transition-all ${tool === t.key ? "bg-blue-600 text-white shadow-md" : "hover:bg-slate-100 text-slate-700"}`}>
+                {t.icon}
+              </button>
+            ))}
+          </div>
+        </main>
+
+        {/* Right Sidebar (Room Statistics & Properties) */}
+        <aside className="w-85 bg-white border-l border-slate-200 flex flex-col z-10 shadow-xs">
+          <div className="p-4 border-b border-slate-200 bg-slate-50">
+            <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Room Statistics</h3>
+          </div>
+          <div className="p-4 border-b border-slate-200 space-y-3 text-xs">
+            <div className="flex justify-between"><span className="text-slate-500 font-medium">Rooms</span><span className="font-bold text-slate-900">{rooms.length}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500 font-medium">Total Area</span><span className="font-bold text-blue-600">{totalRoomArea.toFixed(2)} m²</span></div>
+            <div className="flex justify-between"><span className="text-slate-500 font-medium">Total Perimeter</span><span className="font-bold text-slate-900">{(totalWallLength / 1000).toFixed(2)} m</span></div>
+            <div className="flex justify-between"><span className="text-slate-500 font-medium">Objects Placed</span><span className="font-bold text-slate-900">{furniture.length + doors.length + windows.length}</span></div>
+          </div>
+
+          <div className="p-4 flex-1 overflow-y-auto">
+            <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-4">Properties</h3>
+            {!selectedId ? (
+              <div className="text-center text-slate-400 text-xs py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200 px-4">
+                No element selected.<br />Click any item on canvas to edit.
+              </div>
+            ) : (
+              <div className="space-y-4 text-xs">
+                {selectedWall && (
+                  <>
+                    <div className="font-bold text-slate-800 text-sm">Wall Segment</div>
+                    <div>Length: <b className="text-blue-600">{mmToLabel(pxToMm(wallLength(selectedWall)))}</b></div>
+                    <button onClick={async () => {
+                      const updated = walls.filter(x => x.id !== selectedId);
+                      setWalls(updated); setSelectedId(null); setSelectedType(null);
+                      if (id) await saveDigitalPlan(id, { walls: updated, rooms, doors, windows, furniture });
+                    }}
+                      className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors cursor-pointer mt-4">
+                      Delete Wall
+                    </button>
+                  </>
+                )}
+                {selectedRoom && (
+                  <>
+                    <div className="font-bold text-slate-800 text-sm">Room Zone</div>
+                    <label className="block space-y-1">
+                      <span className="text-slate-500 font-medium">Room Name</span>
+                      <input type="text" value={selectedRoom.name} onChange={async e => {
+                        const name = e.target.value;
+                        const updated = rooms.map(r => r.id === selectedRoom.id ? { ...r, name } : r);
+                        setRooms(updated);
+                        if (id) await saveDigitalPlan(id, { walls, rooms: updated, doors, windows, furniture });
+                      }}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-blue-500 font-medium" />
+                    </label>
+                    <div>Area: <b>{(polygonArea(selectedRoom.points) * (SCALE_MM_PER_PX / 1e6)).toFixed(2)} m²</b></div>
+                    <button onClick={async () => {
+                      const updated = rooms.filter(x => x.id !== selectedId);
+                      setRooms(updated); setSelectedId(null); setSelectedType(null);
+                      if (id) await saveDigitalPlan(id, { walls, rooms: updated, doors, windows, furniture });
+                    }}
+                      className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors cursor-pointer mt-4">
+                      Delete Room
+                    </button>
+                  </>
+                )}
+                {selectedFurniture && (
+                  <>
+                    <div className="font-bold text-slate-800 text-sm">{selectedFurniture.icon} {selectedFurniture.name}</div>
+                    <div>Category: <b>{selectedFurniture.category}</b></div>
+                    <div>Dimensions: {selectedFurniture.width} × {selectedFurniture.height} cm</div>
+                    <button onClick={async () => {
+                      const updated = furniture.filter(x => x.id !== selectedId);
+                      setFurniture(updated); setSelectedId(null); setSelectedType(null);
+                      if (id) await saveDigitalPlan(id, { walls, rooms, doors, windows, furniture: updated });
+                    }}
+                      className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors cursor-pointer mt-4">
+                      Delete Item
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </aside>
+
       </div>
     </div>
   );

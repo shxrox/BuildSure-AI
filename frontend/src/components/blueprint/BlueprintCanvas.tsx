@@ -24,25 +24,34 @@ interface Door {
   rotation: number;
 }
 
+interface BlueprintWindow {
+  id: string;
+  x: number;
+  y: number;
+  rotation: number;
+  width: number;
+}
+
 interface Props {
-  walls: Wall[];
-  setWalls: React.Dispatch<React.SetStateAction<Wall[]>>;
-  rooms?: Room[];
-  setRooms?: React.Dispatch<React.SetStateAction<Room[]>>;
-  doors?: Door[];
-  setDoors?: React.Dispatch<React.SetStateAction<Door[]>>;
+  walls: any[];
+  setWalls: any;
+  rooms?: any[];
+  setRooms?: any;
+  doors?: any[];
+  setDoors?: any;
+  windows?: any[];
+  setWindows?: any;
   imageUrl?: string;
   svgData?: string;
 }
 
-// Grid & Snapping Constants
 const GRID_SIZE = 20;
 const CANVAS_SIZE = 2000; 
 
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
 
-// 100 pixels = 1 meter
 const calculateLength = (points: number[]) => {
+  if (!points || points.length < 4) return "0.00";
   const dx = points[2] - points[0];
   const dy = points[3] - points[1];
   const lengthPx = Math.sqrt(dx * dx + dy * dy);
@@ -50,6 +59,7 @@ const calculateLength = (points: number[]) => {
 };
 
 const getCenter = (points: number[]) => {
+  if (!points || points.length < 4) return { x: 0, y: 0 };
   return {
     x: (points[0] + points[2]) / 2,
     y: (points[1] + points[3]) / 2,
@@ -63,29 +73,34 @@ function BlueprintCanvas({
   rooms: propsRooms, 
   setRooms: propsSetRooms,
   doors: propsDoors,
-  setDoors: propsSetDoors 
+  setDoors: propsSetDoors,
+  windows: propsWindows,
+  setWindows: propsSetWindows
 }: Props) {
   const [image] = useImage(imageUrl || "");
   const stageRef = useRef<any>(null);
   
-  // Local fallback states for parent components that haven't implemented them yet
-  const [localRooms, setLocalRooms] = useState<Room[]>([]);
+  const [localRooms, setLocalRooms] = useState<any[]>([]);
   const actualRooms = propsRooms || localRooms;
   const actualSetRooms = propsSetRooms || setLocalRooms;
 
-  const [localDoors, setLocalDoors] = useState<Door[]>([]);
+  const [localDoors, setLocalDoors] = useState<any[]>([]);
   const actualDoors = propsDoors || localDoors;
   const actualSetDoors = propsSetDoors || setLocalDoors;
 
-  const [mode, setMode] = useState<'select' | 'wall' | 'room' | 'door'>('wall');
+  const [localWindows, setLocalWindows] = useState<any[]>([]);
+  const actualWindows = propsWindows || localWindows;
+  const actualSetWindows = propsSetWindows || setLocalWindows;
+
+  const [mode, setMode] = useState<'select' | 'wall' | 'room' | 'door' | 'window'>('wall');
   const [drawing, setDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<number[]>([]);
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
   const [selectedDoorId, setSelectedDoorId] = useState<string | null>(null);
+  const [selectedWindowId, setSelectedWindowId] = useState<string | null>(null);
 
-  // Generate grid lines
   const gridLines = [];
   for (let i = 0; i < CANVAS_SIZE / GRID_SIZE; i++) {
     gridLines.push(
@@ -98,34 +113,42 @@ function BlueprintCanvas({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Deletion logic
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedWallId) {
-          setWalls((prev) => prev.filter((w) => w.id !== selectedWallId));
+          setWalls((prev: any[]) => prev.filter((w) => w.id !== selectedWallId));
           setSelectedWallId(null);
         }
         if (selectedDoorId) {
-          actualSetDoors((prev) => prev.filter((d) => d.id !== selectedDoorId));
+          actualSetDoors((prev: any[]) => prev.filter((d) => d.id !== selectedDoorId));
           setSelectedDoorId(null);
+        }
+        if (selectedWindowId) {
+          actualSetWindows((prev: any[]) => prev.filter((w) => w.id !== selectedWindowId));
+          setSelectedWindowId(null);
         }
       }
       
-      // Rotation logic for doors
-      if ((e.key === "r" || e.key === "R") && selectedDoorId) {
-        actualSetDoors((prev) =>
-          prev.map((d) => (d.id === selectedDoorId ? { ...d, rotation: (d.rotation + 90) % 360 } : d))
-        );
+      if (e.key === "r" || e.key === "R") {
+        if (selectedDoorId) {
+          actualSetDoors((prev: any[]) =>
+            prev.map((d) => (d.id === selectedDoorId ? { ...d, rotation: (d.rotation + 90) % 360 } : d))
+          );
+        }
+        if (selectedWindowId) {
+          actualSetWindows((prev: any[]) =>
+            prev.map((w) => (w.id === selectedWindowId ? { ...w, rotation: (w.rotation + 90) % 360 } : w))
+          );
+        }
       }
     };
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedWallId, selectedDoorId, setWalls, actualSetDoors]);
+  }, [selectedWallId, selectedDoorId, selectedWindowId, setWalls, actualSetDoors, actualSetWindows]);
 
   const handleMouseDown = (e: any) => {
-    const isInteractiveElement = e.target.getClassName() === "Line" || e.target.hasName("doorRect");
+    const isInteractiveElement = e.target.getClassName() === "Line" || e.target.hasName("doorRect") || e.target.hasName("windowRect");
     
-    // Prevent drawing actions if clicking on interactive elements while in select mode
     if (isInteractiveElement && e.target.name() !== "gridLine" && mode === 'select') {
       return;
     }
@@ -135,6 +158,7 @@ function BlueprintCanvas({
     if (clickedOnEmpty) {
       setSelectedWallId(null);
       setSelectedDoorId(null);
+      setSelectedWindowId(null);
       
       if (mode === 'select') return;
 
@@ -156,7 +180,18 @@ function BlueprintCanvas({
         };
         actualSetDoors([...actualDoors, newDoor]);
         setSelectedDoorId(newDoor.id);
-        setMode('select'); // Switch to select mode automatically so they can adjust/rotate it
+        setMode('select');
+      } else if (mode === 'window') {
+        const newWindow: BlueprintWindow = {
+          id: crypto.randomUUID(),
+          x: snappedX,
+          y: snappedY,
+          rotation: 0,
+          width: 120
+        };
+        actualSetWindows([...actualWindows, newWindow]);
+        setSelectedWindowId(newWindow.id);
+        setMode('select');
       }
     }
   };
@@ -224,10 +259,15 @@ function BlueprintCanvas({
     }
   };
 
+  const selectElement = (type: 'wall' | 'door' | 'window', id: string) => {
+    if (mode !== 'select') return;
+    setSelectedWallId(type === 'wall' ? id : null);
+    setSelectedDoorId(type === 'door' ? id : null);
+    setSelectedWindowId(type === 'window' ? id : null);
+  };
+
   return (
     <div className="relative w-full h-full bg-white overflow-hidden rounded-md border border-gray-200">
-      
-      {/* Tools Menu Overlay */}
       <div className="absolute top-4 left-4 z-10 flex gap-2 bg-white p-2 rounded-lg shadow-md border border-gray-200">
         <button 
           className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
@@ -253,10 +293,15 @@ function BlueprintCanvas({
         >
           Add Door
         </button>
+        <button 
+          className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'window' ? 'bg-teal-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          onClick={() => setMode('window')}
+        >
+          Add Window
+        </button>
       </div>
       
-      {/* Instructions Overlay for Selected Tools */}
-      {selectedDoorId && mode === 'select' && (
+      {(selectedDoorId || selectedWindowId) && mode === 'select' && (
         <div className="absolute bottom-4 left-4 z-10 bg-gray-800 text-white px-4 py-2 rounded-md text-sm shadow-md">
           Press <strong>R</strong> to rotate | Press <strong>Delete</strong> to remove
         </div>
@@ -275,35 +320,79 @@ function BlueprintCanvas({
 
           {image && <KonvaImage image={image} name="backgroundImage" />}
 
-          {/* Render Rooms */}
-          {actualRooms.map((room) => (
-            <Group key={room.id}>
-              <Rect
-                name="roomRect"
-                x={room.x}
-                y={room.y}
-                width={room.width}
-                height={room.height}
-                fill="#bfdbfe"
-                opacity={0.4}
-              />
-              <Text
-                name="roomLabel"
-                x={room.x + room.width / 2 - 40}
-                y={room.y + room.height / 2 - 10}
-                text={`${room.name}\n${room.area} m²`}
-                fontSize={14}
-                fontFamily="sans-serif"
-                fill="#1e3a8a"
-                align="center"
-              />
-            </Group>
-          ))}
+          {actualRooms.map((room) => {
+            if (!room) return null;
+            return (
+              <Group key={room.id}>
+                <Rect
+                  name="roomRect"
+                  x={room.x}
+                  y={room.y}
+                  width={room.width}
+                  height={room.height}
+                  fill="#bfdbfe"
+                  opacity={0.4}
+                />
+                <Text
+                  name="roomLabel"
+                  x={room.x + (room.width || 0) / 2 - 40}
+                  y={room.y + (room.height || 0) / 2 - 10}
+                  text={`${room.name}\n${room.area} m²`}
+                  fontSize={14}
+                  fontFamily="sans-serif"
+                  fill="#1e3a8a"
+                  align="center"
+                />
+              </Group>
+            );
+          })}
 
-          {/* Render Doors */}
+          {actualWindows.map((windowObj) => {
+            if (!windowObj) return null;
+            const isSelected = selectedWindowId === windowObj.id;
+            return (
+              <Group
+                key={windowObj.id}
+                x={windowObj.x}
+                y={windowObj.y}
+                rotation={windowObj.rotation}
+                draggable={mode === 'select'}
+                onClick={() => selectElement('window', windowObj.id)}
+                onTap={() => selectElement('window', windowObj.id)}
+                onDragStart={() => selectElement('window', windowObj.id)}
+                onDragEnd={(e) => {
+                  const node = e.target;
+                  const dx = snapToGrid(node.x());
+                  const dy = snapToGrid(node.y());
+                  node.position({ x: dx, y: dy });
+                  actualSetWindows((prev: any[]) =>
+                    prev.map((w) => (w.id === windowObj.id ? { ...w, x: dx, y: dy } : w))
+                  );
+                }}
+              >
+                <Rect
+                  name="windowRect"
+                  width={windowObj.width || 120}
+                  height={12}
+                  fill={isSelected ? "#0d9488" : "#14b8a6"} 
+                  stroke={isSelected ? "#0f766e" : "#0d9488"}
+                  strokeWidth={2}
+                  hitStrokeWidth={15}
+                  offsetX={(windowObj.width || 120) / 2}
+                  offsetY={6}
+                />
+                <Line
+                  points={[-(windowObj.width || 120) / 2, 0, (windowObj.width || 120) / 2, 0]}
+                  stroke="#cffafe" 
+                  strokeWidth={4}
+                />
+              </Group>
+            );
+          })}
+
           {actualDoors.map((door) => {
+            if (!door) return null;
             const isSelected = selectedDoorId === door.id;
-            // 80px = 0.8m standard door size
             return (
               <Group
                 key={door.id}
@@ -311,48 +400,30 @@ function BlueprintCanvas({
                 y={door.y}
                 rotation={door.rotation}
                 draggable={mode === 'select'}
-                onClick={() => {
-                  if (mode === 'select') {
-                    setSelectedDoorId(door.id);
-                    setSelectedWallId(null);
-                  }
-                }}
-                onTap={() => {
-                  if (mode === 'select') {
-                    setSelectedDoorId(door.id);
-                    setSelectedWallId(null);
-                  }
-                }}
-                onDragStart={() => {
-                  if (mode === 'select') {
-                    setSelectedDoorId(door.id);
-                    setSelectedWallId(null);
-                  }
-                }}
+                onClick={() => selectElement('door', door.id)}
+                onTap={() => selectElement('door', door.id)}
+                onDragStart={() => selectElement('door', door.id)}
                 onDragEnd={(e) => {
                   const node = e.target;
                   const dx = snapToGrid(node.x());
                   const dy = snapToGrid(node.y());
                   node.position({ x: dx, y: dy });
-                  
-                  actualSetDoors((prev) =>
+                  actualSetDoors((prev: any[]) =>
                     prev.map((d) => (d.id === door.id ? { ...d, x: dx, y: dy } : d))
                   );
                 }}
               >
-                {/* Door Opening/Slab */}
                 <Rect
                   name="doorRect"
                   width={80}
                   height={10}
-                  fill={isSelected ? "#d97706" : "#f59e0b"} // Tailwind amber-600/500
+                  fill={isSelected ? "#d97706" : "#f59e0b"}
                   stroke={isSelected ? "#b45309" : "#d97706"}
                   strokeWidth={2}
-                  hitStrokeWidth={10}
-                  offsetX={40} // Center origin for easy rotation
+                  hitStrokeWidth={15}
+                  offsetX={40}
                   offsetY={5}
                 />
-                {/* Door Swing Arc Visual */}
                 <Arc
                   x={-40}
                   y={-5}
@@ -367,7 +438,6 @@ function BlueprintCanvas({
             );
           })}
 
-          {/* Live Drawing Preview for Room */}
           {currentRect && (
             <Rect
               x={currentRect.w < 0 ? currentRect.x + currentRect.w : currentRect.x}
@@ -382,8 +452,9 @@ function BlueprintCanvas({
             />
           )}
 
-          {/* Render Walls */}
           {walls.map((wall: Wall) => {
+            if (!wall || !wall.points || wall.points.length < 4) return null;
+            
             const center = getCenter(wall.points);
             const lengthMeters = calculateLength(wall.points);
             const isSelected = selectedWallId === wall.id;
@@ -397,24 +468,9 @@ function BlueprintCanvas({
                   lineCap="round"
                   hitStrokeWidth={20}
                   draggable={mode === 'select'}
-                  onClick={() => {
-                    if (mode === 'select') {
-                      setSelectedWallId(wall.id);
-                      setSelectedDoorId(null);
-                    }
-                  }}
-                  onTap={() => {
-                    if (mode === 'select') {
-                      setSelectedWallId(wall.id);
-                      setSelectedDoorId(null);
-                    }
-                  }}
-                  onDragStart={() => {
-                    if (mode === 'select') {
-                      setSelectedWallId(wall.id);
-                      setSelectedDoorId(null);
-                    }
-                  }}
+                  onClick={() => selectElement('wall', wall.id)}
+                  onTap={() => selectElement('wall', wall.id)}
+                  onDragStart={() => selectElement('wall', wall.id)}
                   onDragEnd={(e) => {
                     const node = e.target;
                     const dx = snapToGrid(node.x());
@@ -427,7 +483,7 @@ function BlueprintCanvas({
                       wall.points[2] + dx, wall.points[3] + dy,
                     ];
                     
-                    setWalls((prevWalls) =>
+                    setWalls((prevWalls: any[]) =>
                       prevWalls.map((w: Wall) => w.id === wall.id ? { ...w, points: updatedPoints } : w)
                     );
                   }}
@@ -449,21 +505,18 @@ function BlueprintCanvas({
             );
           })}
 
-          {/* Live Drawing Preview for Wall */}
-          {drawing && mode === 'wall' && (
+          {drawing && mode === 'wall' && currentLine && currentLine.length === 4 && (
             <Group>
               <Line points={currentLine} stroke="#ef4444" strokeWidth={5} lineCap="round" />
-              {currentLine.length === 4 && (
-                <Text
-                  x={getCenter(currentLine).x + 15}
-                  y={getCenter(currentLine).y + 15}
-                  text={`${calculateLength(currentLine)} m`}
-                  fontSize={14}
-                  fontFamily="sans-serif"
-                  fill="#ef4444"
-                  padding={4}
-                />
-              )}
+              <Text
+                x={getCenter(currentLine).x + 15}
+                y={getCenter(currentLine).y + 15}
+                text={`${calculateLength(currentLine)} m`}
+                fontSize={14}
+                fontFamily="sans-serif"
+                fill="#ef4444"
+                padding={4}
+              />
             </Group>
           )}
         </Layer>

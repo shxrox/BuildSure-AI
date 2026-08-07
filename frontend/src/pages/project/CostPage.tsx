@@ -169,7 +169,7 @@ function CostPage() {
               <td className="px-6 py-4 text-blue-600">Rs. {breakdown.totalMaterialCost.toLocaleString("en-LK")}</td>
             </tr>
             <tr>
-              <td className="px-6 py-4 font-medium text-gray-900">Estimated Labor & Finishing (Per Sqft)</td>
+              <td className="px-6 py-4 font-medium text-gray-900">Estimated Labor & Finishing</td>
               <td className="px-6 py-4">Rs. {breakdown.estimatedLaborCost.toLocaleString("en-LK")}</td>
             </tr>
             <tr className="bg-blue-50 font-bold text-base">

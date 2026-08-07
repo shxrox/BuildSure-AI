@@ -15,7 +15,7 @@ function CollaborationPage() {
       if (!id) return;
       try {
         setLoading(true);
-        const projData = await getProjectById(id);
+        const projData: any = await getProjectById(id);
         if (projData) {
           setProject(projData);
           if (projData.collaborators && Array.isArray(projData.collaborators)) {

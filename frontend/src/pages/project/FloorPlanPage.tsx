@@ -53,7 +53,7 @@ interface DragState {
   offsetY: number;
 }
 
-type Tool = "select" | "wall" | "door" | "window" | "room" | "eraser" | "measure" | "furniture";
+type Tool = "select" | "pan" | "wall" | "door" | "window" | "room" | "eraser" | "measure" | "furniture";
 
 const GRID_SIZE = 20;
 const SNAP_DIST = 12;
@@ -161,7 +161,7 @@ function FloorPlanPage() {
     const ro = new ResizeObserver(entries => {
       for (const e of entries) {
         const { width, height } = e.contentRect;
-        setCanvasSize({ w: Math.max(600, width - 2), h: Math.max(400, height - 2) });
+        setCanvasSize({ w: Math.max(600, width - 40), h: Math.max(400, height - 40) });
       }
     });
     ro.observe(el);
@@ -219,12 +219,12 @@ function FloorPlanPage() {
     ctx.translate(pan.x, pan.y);
     ctx.scale(zoom, zoom);
 
-    if (showGrid) {
-      const w0 = -pan.x / zoom, h0 = -pan.y / zoom;
-      const wW = canvas.width / zoom, wH = canvas.height / zoom;
-      const startX = Math.floor(w0 / GRID_SIZE) * GRID_SIZE;
-      const startY = Math.floor(h0 / GRID_SIZE) * GRID_SIZE;
+    const w0 = -pan.x / zoom, h0 = -pan.y / zoom;
+    const wW = canvas.width / zoom, wH = canvas.height / zoom;
+    const startX = Math.floor(w0 / GRID_SIZE) * GRID_SIZE;
+    const startY = Math.floor(h0 / GRID_SIZE) * GRID_SIZE;
 
+    if (showGrid) {
       ctx.strokeStyle = "#f1f5f9";
       ctx.lineWidth = 0.5 / zoom;
       for (let gx = startX; gx < w0 + wW; gx += GRID_SIZE) {
@@ -321,7 +321,6 @@ function FloorPlanPage() {
       ctx.save();
       ctx.translate(door.x, door.y);
       ctx.rotate(door.angle);
-
       ctx.fillStyle = sel ? "#bfdbfe" : "#dbeafe";
       ctx.strokeStyle = sel ? "#2563eb" : "#3b82f6";
       ctx.lineWidth = (sel ? 2 : 1.5) / zoom;
@@ -329,7 +328,6 @@ function FloorPlanPage() {
       ctx.rect(-18, -3, 36, 6);
       ctx.fill();
       ctx.stroke();
-
       ctx.restore();
     });
 
@@ -338,7 +336,6 @@ function FloorPlanPage() {
       ctx.save();
       ctx.translate(win.x, win.y);
       ctx.rotate(win.angle);
-
       ctx.fillStyle = sel ? "#a7f3d0" : "#d1fae5";
       ctx.strokeStyle = sel ? "#059669" : "#10b981";
       ctx.lineWidth = (sel ? 2 : 1.5) / zoom;
@@ -346,7 +343,6 @@ function FloorPlanPage() {
       ctx.rect(-20, -4, 40, 8);
       ctx.fill();
       ctx.stroke();
-
       ctx.restore();
     });
 
@@ -355,10 +351,8 @@ function FloorPlanPage() {
       ctx.save();
       ctx.translate(item.x, item.y);
       ctx.rotate(item.rotation);
-
       const fw = item.width / 10;
       const fh = item.height / 10;
-
       ctx.fillStyle = sel ? "#fef3c7" : "#f8fafc";
       ctx.strokeStyle = sel ? "#f59e0b" : "#cbd5e1";
       ctx.lineWidth = (sel ? 2 : 1) / zoom;
@@ -366,16 +360,49 @@ function FloorPlanPage() {
       ctx.roundRect(-fw / 2, -fh / 2, fw, fh, 6);
       ctx.fill();
       ctx.stroke();
-
       ctx.font = `${16 / zoom}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(item.icon, 0, 0);
-
       ctx.restore();
     });
 
     ctx.restore();
+
+    // Rulers Around Canvas
+    if (showGrid) {
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(25, 0, canvas.width, 25);
+      ctx.fillRect(0, 25, 25, canvas.height);
+      ctx.fillStyle = "#cbd5e1";
+      ctx.fillRect(0, 24, canvas.width, 1);
+      ctx.fillRect(24, 0, 1, canvas.height);
+
+      ctx.fillStyle = "#64748b";
+      ctx.font = "9px Inter, sans-serif";
+      ctx.textAlign = "center";
+
+      for (let gx = startX; gx < w0 + wW; gx += GRID_SIZE * 5) {
+        const sx = gx * zoom + pan.x;
+        if (sx < 30 || sx > canvas.width) continue;
+        ctx.fillRect(sx, 18, 1, 7);
+        ctx.fillText(`${Math.round(pxToMm(gx) / 100) / 10}m`, sx, 13);
+      }
+
+      ctx.textAlign = "right";
+      for (let gy = startY; gy < h0 + wH; gy += GRID_SIZE * 5) {
+        const sy = gy * zoom + pan.y;
+        if (sy < 30 || sy > canvas.height) continue;
+        ctx.fillRect(18, sy, 7, 1);
+        ctx.save();
+        ctx.translate(13, sy + 3);
+        ctx.fillText(`${Math.round(pxToMm(gy) / 100) / 10}m`, 0, 0);
+        ctx.restore();
+      }
+
+      ctx.fillStyle = "#f1f5f9";
+      ctx.fillRect(0, 0, 25, 25);
+    }
   }, [walls, doors, windows, rooms, furniture, drawStart, previewEnd, tool, zoom, pan, canvasSize, selectedId, selectedType, showGrid, showDimensions]);
 
   const hitTest = useCallback((wx: number, wy: number) => {
@@ -420,7 +447,7 @@ function FloorPlanPage() {
     const canvas = canvasRef.current;
     if (!canvas || !id) return;
 
-    if (e.button === 1 || (e.shiftKey && tool === "select")) {
+    if (tool === "pan" || e.button === 1 || e.shiftKey) {
       panRef.current = { active: true, lastX: e.clientX, lastY: e.clientY };
       return;
     }
@@ -501,7 +528,6 @@ function FloorPlanPage() {
       }
     }
 
-    // Auto-save to backend on modification
     try {
       await saveDigitalPlan(id, { walls: updatedWalls, rooms: updatedRooms, doors: updatedDoors, windows: updatedWindows, furniture: updatedFurniture });
     } catch (err) {
@@ -510,7 +536,7 @@ function FloorPlanPage() {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (panRef.current.active) {
+    if (tool === "pan" || panRef.current.active) {
       setPan(p => ({ x: p.x + e.movementX, y: p.y + e.movementY }));
       return;
     }
@@ -726,7 +752,7 @@ function FloorPlanPage() {
           )}
         </aside>
 
-        {/* Center Canvas Area (Properly centered & aligned) */}
+        {/* Center Canvas Area with Hand Tool & Rulers */}
         <main ref={containerRef} className="flex-1 relative overflow-hidden bg-slate-100 flex items-center justify-center p-4">
           <canvas
             ref={canvasRef}
@@ -738,13 +764,14 @@ function FloorPlanPage() {
             onMouseLeave={handleMouseUp}
             onWheel={handleWheel}
             className="shadow-md rounded-2xl bg-white border border-slate-200"
-            style={{ cursor: tool === "select" ? "default" : tool === "eraser" ? "cell" : "crosshair" }}
+            style={{ cursor: tool === "pan" ? "grab" : tool === "select" ? "default" : tool === "eraser" ? "cell" : "crosshair" }}
           />
 
-          {/* Floating Tool Bar */}
+          {/* Floating Tool Bar including Pan Hand Icon */}
           <div className="absolute top-6 bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-2xl p-1.5 flex items-center gap-1 z-10">
             {[
               { key: "select", icon: "↖", label: "Select" },
+              { key: "pan", icon: "✋", label: "Pan / Hand" },
               { key: "wall", icon: "🧱", label: "Wall" },
               { key: "door", icon: "🚪", label: "Door" },
               { key: "window", icon: "🪟", label: "Window" },

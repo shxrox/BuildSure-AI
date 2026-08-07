@@ -1,39 +1,43 @@
-// Average Sri Lankan Market Unit Prices (LKR)
-const SRI_LANKAN_PRICES = {
-  BRICK_UNIT: 35,          // Per clay brick / cement block
-  CEMENT_BAG_50KG: 2250,   // Per 50kg bag (e.g., Sanstha / Tokyo Super)
-  SAND_CUBE: 28000,        // Per cubic meter / cube of sand
-  TILE_SQM: 2500,          // Average floor tiles per m² including adhesive/grout
-  LABOR_AND_FINISHING_SQFT: 3500 // Estimated labor & overhead per sqft
-};
-
-export const calculateSriLankanCost = (boqMaterials: {
+export interface MaterialQuantities {
   bricks: number;
   cementBags: number;
   sandCubes: number;
   floorTiles: number;
   doorsCount: number;
   windowsCount: number;
-}, totalFloorAreaSqm: number) => {
+}
+
+export const calculateSriLankanCost = (
+  materials: MaterialQuantities,
+  totalFloorAreaSqm: number
+) => {
+  // Current Sri Lankan Market Rates (LKR)
+  const RATE_BRICK_UNIT = 35; // Per clay brick
+  const RATE_CEMENT_BAG = 3200; // Per 50kg bag (e.g., Tokyo Cement / INSEE)
+  const RATE_SAND_CUBE = 38000; // Per cube (m³) of river/construction sand
+  const RATE_TILE_SQM = 4500; // Average ceramic/porcelain floor tile per sqm including adhesive/grout
   
-  const brickCost = boqMaterials.bricks * SRI_LANKAN_PRICES.BRICK_UNIT;
-  const cementCost = boqMaterials.cementBags * SRI_LANKAN_PRICES.CEMENT_BAG_50KG;
-  const sandCost = boqMaterials.sandCubes * SRI_LANKAN_PRICES.SAND_CUBE;
-  const tileCost = boqMaterials.floorTiles * SRI_LANKAN_PRICES.TILE_SQM;
+  const RATE_DOOR_ALLOWANCE = 45000; // Average wooden/aluminum door with frame
+  const RATE_WINDOW_ALLOWANCE = 35000; // Average aluminum glazed window
   
-  // Standard allowances for doors (approx Rs. 35,000 each) and windows (approx Rs. 25,000 each)
-  const openingsCost = (boqMaterials.doorsCount * 35000) + (boqMaterials.windowsCount * 25000);
+  // Standard Sri Lankan labor & finishing rate per square meter (approx Rs. 45,000 to Rs. 65,000 per sqm for mid-range)
+  const RATE_LABOR_FINISHING_SQM = 55000;
+
+  const brickCost = materials.bricks * RATE_BRICK_UNIT;
+  const cementCost = materials.cementBags * RATE_CEMENT_BAG;
+  const sandCost = materials.sandCubes * RATE_SAND_CUBE;
+  const tileCost = materials.floorTiles * RATE_TILE_SQM;
+
+  const openingsCost =
+    (materials.doorsCount * RATE_DOOR_ALLOWANCE) +
+    (materials.windowsCount * RATE_WINDOW_ALLOWANCE);
 
   const totalMaterialCost = brickCost + cementCost + sandCost + tileCost + openingsCost;
-
-  // Convert m² to sqft for standard Sri Lankan labor calculation (1 m² = 10.764 sqft)
-  const totalFloorAreaSqft = totalFloorAreaSqm * 10.764;
-  const estimatedLaborCost = totalFloorAreaSqft * SRI_LANKAN_PRICES.LABOR_AND_FINISHING_SQFT;
-
+  const estimatedLaborCost = totalFloorAreaSqm * RATE_LABOR_FINISHING_SQM;
+  
   const grandTotalCost = totalMaterialCost + estimatedLaborCost;
 
   return {
-    unitPrices: SRI_LANKAN_PRICES,
     breakdown: {
       brickCost,
       cementCost,
@@ -42,7 +46,14 @@ export const calculateSriLankanCost = (boqMaterials: {
       openingsCost,
       totalMaterialCost,
       estimatedLaborCost,
-      grandTotalCost
-    }
+      grandTotalCost,
+    },
+    ratesUsed: {
+      brickUnit: RATE_BRICK_UNIT,
+      cementBag: RATE_CEMENT_BAG,
+      sandCube: RATE_SAND_CUBE,
+      tileSqm: RATE_TILE_SQM,
+      laborSqm: RATE_LABOR_FINISHING_SQM,
+    },
   };
 };

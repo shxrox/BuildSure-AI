@@ -57,7 +57,11 @@ async (): Promise<Project[]> => {
 
 
 
-
+// Add or update this export in your project.service.ts
+export const updateProject = async (id: string, updateData: any) => {
+  const response = await api.patch(`/projects/${id}`, updateData);
+  return response.data;
+};
 
 
 export const getProjectById =

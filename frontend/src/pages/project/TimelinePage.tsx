@@ -23,9 +23,15 @@ function TimelinePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [milestones, setMilestones] = useState<Milestone[]>(DEFAULT_MILESTONES);
   const [completedMilestones, setCompletedMilestones] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newWeeks, setNewWeeks] = useState(2);
 
   useEffect(() => {
     const fetchTimeline = async () => {
@@ -35,6 +41,9 @@ function TimelinePage() {
         const proj = await getProjectById(id);
         if (proj && proj.completedMilestones) {
           setCompletedMilestones(proj.completedMilestones);
+        }
+        if (proj && proj.customMilestones && Array.isArray(proj.customMilestones)) {
+          setMilestones([...DEFAULT_MILESTONES, ...proj.customMilestones]);
         }
       } catch (error) {
         console.error("Failed to load project timeline", error);
@@ -59,8 +68,8 @@ function TimelinePage() {
     try {
       setSaving(true);
       await updateProject(id, { completedMilestones: updated });
-      setMessage("Milestone updated.");
-      setTimeout(() => setMessage(""), 3000);
+      setMessage("Progress updated.");
+      setTimeout(() => setMessage(""), 2000);
     } catch (error) {
       console.error("Failed to update milestone", error);
     } finally {
@@ -68,90 +77,184 @@ function TimelinePage() {
     }
   };
 
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !newTitle.trim()) return;
+
+    const newTask: Milestone = {
+      id: Date.now().toString(),
+      title: newTitle.trim(),
+      description: newDesc.trim() || "Custom project task.",
+      estimatedWeeks: Number(newWeeks) || 1,
+    };
+
+    const updatedMilestonesList = [...milestones, newTask];
+    setMilestones(updatedMilestonesList);
+
+    const customOnly = updatedMilestonesList.slice(DEFAULT_MILESTONES.length);
+
+    try {
+      setSaving(true);
+      await updateProject(id, { customMilestones: customOnly });
+      setNewTitle("");
+      setNewDesc("");
+      setNewWeeks(2);
+      setIsAdding(false);
+      setMessage("Task added successfully.");
+      setTimeout(() => setMessage(""), 2000);
+    } catch (error) {
+      console.error("Failed to add custom task", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500 font-medium">
-        Loading construction schedule & timeline...
+      <div className="flex items-center justify-center h-64 text-slate-400 font-medium text-xs">
+        Loading construction schedule & checklist...
       </div>
     );
   }
 
   const completedCount = completedMilestones.length;
-  const totalCount = DEFAULT_MILESTONES.length;
-  const progressPercentage = Math.round((completedCount / totalCount) * 100);
+  const totalCount = milestones.length;
+  const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto font-sans">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-955">📅 Construction Timeline & Milestones</h2>
-          <p className="text-gray-600">
-            Track phase-by-phase construction progress from foundation to final homeowner handover.
+          <h2 className="text-xl font-bold text-slate-900">📅 Construction Action Checklist</h2>
+          <p className="text-slate-500 text-xs mt-0.5">
+            Check off items as phases are executed or add custom tasks to track overall workflow.
           </p>
         </div>
-        <button
-          onClick={() => navigate(`/projects/${id}/sharing`)}
-          className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 cursor-pointer transition-colors"
-        >
-          View Sharing ➔
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 cursor-pointer transition-colors shadow-xs"
+          >
+            {isAdding ? "Cancel" : "+ Add Task"}
+          </button>
+          <button
+            onClick={() => navigate(`/projects/${id}/sharing`)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 cursor-pointer transition-colors shadow-xs"
+          >
+            View Sharing ➔
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-semibold text-gray-700">Overall Project Completion</span>
-          <span className="text-sm font-bold text-blue-600">{progressPercentage}%</span>
+      {isAdding && (
+        <div className="mb-6 bg-white p-6 rounded-xl shadow-xs border border-slate-200">
+          <h3 className="text-sm font-bold text-slate-800 mb-4">Add Custom Construction Task</h3>
+          <form onSubmit={handleAddTask} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Task Title</label>
+              <input
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="e.g. Boundary wall construction"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-blue-500"
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+              <input
+                type="text"
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="Brief description of work"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Estimated Duration (Weeks)</label>
+              <input
+                type="number"
+                value={newWeeks}
+                onChange={(e) => setNewWeeks(Number(e.target.value))}
+                min={1}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsAdding(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors"
+              >
+                Save Task
+              </button>
+            </div>
+          </form>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+      )}
+
+      <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200 mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Overall Checklist Progress</span>
+          <span className="text-xs font-extrabold text-blue-600">{progressPercentage}%</span>
+        </div>
+        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
           <div
-            className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+            className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          {completedCount} of {totalCount} construction milestones completed. {message && <span className="text-green-600 font-semibold ml-2">{message}</span>}
+        <p className="text-[11px] text-slate-400 mt-2 flex justify-between items-center">
+          <span>{completedCount} of {totalCount} tasks completed</span>
+          {message && <span className="text-emerald-600 font-bold">{message}</span>}
+          {saving && <span className="text-blue-500 font-medium">Saving...</span>}
         </p>
       </div>
 
-      <div className="space-y-4">
-        {DEFAULT_MILESTONES.map((item, index) => {
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+        {milestones.map((item, index) => {
           const isDone = completedMilestones.includes(item.id);
           return (
             <div
               key={item.id}
               onClick={() => toggleMilestone(item.id)}
-              className={`p-5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                isDone ? "bg-green-50/50 border-green-200 shadow-sm" : "bg-white border-gray-200 hover:border-gray-300"
+              className={`p-4 flex items-center gap-4 cursor-pointer transition-colors ${
+                isDone ? "bg-slate-50/60" : "hover:bg-slate-50/40 bg-white"
               }`}
             >
-              <div className="flex items-start gap-4">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                    isDone ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600 border border-gray-300"
-                  }`}
-                >
-                  {index + 1}
-                </div>
-                <div>
-                  <h3 className={`font-semibold text-base ${isDone ? "text-green-900 line-through" : "text-gray-900"}`}>
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
-                  <span className="inline-block mt-2 px-2.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[11px] font-medium">
-                    Estimated Duration: {item.estimatedWeeks} weeks
+              <input
+                type="checkbox"
+                checked={isDone}
+                onChange={() => {}}
+                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-slate-400">Task #{index + 1}</span>
+                  <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
+                    {item.estimatedWeeks} weeks est.
                   </span>
                 </div>
+                <h3 className={`text-xs font-bold mt-0.5 ${isDone ? "text-slate-400 line-through" : "text-slate-800"}`}>
+                  {item.title}
+                </h3>
+                <p className={`text-[11px] mt-0.5 ${isDone ? "text-slate-400" : "text-slate-500"}`}>
+                  {item.description}
+                </p>
               </div>
-
-              <div>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    isDone ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {isDone ? "Completed ✓" : "Pending"}
-                </span>
-              </div>
+              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md ${
+                isDone ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+              }`}>
+                {isDone ? "Done" : "To Do"}
+              </span>
             </div>
           );
         })}

@@ -14,6 +14,14 @@ export interface IProject extends Document {
     | "IN_PROGRESS"
     | "COMPLETED";
 
+  completedMilestones?: string[];
+  customMilestones?: {
+    id: string;
+    title: string;
+    description: string;
+    estimatedWeeks: number;
+  }[];
+
   blueprint?: {
     fileName: string;
     fileType: string;
@@ -70,6 +78,17 @@ export interface IProject extends Document {
       height: number;
       rotation: number;
     }[];
+
+    costSettings?: {
+      actualSpent: number;
+      rates: {
+        cementRate: number;
+        brickRate: number;
+        sandRate: number;
+        tileRate: number;
+        laborRatePerSqm: number;
+      };
+    };
   };
 
   createdAt: Date;
@@ -106,6 +125,13 @@ const projectSchema = new Schema<IProject>(
       ],
       default: "PLANNING",
     },
+    completedMilestones: [{ type: String }],
+    customMilestones: [{
+      id: String,
+      title: String,
+      description: String,
+      estimatedWeeks: Number,
+    }],
     blueprint: {
       fileName: String,
       fileType: String,
@@ -157,6 +183,16 @@ const projectSchema = new Schema<IProject>(
         height: Number,
         rotation: Number,
       }],
+      costSettings: {
+        actualSpent: Number,
+        rates: {
+          cementRate: Number,
+          brickRate: Number,
+          sandRate: Number,
+          tileRate: Number,
+          laborRatePerSqm: Number,
+        },
+      },
     },
   },
   {

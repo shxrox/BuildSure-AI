@@ -1,5 +1,3 @@
-
-
 export interface Wall {
   id: string;
   startX: number;

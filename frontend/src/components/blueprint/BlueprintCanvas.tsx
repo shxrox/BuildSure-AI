@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Line, Text, Group, Image as KonvaImage, Rect } from "react-konva";
+import { Stage, Layer, Line, Text, Group, Image as KonvaImage, Rect, Arc } from "react-konva";
 import useImage from "use-image";
 
 interface Wall {
@@ -17,11 +17,20 @@ interface Room {
   area: number;
 }
 
+interface Door {
+  id: string;
+  x: number;
+  y: number;
+  rotation: number;
+}
+
 interface Props {
   walls: Wall[];
   setWalls: React.Dispatch<React.SetStateAction<Wall[]>>;
-  rooms?: Room[]; // Optional so it doesn't break the parent if not passed yet
+  rooms?: Room[];
   setRooms?: React.Dispatch<React.SetStateAction<Room[]>>;
+  doors?: Door[];
+  setDoors?: React.Dispatch<React.SetStateAction<Door[]>>;
   imageUrl?: string;
   svgData?: string;
 }
@@ -47,20 +56,34 @@ const getCenter = (points: number[]) => {
   };
 };
 
-function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRooms: propsSetRooms }: Props) {
+function BlueprintCanvas({ 
+  imageUrl, 
+  walls, 
+  setWalls, 
+  rooms: propsRooms, 
+  setRooms: propsSetRooms,
+  doors: propsDoors,
+  setDoors: propsSetDoors 
+}: Props) {
   const [image] = useImage(imageUrl || "");
   const stageRef = useRef<any>(null);
   
-  // Local fallback state for rooms if the parent component hasn't implemented it yet
+  // Local fallback states for parent components that haven't implemented them yet
   const [localRooms, setLocalRooms] = useState<Room[]>([]);
   const actualRooms = propsRooms || localRooms;
   const actualSetRooms = propsSetRooms || setLocalRooms;
 
-  const [mode, setMode] = useState<'select' | 'wall' | 'room'>('wall');
+  const [localDoors, setLocalDoors] = useState<Door[]>([]);
+  const actualDoors = propsDoors || localDoors;
+  const actualSetDoors = propsSetDoors || setLocalDoors;
+
+  const [mode, setMode] = useState<'select' | 'wall' | 'room' | 'door'>('wall');
   const [drawing, setDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<number[]>([]);
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
+  const [selectedDoorId, setSelectedDoorId] = useState<string | null>(null);
 
   // Generate grid lines
   const gridLines = [];
@@ -75,18 +98,35 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedWallId) {
-        setWalls((prevWalls) => prevWalls.filter((w: Wall) => w.id !== selectedWallId));
-        setSelectedWallId(null);
+      // Deletion logic
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedWallId) {
+          setWalls((prev) => prev.filter((w) => w.id !== selectedWallId));
+          setSelectedWallId(null);
+        }
+        if (selectedDoorId) {
+          actualSetDoors((prev) => prev.filter((d) => d.id !== selectedDoorId));
+          setSelectedDoorId(null);
+        }
+      }
+      
+      // Rotation logic for doors
+      if ((e.key === "r" || e.key === "R") && selectedDoorId) {
+        actualSetDoors((prev) =>
+          prev.map((d) => (d.id === selectedDoorId ? { ...d, rotation: (d.rotation + 90) % 360 } : d))
+        );
       }
     };
+    
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedWallId, setWalls]);
+  }, [selectedWallId, selectedDoorId, setWalls, actualSetDoors]);
 
   const handleMouseDown = (e: any) => {
-    // Prevent actions if clicking on an interactive element while not in drawing modes
-    if (e.target.getClassName() === "Line" && e.target.name() !== "gridLine" && mode === 'select') {
+    const isInteractiveElement = e.target.getClassName() === "Line" || e.target.hasName("doorRect");
+    
+    // Prevent drawing actions if clicking on interactive elements while in select mode
+    if (isInteractiveElement && e.target.name() !== "gridLine" && mode === 'select') {
       return;
     }
 
@@ -94,6 +134,7 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
     
     if (clickedOnEmpty) {
       setSelectedWallId(null);
+      setSelectedDoorId(null);
       
       if (mode === 'select') return;
 
@@ -106,6 +147,16 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
         setCurrentLine([snappedX, snappedY, snappedX, snappedY]);
       } else if (mode === 'room') {
         setCurrentRect({ x: snappedX, y: snappedY, w: 0, h: 0 });
+      } else if (mode === 'door') {
+        const newDoor: Door = {
+          id: crypto.randomUUID(),
+          x: snappedX,
+          y: snappedY,
+          rotation: 0
+        };
+        actualSetDoors([...actualDoors, newDoor]);
+        setSelectedDoorId(newDoor.id);
+        setMode('select'); // Switch to select mode automatically so they can adjust/rotate it
       }
     }
   };
@@ -143,12 +194,10 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
     } else if (mode === 'room' && currentRect) {
       let { x, y, w, h } = currentRect;
       
-      // Normalize negative dimensions if drawn backwards
       if (w < 0) { x += w; w = Math.abs(w); }
       if (h < 0) { y += h; h = Math.abs(h); }
 
       if (w > 0 && h > 0) {
-        // Calculate area based on 100px:1m scaling
         const widthMeters = w / 100;
         const heightMeters = h / 100;
         const area = parseFloat((widthMeters * heightMeters).toFixed(2));
@@ -161,17 +210,17 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
         
         actualSetRooms([...actualRooms, newRoom]);
 
-        // Auto-generate the 4 perimeter walls for the drawn room
         const roomWalls: Wall[] = [
-          { id: crypto.randomUUID(), points: [x, y, x + w, y] }, // Top
-          { id: crypto.randomUUID(), points: [x + w, y, x + w, y + h] }, // Right
-          { id: crypto.randomUUID(), points: [x + w, y + h, x, y + h] }, // Bottom
-          { id: crypto.randomUUID(), points: [x, y + h, x, y] }, // Left
+          { id: crypto.randomUUID(), points: [x, y, x + w, y] },
+          { id: crypto.randomUUID(), points: [x + w, y, x + w, y + h] },
+          { id: crypto.randomUUID(), points: [x + w, y + h, x, y + h] },
+          { id: crypto.randomUUID(), points: [x, y + h, x, y] },
         ];
         
         setWalls([...walls, ...roomWalls]);
       }
       setCurrentRect(null);
+      setMode('select');
     }
   };
 
@@ -198,7 +247,20 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
         >
           Draw Room
         </button>
+        <button 
+          className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'door' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          onClick={() => setMode('door')}
+        >
+          Add Door
+        </button>
       </div>
+      
+      {/* Instructions Overlay for Selected Tools */}
+      {selectedDoorId && mode === 'select' && (
+        <div className="absolute bottom-4 left-4 z-10 bg-gray-800 text-white px-4 py-2 rounded-md text-sm shadow-md">
+          Press <strong>R</strong> to rotate | Press <strong>Delete</strong> to remove
+        </div>
+      )}
 
       <Stage
         width={900}
@@ -222,7 +284,7 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
                 y={room.y}
                 width={room.width}
                 height={room.height}
-                fill="#bfdbfe" // Tailwind blue-200
+                fill="#bfdbfe"
                 opacity={0.4}
               />
               <Text
@@ -232,11 +294,78 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
                 text={`${room.name}\n${room.area} m²`}
                 fontSize={14}
                 fontFamily="sans-serif"
-                fill="#1e3a8a" // Tailwind blue-900
+                fill="#1e3a8a"
                 align="center"
               />
             </Group>
           ))}
+
+          {/* Render Doors */}
+          {actualDoors.map((door) => {
+            const isSelected = selectedDoorId === door.id;
+            // 80px = 0.8m standard door size
+            return (
+              <Group
+                key={door.id}
+                x={door.x}
+                y={door.y}
+                rotation={door.rotation}
+                draggable={mode === 'select'}
+                onClick={() => {
+                  if (mode === 'select') {
+                    setSelectedDoorId(door.id);
+                    setSelectedWallId(null);
+                  }
+                }}
+                onTap={() => {
+                  if (mode === 'select') {
+                    setSelectedDoorId(door.id);
+                    setSelectedWallId(null);
+                  }
+                }}
+                onDragStart={() => {
+                  if (mode === 'select') {
+                    setSelectedDoorId(door.id);
+                    setSelectedWallId(null);
+                  }
+                }}
+                onDragEnd={(e) => {
+                  const node = e.target;
+                  const dx = snapToGrid(node.x());
+                  const dy = snapToGrid(node.y());
+                  node.position({ x: dx, y: dy });
+                  
+                  actualSetDoors((prev) =>
+                    prev.map((d) => (d.id === door.id ? { ...d, x: dx, y: dy } : d))
+                  );
+                }}
+              >
+                {/* Door Opening/Slab */}
+                <Rect
+                  name="doorRect"
+                  width={80}
+                  height={10}
+                  fill={isSelected ? "#d97706" : "#f59e0b"} // Tailwind amber-600/500
+                  stroke={isSelected ? "#b45309" : "#d97706"}
+                  strokeWidth={2}
+                  hitStrokeWidth={10}
+                  offsetX={40} // Center origin for easy rotation
+                  offsetY={5}
+                />
+                {/* Door Swing Arc Visual */}
+                <Arc
+                  x={-40}
+                  y={-5}
+                  innerRadius={78}
+                  outerRadius={80}
+                  angle={90}
+                  fill={isSelected ? "#d97706" : "#f59e0b"}
+                  opacity={0.6}
+                  rotation={0}
+                />
+              </Group>
+            );
+          })}
 
           {/* Live Drawing Preview for Room */}
           {currentRect && (
@@ -267,10 +396,25 @@ function BlueprintCanvas({ imageUrl, walls, setWalls, rooms: propsRooms, setRoom
                   strokeWidth={isSelected ? 6 : 5}
                   lineCap="round"
                   hitStrokeWidth={20}
-                  draggable={mode === 'select'} // Only draggable in select mode
-                  onClick={() => mode === 'select' && setSelectedWallId(wall.id)}
-                  onTap={() => mode === 'select' && setSelectedWallId(wall.id)}
-                  onDragStart={() => mode === 'select' && setSelectedWallId(wall.id)}
+                  draggable={mode === 'select'}
+                  onClick={() => {
+                    if (mode === 'select') {
+                      setSelectedWallId(wall.id);
+                      setSelectedDoorId(null);
+                    }
+                  }}
+                  onTap={() => {
+                    if (mode === 'select') {
+                      setSelectedWallId(wall.id);
+                      setSelectedDoorId(null);
+                    }
+                  }}
+                  onDragStart={() => {
+                    if (mode === 'select') {
+                      setSelectedWallId(wall.id);
+                      setSelectedDoorId(null);
+                    }
+                  }}
                   onDragEnd={(e) => {
                     const node = e.target;
                     const dx = snapToGrid(node.x());

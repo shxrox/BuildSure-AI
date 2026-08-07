@@ -11,7 +11,8 @@ import {
   uploadBlueprint,
   downloadBlueprint,
   getDigitalPlan,
-  updateDigitalPlan
+  updateDigitalPlan,
+  processBlueprint
 } from "../controllers/project.controller";
 
 
@@ -132,6 +133,15 @@ updateDigitalPlan
 
 );
 
+router.post(
+
+"/:id/process-blueprint",
+
+authMiddleware,
+
+processBlueprint
+
+);
 
 
 

@@ -14,7 +14,9 @@ import {
 } from "../utils/apiResponse";
 
 
-
+import {
+  XMLParser
+} from "fast-xml-parser";
 
 
 
@@ -672,11 +674,19 @@ export const uploadBlueprint =
           fileName:
             project.blueprint.fileName,
 
+
           fileType:
             project.blueprint.fileType,
 
+
           uploadedAt:
-            project.blueprint.uploadedAt
+            project.blueprint.uploadedAt,
+
+
+          svgData:
+            project.blueprint.fileData.toString(
+              "utf-8"
+            )
 
         }
 
@@ -1052,6 +1062,317 @@ export const updateDigitalPlan =
 
 
     }
+
+
+  };
+
+
+// PROCESS SVG BLUEPRINT INTO DIGITAL PLAN
+
+export const processBlueprint =
+  async (
+    req: Request,
+    res: Response
+  ) => {
+
+
+    try {
+
+
+      const project =
+        await Project.findById(
+
+          req.params.id
+
+        );
+
+
+
+
+
+      if (!project) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message: "Project not found"
+
+        });
+
+      }
+
+
+
+
+
+
+      if (
+        !project.blueprint ||
+        !project.blueprint.fileData
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message: "Blueprint not uploaded"
+
+        });
+
+      }
+
+
+
+
+
+
+
+
+      const svgContent =
+
+        project.blueprint.fileData.toString(
+          "utf-8"
+        );
+
+
+
+
+
+
+
+      const parser =
+        new XMLParser({
+
+          ignoreAttributes: false,
+
+          attributeNamePrefix: "@_"
+
+        });
+
+
+
+
+
+
+      const svg =
+        parser.parse(
+
+          svgContent
+
+        );
+
+
+
+
+
+
+
+      const walls: any[] = [];
+
+      const rooms: any[] = [];
+
+      const doors: any[] = [];
+
+      const windows: any[] = [];
+
+
+
+
+
+
+
+      const elements =
+        svg.svg;
+
+
+
+      // Extract SVG lines as walls
+
+      if (elements.line) {
+
+
+
+        const lines =
+          Array.isArray(elements.line)
+
+            ?
+            elements.line
+
+            :
+            [
+              elements.line
+            ];
+
+
+
+
+
+        lines.forEach(
+          (line: any) => {
+
+
+            walls.push({
+
+              startX:
+                Number(line["@_x1"]),
+
+              startY:
+                Number(line["@_y1"]),
+
+              endX:
+                Number(line["@_x2"]),
+
+              endY:
+                Number(line["@_y2"])
+
+            });
+
+
+          });
+
+
+      }
+
+
+
+
+
+
+
+
+
+      // Extract rectangles as rooms
+
+      if (elements.rect) {
+
+
+
+        const rects =
+          Array.isArray(elements.rect)
+
+            ?
+            elements.rect
+
+            :
+            [
+              elements.rect
+            ];
+
+
+
+
+
+        rects.forEach(
+          (rect: any) => {
+
+
+            rooms.push({
+
+              x:
+                Number(rect["@_x"] || 0),
+
+              y:
+                Number(rect["@_y"] || 0),
+
+              width:
+                Number(rect["@_width"] || 0),
+
+              height:
+                Number(rect["@_height"] || 0)
+
+            });
+
+
+          });
+
+
+      }
+
+
+
+
+
+
+
+
+
+      project.digitalPlan = {
+
+
+        walls,
+
+        rooms,
+
+        doors,
+
+        windows
+
+
+      };
+
+
+
+
+
+
+
+      await project.save();
+
+
+
+
+
+
+
+      return successResponse(
+
+        res,
+
+        "Blueprint processed successfully",
+
+        project.digitalPlan
+
+      );
+
+
+
+
+
+
+    }
+    catch (error) {
+
+
+
+      console.error(
+
+        "PROCESS BLUEPRINT ERROR",
+
+        error
+
+      );
+
+
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error instanceof Error
+            ?
+            error.message
+            :
+            "Failed to process blueprint"
+
+
+      });
+
+
+    }
+
 
 
   };

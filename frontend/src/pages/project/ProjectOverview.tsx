@@ -73,68 +73,68 @@ function ProjectOverview() {
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto font-sans">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-8 max-w-6xl mx-auto font-sans">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-slate-200 pb-6 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">📊 Project Executive Overview</h2>
-          <p className="text-slate-500 text-xs mt-0.5">
-            High-level summary of your construction workspace, financial standing, and architectural metrics.
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Project Executive Overview</h2>
+          <p className="text-slate-500 text-xs mt-1">
+            Centralized summary of construction progress, financial allocations, and architectural layout parameters.
           </p>
         </div>
         <button
           onClick={() => navigate(`/projects/${id}/floor-plan`)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 cursor-pointer transition-colors shadow-xs"
+          className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 cursor-pointer transition-colors shadow-xs whitespace-nowrap"
         >
-          Open Floor Plan CAD ➔
+          Open Floor Plan CAD &rarr;
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Construction Status</p>
-          <p className="text-xl font-extrabold text-blue-600 mt-2 uppercase">{project?.status || "PLANNING"}</p>
-          <p className="text-[11px] text-slate-400 mt-1">Current phase</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-center items-center text-center">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Construction Status</p>
+          <p className="text-xl font-extrabold text-blue-600 uppercase tracking-wide">{project?.status || "PLANNING"}</p>
+          <p className="text-[11px] text-slate-400 mt-1">Active lifecycle phase</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Floor Area</p>
-          <p className="text-xl font-extrabold text-slate-900 mt-2">
+        <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-center items-center text-center">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total Floor Area</p>
+          <p className="text-xl font-extrabold text-slate-900">
             {summary ? `${summary.floorArea.toFixed(2)} m²` : "0 m²"}
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Calculated from 2D walls & rooms</p>
+          <p className="text-[11px] text-slate-400 mt-1">Extracted from 2D structures</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estimated Cost (LKR)</p>
-          <p className="text-xl font-extrabold text-emerald-600 mt-2">
+        <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-center items-center text-center">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimated Cost (LKR)</p>
+          <p className="text-xl font-extrabold text-emerald-600">
             {summary ? `Rs. ${summary.grandTotal.toLocaleString("en-LK", { maximumFractionDigits: 0 })}` : "Rs. 0"}
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Market materials & labor</p>
+          <p className="text-[11px] text-slate-400 mt-1">Live market calculations</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Milestones Done</p>
-          <p className="text-xl font-extrabold text-amber-600 mt-2">
+        <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-center items-center text-center">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Milestones Done</p>
+          <p className="text-xl font-extrabold text-amber-600">
             {summary ? `${summary.milestonesCount} / 7` : "0 / 7"}
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Construction timeline</p>
+          <p className="text-[11px] text-slate-400 mt-1">Schedule execution</p>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200 mb-8">
-        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4">Project Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+      <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 mb-8">
+        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-6 border-b border-slate-100 pb-3">Project Specification Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
           <div>
-            <span className="font-semibold text-slate-500">Project Name:</span>
-            <p className="text-slate-900 font-bold mt-0.5">{project?.projectName}</p>
+            <span className="font-semibold text-slate-400 uppercase tracking-wider block mb-1">Project Name</span>
+            <p className="text-slate-900 font-bold text-sm">{project?.projectName}</p>
           </div>
           <div>
-            <span className="font-semibold text-slate-500">Location / City:</span>
-            <p className="text-slate-900 font-bold mt-0.5">📍 {project?.location}</p>
+            <span className="font-semibold text-slate-400 uppercase tracking-wider block mb-1">Location / Site</span>
+            <p className="text-slate-900 font-bold text-sm">{project?.location}</p>
           </div>
           <div className="md:col-span-2">
-            <span className="font-semibold text-slate-500">Description:</span>
-            <p className="text-slate-800 mt-0.5">{project?.description || "No description provided."}</p>
+            <span className="font-semibold text-slate-400 uppercase tracking-wider block mb-1">Description</span>
+            <p className="text-slate-700 leading-relaxed text-sm">{project?.description || "No description provided."}</p>
           </div>
         </div>
       </div>
@@ -142,24 +142,24 @@ function ProjectOverview() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
           onClick={() => navigate(`/projects/${id}/boq`)}
-          className="bg-white p-6 rounded-xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all"
+          className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all flex flex-col justify-center items-center text-center group"
         >
-          <h4 className="font-bold text-slate-900 text-sm mb-1">📦 Bill of Quantities</h4>
-          <p className="text-xs text-slate-500">Inspect exact brick counts, cement bags, sand cubes, and tile area estimates.</p>
+          <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-blue-600 transition-colors">Bill of Quantities</h4>
+          <p className="text-xs text-slate-500 mt-1">Inspect exact brick counts, cement bags, sand cubes, and tile area estimates.</p>
         </div>
         <div
           onClick={() => navigate(`/projects/${id}/cost`)}
-          className="bg-white p-6 rounded-xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all"
+          className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all flex flex-col justify-center items-center text-center group"
         >
-          <h4 className="font-bold text-slate-900 text-sm mb-1">💰 Cost & Tracking</h4>
-          <p className="text-xs text-slate-500">Track actual spending against calculated Sri Lankan market projections.</p>
+          <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-blue-600 transition-colors">Cost & Budget Tracking</h4>
+          <p className="text-xs text-slate-500 mt-1">Monitor actual spending against calculated Sri Lankan market projections.</p>
         </div>
         <div
           onClick={() => navigate(`/projects/${id}/sharing`)}
-          className="bg-white p-6 rounded-xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all"
+          className="bg-white p-6 rounded-xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all flex flex-col justify-center items-center text-center group"
         >
-          <h4 className="font-bold text-slate-900 text-sm mb-1">🔗 Sharing & Access</h4>
-          <p className="text-xs text-slate-500">Collaborate with contractors, engineers, and municipal authorities.</p>
+          <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-blue-600 transition-colors">Sharing & Access</h4>
+          <p className="text-xs text-slate-500 mt-1">Manage collaborators, engineers, and municipal authority access rights.</p>
         </div>
       </div>
     </div>

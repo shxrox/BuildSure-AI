@@ -93,8 +93,8 @@ export const calculateMaterials = (
     totalFloorAreaSqm = parseFloat(((totalWallLengthM / 4) * (totalWallLengthM / 4)).toFixed(2));
   }
 
-  // Floor tiles including 10% waste margin
-  const floorTiles = Math.round(totalFloorAreaSqm * 1.10);
+  // Floor tiles including 10% waste margin (expressed in total tile area sqm)
+  const floorTiles = parseFloat((totalFloorAreaSqm * 1.10).toFixed(2));
 
   return {
     metrics: {

@@ -1,276 +1,101 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
-
-import {
-  Outlet,
-  useParams,
-  useLocation,
-} from "react-router-dom";
-
-
-import api from "../../services/api";
-
-
-import ProjectLayout from "../../components/project/ProjectLayout";
-
-
-
-
+import type { ReactNode, Dispatch, SetStateAction } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface Project {
-
-  _id:string;
-
-  projectName:string;
-
-  location:string;
-
-  description:string;
-
-  status:string;
-
-  createdAt:string;
-
+  _id: string;
+  projectName: string;
+  location: string;
+  description: string;
+  status: string;
+  createdAt: string;
 }
 
-
-
-
-
-
-
-function ProjectWorkspace() {
-
-
-  const {
-    id,
-  } = useParams();
-
-
-
-  const location =
-    useLocation();
-
-
-
-
-
-
-  const [
-    activeSection,
-    setActiveSection,
-  ] = useState("overview");
-
-
-
-
-
-  const [
-    project,
-    setProject,
-  ] = useState<Project | null>(null);
-
-
-
-
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-
-
-
-
-
-
-
-
-  useEffect(() => {
-
-
-    const loadProject =
-    async () => {
-
-
-      try {
-
-
-        const response =
-          await api.get(
-            `/projects/${id}`
-          );
-
-
-
-        setProject(
-          response.data.data
-        );
-
-
-
-      } catch(error) {
-
-
-        console.log(
-          "Failed to load project",
-          error
-        );
-
-
-
-      } finally {
-
-
-        setLoading(false);
-
-      }
-
-
-    };
-
-
-
-
-    if(id) {
-
-      loadProject();
-
-    }
-
-
-
-  },[id]);
-
-
-
-
-
-
-
-
-
-  useEffect(() => {
-
-
-    const currentPath =
-      location.pathname
-        .split("/")
-        .pop();
-
-
-
-
-    if(
-      currentPath &&
-      currentPath !== id
-    ) {
-
-
-      setActiveSection(
-        currentPath
-      );
-
-
-    } else {
-
-
-      setActiveSection(
-        "overview"
-      );
-
-    }
-
-
-
-  },[
-    location.pathname,
-    id,
-  ]);
-
-
-
-
-
-
-
-
-
-  if(loading) {
-
-
-    return (
-
-      <h2>
-        Loading workspace...
-      </h2>
-
-    );
-
-  }
-
-
-
-
-
-
-
-
-
-  if(!project) {
-
-
-    return (
-
-      <h2>
-        Project not found
-      </h2>
-
-    );
-
-  }
-
-
-
-
-
-
-
-
+export interface ProjectLayoutProps {
+  project: Project;
+  active: string;
+  setActive: Dispatch<SetStateAction<string>>;
+  children: ReactNode;
+}
+
+function ProjectLayout({
+  project,
+  active,
+  setActive,
+  children,
+}: ProjectLayoutProps) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+
+  const navItems = [
+    { id: "overview", label: "📊 Overview", path: `/projects/${id}` },
+    { id: "floor-plan", label: "📐 Floor Plan", path: `/projects/${id}/floor-plan` },
+    { id: "blueprint", label: "🖼 Blueprint", path: `/projects/${id}/blueprint` },
+    { id: "boq", label: "📦 BOQ", path: `/projects/${id}/boq` },
+    { id: "cost", label: "💰 Cost & Tracking", path: `/projects/${id}/cost` },
+    { id: "timeline", label: "📅 Timeline", path: `/projects/${id}/timeline` },
+    { id: "sharing", label: "🔗 Sharing", path: `/projects/${id}/sharing` },
+    { id: "settings", label: "⚙️ Settings", path: `/projects/${id}/settings` },
+  ];
 
   return (
+    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "sans-serif", display: "flex", flexDirection: "column" }}>
+      <header style={{ background: "white", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 30 }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px", height: "65px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            <button
+              onClick={() => navigate("/homeowner")}
+              style={{ background: "none", border: "none", color: "#475569", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}
+            >
+              ← Dashboard
+            </button>
+            <div style={{ width: "1px", height: "20px", background: "#cbd5e1" }} />
+            <h1 style={{ margin: 0, fontSize: "18px", color: "#0f172a" }}>
+              {project?.projectName}
+            </h1>
+            <span style={{ background: "#e0f2fe", color: "#0369a1", padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "bold" }}>
+              {project?.status || "PLANNING"}
+            </span>
+          </div>
 
-    <ProjectLayout
+          <div style={{ fontSize: "13px", color: "#64748b" }}>
+            📍 {project?.location}
+          </div>
+        </div>
 
-      project={
-        project
-      }
+        <nav style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px", display: "flex", gap: "5px", overflowX: "auto", borderTop: "1px solid #f1f5f9", paddingBottom: "10px", paddingTop: "10px" }}>
+          {navItems.map((item) => {
+            const isActive = active === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActive(item.id);
+                  navigate(item.path);
+                }}
+                style={{
+                  background: isActive ? "#2563eb" : "transparent",
+                  color: isActive ? "white" : "#475569",
+                  border: "none",
+                  padding: "8px 14px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </header>
 
-      active={
-        activeSection
-      }
-
-      setActive={
-        setActiveSection
-      }
-
-    >
-
-      {/* <Outlet /> */}
-
-    </ProjectLayout>
-
+      <main style={{ flex: 1, padding: "20px 0" }}>
+        {children}
+      </main>
+    </div>
   );
-
-
 }
 
-
-
-
-
-export default ProjectWorkspace;
+export default ProjectLayout;

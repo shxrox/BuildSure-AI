@@ -29,31 +29,28 @@ function ProjectOverview() {
           laborRatePerSqm: 18000,
         };
 
-        if (plan) {
-          const boq = calculateMaterials(
-            plan.walls || [],
-            plan.doors || [],
-            plan.windows || [],
-            plan.rooms || []
-          );
-          const mappedMaterials = {
-            bricksCount: Number(boq?.materials?.bricks) || 0,
-            cementBags: Number(boq?.materials?.cementBags) || 0,
-            sandCubes: Number(boq?.materials?.sandCubes) || 0,
-            tileAreaSqm: Number(boq?.materials?.floorTiles) || 0,
-          };
-          const financial = calculateSriLankanCost(
-            mappedMaterials,
-            Number(boq?.metrics?.totalFloorAreaSqm) || 0,
-            activeRates
-          );
-          setSummary({
-            floorArea: Number(boq?.metrics?.totalFloorAreaSqm) || 0,
-            grandTotal: Number(financial?.breakdown?.grandTotalCost) || 0,
-            milestonesCount: projData?.completedMilestones?.length || 0,
-            collaboratorsCount: projData?.collaborators?.length || 0,
-          });
-        }
+        const walls = plan?.walls || [];
+        const doors = plan?.doors || [];
+        const windows = plan?.windows || [];
+        const rooms = plan?.rooms || [];
+
+        const boq = calculateMaterials(walls, doors, windows, rooms);
+        const mappedMaterials = {
+          bricksCount: Number(boq?.materials?.bricks) || 0,
+          cementBags: Number(boq?.materials?.cementBags) || 0,
+          sandCubes: Number(boq?.materials?.sandCubes) || 0,
+          tileAreaSqm: Number(boq?.materials?.floorTiles) || 0,
+        };
+
+        const floorArea = Number(boq?.metrics?.totalFloorAreaSqm) || 0;
+        const financial = calculateSriLankanCost(mappedMaterials, floorArea, activeRates);
+
+        setSummary({
+          floorArea,
+          grandTotal: Number(financial?.breakdown?.grandTotalCost) || 0,
+          milestonesCount: projData?.completedMilestones?.length || 0,
+          collaboratorsCount: projData?.collaborators?.length || 0,
+        });
       } catch (error) {
         console.error("Failed to load project overview summary", error);
       } finally {
@@ -71,6 +68,10 @@ function ProjectOverview() {
       </div>
     );
   }
+
+  const floorAreaValue = summary ? Number(summary.floorArea) || 0 : 0;
+  const grandTotalValue = summary ? Number(summary.grandTotal) || 0 : 0;
+  const milestonesCountValue = summary ? Number(summary.milestonesCount) || 0 : 0;
 
   return (
     <div className="p-8 max-w-6xl mx-auto font-sans">
@@ -99,7 +100,7 @@ function ProjectOverview() {
         <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-center items-center text-center">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total Floor Area</p>
           <p className="text-xl font-extrabold text-slate-900">
-            {summary ? `${summary.floorArea.toFixed(2)} m²` : "0 m²"}
+            {floorAreaValue.toFixed(2)} m²
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Extracted from 2D structures</p>
         </div>
@@ -107,7 +108,7 @@ function ProjectOverview() {
         <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-center items-center text-center">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimated Cost (LKR)</p>
           <p className="text-xl font-extrabold text-emerald-600">
-            {summary ? `Rs. ${summary.grandTotal.toLocaleString("en-LK", { maximumFractionDigits: 0 })}` : "Rs. 0"}
+            Rs. {grandTotalValue.toLocaleString("en-LK", { maximumFractionDigits: 0 })}
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Live market calculations</p>
         </div>
@@ -115,7 +116,7 @@ function ProjectOverview() {
         <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-center items-center text-center">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Milestones Done</p>
           <p className="text-xl font-extrabold text-amber-600">
-            {summary ? `${summary.milestonesCount} / 7` : "0 / 7"}
+            {milestonesCountValue} / 7
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Schedule execution</p>
         </div>
@@ -156,7 +157,7 @@ function ProjectOverview() {
         </div>
         <div
           onClick={() => navigate(`/projects/${id}/sharing`)}
-          className="bg-white p-6 rounded-xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all flex flex-col justify-center items-center text-center group"
+          className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 hover:border-blue-500 cursor-pointer transition-all flex flex-col justify-center items-center text-center group"
         >
           <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-blue-600 transition-colors">Sharing & Access</h4>
           <p className="text-xs text-slate-500 mt-1">Manage collaborators, engineers, and municipal authority access rights.</p>

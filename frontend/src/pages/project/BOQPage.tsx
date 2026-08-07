@@ -10,53 +10,53 @@ function BOQPage() {
   const [boqData, setBoqData] = useState<any>(null);
 
   useEffect(() => {
-    const fetchBOQ = async () => {
+    const fetchBoq = async () => {
       if (!id) return;
       try {
         setLoading(true);
         const plan = await getDigitalPlan(id);
         if (plan) {
-          const boq = calculateMaterials(
+          const result = calculateMaterials(
             plan.walls || [],
             plan.doors || [],
             plan.windows || [],
             plan.rooms || []
           );
-          setBoqData(boq);
+          setBoqData(result);
         }
       } catch (error) {
-        console.error("Failed to calculate Bill of Quantities", error);
+        console.error("Failed to calculate BOQ", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBOQ();
+    fetchBoq();
   }, [id]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500 font-medium">
-        Calculating material quantities and volumetric metrics...
+        Calculating Bill of Quantities (BOQ)...
       </div>
     );
   }
 
-  if (!boqData) {
+  if (!boqData || !boqData.materials) {
     return (
       <div className="p-8 text-gray-600">
-        <p className="mb-4">Please draw your architectural floor plan in the 2D workspace to generate a Bill of Quantities (BOQ).</p>
+        <p className="mb-4">Please draw structural walls and rooms in your 2D Floor Plan workspace to generate a Bill of Quantities.</p>
         <button
           onClick={() => navigate(`/projects/${id}/floor-plan`)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 cursor-pointer"
         >
-          Go to Floor Plan Workspace
+          Go to Floor Plan Canvas
         </button>
       </div>
     );
   }
 
-  const { metrics, materials } = boqData;
+  const { materials, metrics } = boqData;
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -64,7 +64,7 @@ function BOQPage() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">📦 Bill of Quantities (BOQ)</h2>
           <p className="text-gray-600">
-            Calculated material volumes, wall lengths, and floor metrics based on your 2D digital floor plan.
+            Precise material takeoff calculations derived from your 2D architectural blueprint layout.
           </p>
         </div>
         <button
@@ -75,27 +75,28 @@ function BOQPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <p className="text-sm font-medium text-gray-500">Total Floor Area</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">{metrics.totalFloorAreaSqm} m²</p>
-          <p className="text-xs text-gray-400 mt-1">{(metrics.totalFloorAreaSqm * 10.764).toFixed(1)} sqft</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">{metrics?.totalFloorAreaSqm ?? 0} m²</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <p className="text-sm font-medium text-gray-500">Total Wall Length</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{metrics.totalWallLengthMeters} meters</p>
-          <p className="text-xs text-gray-400 mt-1">Linear perimeter estimation</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{metrics?.totalWallLengthM ?? 0} m</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <p className="text-sm font-medium text-gray-500">Openings Count</p>
-          <p className="text-2xl font-bold text-amber-600 mt-1">{metrics.totalOpeningsCount} units</p>
-          <p className="text-xs text-gray-400 mt-1">Doors & Windows total</p>
+          <p className="text-sm font-medium text-gray-500">Doors Count</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{materials?.doorsCount ?? 0} units</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <p className="text-sm font-medium text-gray-500">Windows Count</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{materials?.windowsCount ?? 0} units</p>
         </div>
       </div>
 
       <div className="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">Material Requirements Schedule</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Material Takeoff Schedule</h3>
         </div>
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -107,29 +108,24 @@ function BOQPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 text-sm text-gray-700">
             <tr>
-              <td className="px-6 py-4 font-medium text-gray-900">Clay Bricks / Cement Blocks</td>
-              <td className="px-6 py-4 font-bold text-blue-600">{materials.bricksCount.toLocaleString()}</td>
-              <td className="px-6 py-4">pieces</td>
+              <td className="px-6 py-4 font-medium text-gray-900">Clay Bricks / Blocks</td>
+              <td className="px-6 py-4 font-bold text-blue-600">{(materials?.bricks ?? 0).toLocaleString()}</td>
+              <td className="px-6 py-4 text-gray-500">Units</td>
             </tr>
             <tr>
               <td className="px-6 py-4 font-medium text-gray-900">Cement Bags (50kg)</td>
-              <td className="px-6 py-4 font-bold text-blue-600">{materials.cementBagsCount.toLocaleString()}</td>
-              <td className="px-6 py-4">bags</td>
+              <td className="px-6 py-4 font-bold text-blue-600">{(materials?.cementBags ?? 0).toLocaleString()}</td>
+              <td className="px-6 py-4 text-gray-500">Bags</td>
             </tr>
             <tr>
               <td className="px-6 py-4 font-medium text-gray-900">Construction Sand</td>
-              <td className="px-6 py-4 font-bold text-blue-600">{materials.sandCubes.toLocaleString()}</td>
-              <td className="px-6 py-4">cubes</td>
+              <td className="px-6 py-4 font-bold text-blue-600">{(materials?.sandCubes ?? 0).toLocaleString()}</td>
+              <td className="px-6 py-4 text-gray-500">Cubes (m³)</td>
             </tr>
             <tr>
-              <td className="px-6 py-4 font-medium text-gray-900">Floor Tiles Requirement</td>
-              <td className="px-6 py-4 font-bold text-blue-600">{materials.tileAreaSqm.toLocaleString()}</td>
-              <td className="px-6 py-4">m²</td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 font-medium text-gray-900">Doors & Windows Allowances</td>
-              <td className="px-6 py-4 font-bold text-blue-600">{materials.openingsCount}</td>
-              <td className="px-6 py-4">units</td>
+              <td className="px-6 py-4 font-medium text-gray-900">Floor Tiles & Adhesives</td>
+              <td className="px-6 py-4 font-bold text-blue-600">{(materials?.floorTiles ?? 0).toLocaleString()}</td>
+              <td className="px-6 py-4 text-gray-500">m²</td>
             </tr>
           </tbody>
         </table>

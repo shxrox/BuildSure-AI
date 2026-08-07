@@ -6,7 +6,6 @@ function SharingPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [project, setProject] = useState<any>(null);
   const [collaboratorEmail, setCollaboratorEmail] = useState("");
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -19,7 +18,6 @@ function SharingPage() {
       try {
         setLoading(true);
         const projData = await getProjectById(id);
-        setProject(projData);
         if (projData && projData.collaborators) {
           setCollaborators(projData.collaborators);
         }

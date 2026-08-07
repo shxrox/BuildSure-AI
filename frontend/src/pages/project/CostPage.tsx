@@ -30,33 +30,35 @@ function CostPage() {
 
       let activeRates = customRates;
       if (settings && settings.rates) {
-        activeRates = settings.rates;
-        setCustomRates(settings.rates);
+        activeRates = {
+          cementRate: Number(settings.rates.cementRate) || 2800,
+          brickRate: Number(settings.rates.brickRate) || 35,
+          sandRate: Number(settings.rates.sandRate) || 25000,
+          tileRate: Number(settings.rates.tileRate) || 4500,
+          laborRatePerSqm: Number(settings.rates.laborRatePerSqm) || 18000,
+        };
+        setCustomRates(activeRates);
       }
       if (settings && typeof settings.actualSpent === "number") {
         setActualSpent(settings.actualSpent);
       }
 
-      if (plan) {
-        const boq = calculateMaterials(
-          plan.walls || [],
-          plan.doors || [],
-          plan.windows || [],
-          plan.rooms || []
-        );
-        const mappedMaterials = {
-          bricksCount: boq.materials.bricks || 0,
-          cementBags: boq.materials.cementBags || 0,
-          sandCubes: boq.materials.sandCubes || 0,
-          tileAreaSqm: boq.materials.floorTiles || 0,
-        };
-        const financial = calculateSriLankanCost(
-          mappedMaterials,
-          boq.metrics.totalFloorAreaSqm,
-          activeRates
-        );
-        setCostData(financial);
-      }
+      const walls = plan?.walls || [];
+      const doors = plan?.doors || [];
+      const windows = plan?.windows || [];
+      const rooms = plan?.rooms || [];
+
+      const boq = calculateMaterials(walls, doors, windows, rooms);
+      const mappedMaterials = {
+        bricksCount: Number(boq?.materials?.bricks) || 0,
+        cementBags: Number(boq?.materials?.cementBags) || 0,
+        sandCubes: Number(boq?.materials?.sandCubes) || 0,
+        tileAreaSqm: Number(boq?.materials?.floorTiles) || 0,
+      };
+
+      const floorArea = Number(boq?.metrics?.totalFloorAreaSqm) || 0;
+      const financial = calculateSriLankanCost(mappedMaterials, floorArea, activeRates);
+      setCostData(financial);
     } catch (error) {
       console.error("Failed to load financial estimation", error);
     } finally {
@@ -80,31 +82,27 @@ function CostPage() {
 
   const handleSaveRates = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !costData) return;
+    if (!id) return;
     try {
       setLoading(true);
       await saveCostSettings(id, { actualSpent, rates: customRates });
       const plan = await getDigitalPlan(id);
-      if (plan) {
-        const boq = calculateMaterials(
-          plan.walls || [],
-          plan.doors || [],
-          plan.windows || [],
-          plan.rooms || []
-        );
-        const mappedMaterials = {
-          bricksCount: boq.materials.bricks || 0,
-          cementBags: boq.materials.cementBags || 0,
-          sandCubes: boq.materials.sandCubes || 0,
-          tileAreaSqm: boq.materials.floorTiles || 0,
-        };
-        const financial = calculateSriLankanCost(
-          mappedMaterials,
-          boq.metrics.totalFloorAreaSqm,
-          customRates
-        );
-        setCostData(financial);
-      }
+      const walls = plan?.walls || [];
+      const doors = plan?.doors || [];
+      const windows = plan?.windows || [];
+      const rooms = plan?.rooms || [];
+
+      const boq = calculateMaterials(walls, doors, windows, rooms);
+      const mappedMaterials = {
+        bricksCount: Number(boq?.materials?.bricks) || 0,
+        cementBags: Number(boq?.materials?.cementBags) || 0,
+        sandCubes: Number(boq?.materials?.sandCubes) || 0,
+        tileAreaSqm: Number(boq?.materials?.floorTiles) || 0,
+      };
+
+      const floorArea = Number(boq?.metrics?.totalFloorAreaSqm) || 0;
+      const financial = calculateSriLankanCost(mappedMaterials, floorArea, customRates);
+      setCostData(financial);
       setIsEditingRates(false);
     } catch (err) {
       console.error("Failed to update custom rates", err);
@@ -115,36 +113,38 @@ function CostPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500 font-medium">
+      <div className="flex items-center justify-center h-64 text-slate-400 font-medium text-xs">
         Loading cost metrics…
       </div>
     );
   }
 
-  if (!costData) {
-    return (
-      <div className="p-6 text-gray-600">
-        Please complete your digital floor plan in the Blueprint workspace to generate cost metrics.
-      </div>
-    );
-  }
+  const breakdown = costData?.breakdown || {
+    brickCost: 0,
+    cementCost: 0,
+    sandCost: 0,
+    tileCost: 0,
+    openingsCost: 0,
+    totalMaterialCost: 0,
+    estimatedLaborCost: 0,
+    grandTotalCost: 0,
+  };
 
-  const { breakdown } = costData;
-  const grandTotal = breakdown.grandTotalCost;
+  const grandTotal = Number(breakdown.grandTotalCost) || 0;
   const remainingBudget = grandTotal - actualSpent;
 
   return (
     <div className="p-8 max-w-5xl mx-auto font-sans">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">💰 Sri Lankan Construction Costing & Rates</h1>
-          <p className="text-gray-600 text-sm mt-1">
-            Customize material and labor unit rates based on live Sri Lankan market fluctuations.
+          <h1 className="text-xl font-bold text-slate-900">💰 Sri Lankan Construction Costing & Rates</h1>
+          <p className="text-slate-500 text-xs mt-0.5">
+            Prices automatically update based on your latest floor plan additions and saved custom market rates.
           </p>
         </div>
         <button
           onClick={() => setIsEditingRates(!isEditingRates)}
-          className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 cursor-pointer transition-colors"
+          className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 cursor-pointer transition-colors shadow-xs"
         >
           {isEditingRates ? "Close Customizer" : "⚙️ Adjust Market Rates"}
         </button>
@@ -152,7 +152,7 @@ function CostPage() {
 
       {isEditingRates && (
         <div className="mb-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
-          <h3 className="text-sm font-bold text-slate-800 mb-4">Set Custom Market Rates (LKR)</h3>
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4">Set Persistent Custom Market Rates (LKR)</h3>
           <form onSubmit={handleSaveRates} className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Cement Bag Rate (LKR)</label>
@@ -181,7 +181,7 @@ function CostPage() {
             </div>
             <div className="flex items-end">
               <button type="submit" className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors">
-                Apply & Recalculate
+                Save & Recalculate
               </button>
             </div>
           </form>
@@ -232,7 +232,7 @@ function CostPage() {
 
       <div className="bg-white shadow-xs rounded-xl overflow-hidden border border-slate-200">
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
-          <h3 className="text-sm font-bold text-slate-800">Cost Breakdown Structure</h3>
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Cost Breakdown Structure</h3>
         </div>
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
@@ -242,14 +242,14 @@ function CostPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-200 text-xs text-slate-700">
-            <tr><td className="px-6 py-3 font-medium text-slate-900">Bricks & Blocks Subtotal</td><td className="px-6 py-3">Rs. {breakdown.brickCost.toLocaleString("en-LK")}</td></tr>
-            <tr><td className="px-6 py-3 font-medium text-slate-900">Cement Subtotal</td><td className="px-6 py-3">Rs. {breakdown.cementCost.toLocaleString("en-LK")}</td></tr>
-            <tr><td className="px-6 py-3 font-medium text-slate-900">Sand Subtotal</td><td className="px-6 py-3">Rs. {breakdown.sandCost.toLocaleString("en-LK")}</td></tr>
-            <tr><td className="px-6 py-3 font-medium text-slate-900">Flooring & Tiling Subtotal</td><td className="px-6 py-3">Rs. {breakdown.tileCost.toLocaleString("en-LK")}</td></tr>
-            <tr><td className="px-6 py-3 font-medium text-slate-900">Doors & Windows Allowances</td><td className="px-6 py-3">Rs. {breakdown.openingsCost.toLocaleString("en-LK")}</td></tr>
-            <tr className="bg-slate-50 font-bold"><td className="px-6 py-3 text-slate-900">Total Material Cost</td><td className="px-6 py-3 text-blue-600">Rs. {breakdown.totalMaterialCost.toLocaleString("en-LK")}</td></tr>
-            <tr><td className="px-6 py-3 font-medium text-slate-900">Estimated Labor & Finishing</td><td className="px-6 py-3">Rs. {breakdown.estimatedLaborCost.toLocaleString("en-LK")}</td></tr>
-            <tr className="bg-blue-50 font-extrabold text-sm"><td className="px-6 py-3 text-slate-900">Grand Total Estimated Construction Cost</td><td className="px-6 py-3 text-blue-700">Rs. {breakdown.grandTotalCost.toLocaleString("en-LK", { maximumFractionDigits: 0 })}</td></tr>
+            <tr><td className="px-6 py-3 font-medium text-slate-900">Bricks & Blocks Subtotal</td><td className="px-6 py-3">Rs. {(Number(breakdown.brickCost) || 0).toLocaleString("en-LK")}</td></tr>
+            <tr><td className="px-6 py-3 font-medium text-slate-900">Cement Subtotal</td><td className="px-6 py-3">Rs. {(Number(breakdown.cementCost) || 0).toLocaleString("en-LK")}</td></tr>
+            <tr><td className="px-6 py-3 font-medium text-slate-900">Sand Subtotal</td><td className="px-6 py-3">Rs. {(Number(breakdown.sandCost) || 0).toLocaleString("en-LK")}</td></tr>
+            <tr><td className="px-6 py-3 font-medium text-slate-900">Flooring & Tiling Subtotal</td><td className="px-6 py-3">Rs. {(Number(breakdown.tileCost) || 0).toLocaleString("en-LK")}</td></tr>
+            <tr><td className="px-6 py-3 font-medium text-slate-900">Doors & Windows Allowances</td><td className="px-6 py-3">Rs. {(Number(breakdown.openingsCost) || 0).toLocaleString("en-LK")}</td></tr>
+            <tr className="bg-slate-50 font-bold"><td className="px-6 py-3 text-slate-900">Total Material Cost</td><td className="px-6 py-3 text-blue-600">Rs. {(Number(breakdown.totalMaterialCost) || 0).toLocaleString("en-LK")}</td></tr>
+            <tr><td className="px-6 py-3 font-medium text-slate-900">Estimated Labor & Finishing</td><td className="px-6 py-3">Rs. {(Number(breakdown.estimatedLaborCost) || 0).toLocaleString("en-LK")}</td></tr>
+            <tr className="bg-blue-50 font-extrabold text-sm"><td className="px-6 py-3 text-slate-900">Grand Total Estimated Construction Cost</td><td className="px-6 py-3 text-blue-700">Rs. {grandTotal.toLocaleString("en-LK", { maximumFractionDigits: 0 })}</td></tr>
           </tbody>
         </table>
       </div>

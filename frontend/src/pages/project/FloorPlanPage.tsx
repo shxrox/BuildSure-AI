@@ -41,7 +41,7 @@ function FloorPlanPage() {
     try {
       setSaving(true);
       await saveDigitalPlan(id, { walls, rooms, doors, windows });
-      setMessage("Floor plan saved successfully.");
+      setMessage("Floor plan saved successfully to server.");
       setTimeout(() => setMessage(""), 4000);
     } catch (error) {
       console.error("Failed to save digital plan", error);
@@ -65,17 +65,17 @@ function FloorPlanPage() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">📐 Interactive 2D Floor Plan Workspace</h2>
           <p className="text-gray-600 text-sm">
-            Draw precise architectural walls, rooms, doors, and windows with real-time metric scaling (100px = 1m).
+            Draw precise architectural walls, room boxes, doors, and windows with real-time metric scaling (100px = 1m).
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {message && <span className="text-xs font-semibold text-green-600">{message}</span>}
+          {message && <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">{message}</span>}
           <button
             onClick={handleSavePlan}
             disabled={saving}
             className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow-sm hover:bg-blue-700 cursor-pointer transition-colors disabled:opacity-50"
           >
-            {saving ? "Saving Plan..." : "Save Floor Plan"}
+            {saving ? "Saving Plan..." : "💾 Save Floor Plan"}
           </button>
           <button
             onClick={() => navigate(`/projects/${id}/boq`)}
@@ -86,7 +86,7 @@ function FloorPlanPage() {
         </div>
       </div>
 
-      <div className="flex-1 w-full bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm relative">
+      <div className="flex-1 w-full bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm relative flex flex-col">
         <BlueprintCanvas
           walls={walls}
           setWalls={setWalls}

@@ -5,6 +5,7 @@ import useImage from "use-image";
 interface Wall {
   id: string;
   points: number[];
+  thickness?: number;
 }
 
 interface Room {
@@ -42,11 +43,10 @@ interface Props {
   windows?: any[];
   setWindows?: any;
   imageUrl?: string;
-  svgData?: string;
 }
 
 const GRID_SIZE = 20;
-const CANVAS_SIZE = 2000; 
+const CANVAS_SIZE = 3000;
 
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
 
@@ -101,13 +101,16 @@ function BlueprintCanvas({
   const [selectedDoorId, setSelectedDoorId] = useState<string | null>(null);
   const [selectedWindowId, setSelectedWindowId] = useState<string | null>(null);
 
+  const [scale, setScale] = useState(1);
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+
   const gridLines = [];
   for (let i = 0; i < CANVAS_SIZE / GRID_SIZE; i++) {
     gridLines.push(
-      <Line key={`v-${i}`} points={[i * GRID_SIZE, 0, i * GRID_SIZE, CANVAS_SIZE]} stroke="#e5e7eb" strokeWidth={1} />
+      <Line key={`v-${i}`} points={[i * GRID_SIZE, 0, i * GRID_SIZE, CANVAS_SIZE]} stroke="#f0f2f5" strokeWidth={1} />
     );
     gridLines.push(
-      <Line key={`h-${i}`} points={[0, i * GRID_SIZE, CANVAS_SIZE, i * GRID_SIZE]} stroke="#e5e7eb" strokeWidth={1} />
+      <Line key={`h-${i}`} points={[0, i * GRID_SIZE, CANVAS_SIZE, i * GRID_SIZE]} stroke="#f0f2f5" strokeWidth={1} />
     );
   }
 
@@ -146,14 +149,33 @@ function BlueprintCanvas({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedWallId, selectedDoorId, selectedWindowId, setWalls, actualSetDoors, actualSetWindows]);
 
-  const handleMouseDown = (e: any) => {
-    const isInteractiveElement = e.target.getClassName() === "Line" || e.target.hasName("doorRect") || e.target.hasName("windowRect");
-    
-    if (isInteractiveElement && e.target.name() !== "gridLine" && mode === 'select') {
-      return;
-    }
+  const handleWheel = (e: any) => {
+    e.evt.preventDefault();
+    const scaleBy = 1.05;
+    const stage = stageRef.current;
+    if (!stage) return;
 
-    const clickedOnEmpty = e.target === e.target.getStage() || e.target.hasName("backgroundImage") || e.target.hasName("gridLine") || e.target.hasName("roomRect") || e.target.hasName("roomLabel");
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    const clampedScale = Math.max(0.3, Math.min(3, newScale));
+
+    setScale(clampedScale);
+    setStagePos({
+      x: pointer.x - mousePointTo.x * clampedScale,
+      y: pointer.y - mousePointTo.y * clampedScale,
+    });
+  };
+
+  const handleMouseDown = (e: any) => {
+    const clickedOnEmpty = e.target === e.target.getStage() || e.target.hasName("backgroundImage") || e.target.hasName("gridLine");
     
     if (clickedOnEmpty) {
       setSelectedWallId(null);
@@ -162,7 +184,11 @@ function BlueprintCanvas({
       
       if (mode === 'select') return;
 
-      const pos = e.target.getStage().getPointerPosition();
+      const stage = stageRef.current;
+      const pointer = stage.getPointerPosition();
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const pos = transform.point(pointer);
+
       const snappedX = snapToGrid(pos.x);
       const snappedY = snapToGrid(pos.y);
       
@@ -187,7 +213,7 @@ function BlueprintCanvas({
           x: snappedX,
           y: snappedY,
           rotation: 0,
-          width: 120
+          width: 100
         };
         actualSetWindows([...actualWindows, newWindow]);
         setSelectedWindowId(newWindow.id);
@@ -196,8 +222,14 @@ function BlueprintCanvas({
     }
   };
 
-  const handleMouseMove = (e: any) => {
-    const pos = e.target.getStage().getPointerPosition();
+  const handleMouseMove = () => {
+    if (!drawing && !currentRect) return;
+    const stage = stageRef.current;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    
+    const transform = stage.getAbsoluteTransform().copy().invert();
+    const pos = transform.point(pointer);
     const snappedX = snapToGrid(pos.x);
     const snappedY = snapToGrid(pos.y);
 
@@ -215,34 +247,26 @@ function BlueprintCanvas({
   const handleMouseUp = () => {
     if (mode === 'wall' && drawing) {
       setDrawing(false);
-      
       if (currentLine[0] === currentLine[2] && currentLine[1] === currentLine[3]) {
         setCurrentLine([]);
         return;
       }
-      
       const newWall: Wall = { id: crypto.randomUUID(), points: currentLine };
       setWalls([...walls, newWall]);
       setCurrentLine([]);
       setSelectedWallId(newWall.id);
-
     } else if (mode === 'room' && currentRect) {
       let { x, y, w, h } = currentRect;
-      
       if (w < 0) { x += w; w = Math.abs(w); }
       if (h < 0) { y += h; h = Math.abs(h); }
 
-      if (w > 0 && h > 0) {
-        const widthMeters = w / 100;
-        const heightMeters = h / 100;
-        const area = parseFloat((widthMeters * heightMeters).toFixed(2));
-
+      if (w > 20 && h > 20) {
+        const area = parseFloat(((w / 100) * (h / 100)).toFixed(2));
         const newRoom: Room = {
           id: crypto.randomUUID(),
           name: `Room ${actualRooms.length + 1}`,
           x, y, width: w, height: h, area
         };
-        
         actualSetRooms([...actualRooms, newRoom]);
 
         const roomWalls: Wall[] = [
@@ -251,7 +275,6 @@ function BlueprintCanvas({
           { id: crypto.randomUUID(), points: [x + w, y + h, x, y + h] },
           { id: crypto.randomUUID(), points: [x, y + h, x, y] },
         ];
-        
         setWalls([...walls, ...roomWalls]);
       }
       setCurrentRect(null);
@@ -267,260 +290,254 @@ function BlueprintCanvas({
   };
 
   return (
-    <div className="relative w-full h-full bg-white overflow-hidden rounded-md border border-gray-200">
-      <div className="absolute top-4 left-4 z-10 flex gap-2 bg-white p-2 rounded-lg shadow-md border border-gray-200">
+    <div className="relative w-full h-full bg-slate-50 overflow-hidden rounded-xl border border-slate-200 shadow-inner flex flex-col">
+      <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2 bg-white/90 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-200">
         <button 
-          className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          className={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide uppercase transition-all cursor-pointer ${mode === 'select' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
           onClick={() => setMode('select')}
         >
-          Select
+          👆 Select / Move
         </button>
         <button 
-          className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'wall' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          className={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide uppercase transition-all cursor-pointer ${mode === 'wall' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
           onClick={() => setMode('wall')}
         >
-          Draw Wall
+          🧱 Draw Wall
         </button>
         <button 
-          className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'room' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          className={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide uppercase transition-all cursor-pointer ${mode === 'room' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
           onClick={() => setMode('room')}
         >
-          Draw Room
+          🏠 Draw Room Box
         </button>
         <button 
-          className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'door' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          className={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide uppercase transition-all cursor-pointer ${mode === 'door' ? 'bg-amber-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
           onClick={() => setMode('door')}
         >
-          Add Door
+          🚪 Add Door
         </button>
         <button 
-          className={`px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-colors ${mode === 'window' ? 'bg-teal-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          className={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide uppercase transition-all cursor-pointer ${mode === 'window' ? 'bg-teal-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
           onClick={() => setMode('window')}
         >
-          Add Window
+          🪟 Add Window
         </button>
       </div>
-      
-      {(selectedDoorId || selectedWindowId) && mode === 'select' && (
-        <div className="absolute bottom-4 left-4 z-10 bg-gray-800 text-white px-4 py-2 rounded-md text-sm shadow-md">
-          Press <strong>R</strong> to rotate | Press <strong>Delete</strong> to remove
+
+      {(selectedDoorId || selectedWindowId || selectedWallId) && mode === 'select' && (
+        <div className="absolute bottom-6 left-6 z-20 bg-slate-900/90 text-white px-4 py-2.5 rounded-xl text-xs font-medium shadow-xl backdrop-blur-sm flex items-center gap-3">
+          <span>✨ Tip: Press <strong className="text-amber-400">R</strong> to rotate | <strong className="text-red-400">Delete</strong> to remove</span>
         </div>
       )}
 
-      <Stage
-        width={900}
-        height={700}
-        ref={stageRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-      >
-        <Layer>
-          <Group name="gridLine">{gridLines}</Group>
+      <div className="flex-1 w-full h-full cursor-crosshair">
+        <Stage
+          width={window.innerWidth > 1200 ? 1100 : window.innerWidth - 300}
+          height={750}
+          ref={stageRef}
+          scaleX={scale}
+          scaleY={scale}
+          x={stagePos.x}
+          y={stagePos.y}
+          draggable={mode === 'select'}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onDragEnd={(e) => {
+            if (e.target === stageRef.current) {
+              setStagePos({ x: e.target.x(), y: e.target.y() });
+            }
+          }}
+        >
+          <Layer>
+            <Group name="gridLine">{gridLines}</Group>
+            {image && <KonvaImage image={image} name="backgroundImage" />}
 
-          {image && <KonvaImage image={image} name="backgroundImage" />}
+            {actualRooms.map((room) => {
+              if (!room) return null;
+              return (
+                <Group key={room.id}>
+                  <Rect
+                    x={room.x}
+                    y={room.y}
+                    width={room.width}
+                    height={room.height}
+                    fill="#3b82f6"
+                    opacity={0.12}
+                    cornerRadius={4}
+                  />
+                  <Text
+                    x={room.x + (room.width || 0) / 2 - 50}
+                    y={room.y + (room.height || 0) / 2 - 12}
+                    text={`${room.name}\n${room.area} m²`}
+                    fontSize={13}
+                    fontFamily="sans-serif"
+                    fontStyle="bold"
+                    fill="#1e40af"
+                    align="center"
+                  />
+                </Group>
+              );
+            })}
 
-          {actualRooms.map((room) => {
-            if (!room) return null;
-            return (
-              <Group key={room.id}>
-                <Rect
-                  name="roomRect"
-                  x={room.x}
-                  y={room.y}
-                  width={room.width}
-                  height={room.height}
-                  fill="#bfdbfe"
-                  opacity={0.4}
-                />
-                <Text
-                  name="roomLabel"
-                  x={room.x + (room.width || 0) / 2 - 40}
-                  y={room.y + (room.height || 0) / 2 - 10}
-                  text={`${room.name}\n${room.area} m²`}
-                  fontSize={14}
-                  fontFamily="sans-serif"
-                  fill="#1e3a8a"
-                  align="center"
-                />
-              </Group>
-            );
-          })}
-
-          {actualWindows.map((windowObj) => {
-            if (!windowObj) return null;
-            const isSelected = selectedWindowId === windowObj.id;
-            return (
-              <Group
-                key={windowObj.id}
-                x={windowObj.x}
-                y={windowObj.y}
-                rotation={windowObj.rotation}
-                draggable={mode === 'select'}
-                onClick={() => selectElement('window', windowObj.id)}
-                onTap={() => selectElement('window', windowObj.id)}
-                onDragStart={() => selectElement('window', windowObj.id)}
-                onDragEnd={(e) => {
-                  const node = e.target;
-                  const dx = snapToGrid(node.x());
-                  const dy = snapToGrid(node.y());
-                  node.position({ x: dx, y: dy });
-                  actualSetWindows((prev: any[]) =>
-                    prev.map((w) => (w.id === windowObj.id ? { ...w, x: dx, y: dy } : w))
-                  );
-                }}
-              >
-                <Rect
-                  name="windowRect"
-                  width={windowObj.width || 120}
-                  height={12}
-                  fill={isSelected ? "#0d9488" : "#14b8a6"} 
-                  stroke={isSelected ? "#0f766e" : "#0d9488"}
-                  strokeWidth={2}
-                  hitStrokeWidth={15}
-                  offsetX={(windowObj.width || 120) / 2}
-                  offsetY={6}
-                />
-                <Line
-                  points={[-(windowObj.width || 120) / 2, 0, (windowObj.width || 120) / 2, 0]}
-                  stroke="#cffafe" 
-                  strokeWidth={4}
-                />
-              </Group>
-            );
-          })}
-
-          {actualDoors.map((door) => {
-            if (!door) return null;
-            const isSelected = selectedDoorId === door.id;
-            return (
-              <Group
-                key={door.id}
-                x={door.x}
-                y={door.y}
-                rotation={door.rotation}
-                draggable={mode === 'select'}
-                onClick={() => selectElement('door', door.id)}
-                onTap={() => selectElement('door', door.id)}
-                onDragStart={() => selectElement('door', door.id)}
-                onDragEnd={(e) => {
-                  const node = e.target;
-                  const dx = snapToGrid(node.x());
-                  const dy = snapToGrid(node.y());
-                  node.position({ x: dx, y: dy });
-                  actualSetDoors((prev: any[]) =>
-                    prev.map((d) => (d.id === door.id ? { ...d, x: dx, y: dy } : d))
-                  );
-                }}
-              >
-                <Rect
-                  name="doorRect"
-                  width={80}
-                  height={10}
-                  fill={isSelected ? "#d97706" : "#f59e0b"}
-                  stroke={isSelected ? "#b45309" : "#d97706"}
-                  strokeWidth={2}
-                  hitStrokeWidth={15}
-                  offsetX={40}
-                  offsetY={5}
-                />
-                <Arc
-                  x={-40}
-                  y={-5}
-                  innerRadius={78}
-                  outerRadius={80}
-                  angle={90}
-                  fill={isSelected ? "#d97706" : "#f59e0b"}
-                  opacity={0.6}
-                  rotation={0}
-                />
-              </Group>
-            );
-          })}
-
-          {currentRect && (
-            <Rect
-              x={currentRect.w < 0 ? currentRect.x + currentRect.w : currentRect.x}
-              y={currentRect.h < 0 ? currentRect.y + currentRect.h : currentRect.y}
-              width={Math.abs(currentRect.w)}
-              height={Math.abs(currentRect.h)}
-              fill="#bfdbfe"
-              opacity={0.5}
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dash={[5, 5]}
-            />
-          )}
-
-          {walls.map((wall: Wall) => {
-            if (!wall || !wall.points || wall.points.length < 4) return null;
-            
-            const center = getCenter(wall.points);
-            const lengthMeters = calculateLength(wall.points);
-            const isSelected = selectedWallId === wall.id;
-
-            return (
-              <Group key={wall.id}>
-                <Line
-                  points={wall.points}
-                  stroke={isSelected ? "#3b82f6" : "#1f2937"}
-                  strokeWidth={isSelected ? 6 : 5}
-                  lineCap="round"
-                  hitStrokeWidth={20}
+            {actualWindows.map((windowObj) => {
+              if (!windowObj) return null;
+              const isSelected = selectedWindowId === windowObj.id;
+              return (
+                <Group
+                  key={windowObj.id}
+                  x={windowObj.x}
+                  y={windowObj.y}
+                  rotation={windowObj.rotation}
                   draggable={mode === 'select'}
-                  onClick={() => selectElement('wall', wall.id)}
-                  onTap={() => selectElement('wall', wall.id)}
-                  onDragStart={() => selectElement('wall', wall.id)}
+                  onClick={() => selectElement('window', windowObj.id)}
+                  onTap={() => selectElement('window', windowObj.id)}
                   onDragEnd={(e) => {
                     const node = e.target;
                     const dx = snapToGrid(node.x());
                     const dy = snapToGrid(node.y());
-                    
-                    node.position({ x: 0, y: 0 });
-                    
-                    const updatedPoints = [
-                      wall.points[0] + dx, wall.points[1] + dy,
-                      wall.points[2] + dx, wall.points[3] + dy,
-                    ];
-                    
-                    setWalls((prevWalls: any[]) =>
-                      prevWalls.map((w: Wall) => w.id === wall.id ? { ...w, points: updatedPoints } : w)
+                    actualSetWindows((prev: any[]) =>
+                      prev.map((w) => (w.id === windowObj.id ? { ...w, x: dx, y: dy } : w))
                     );
                   }}
-                />
-                
-                {isSelected && (
-                  <Text
-                    x={center.x + 15}
-                    y={center.y + 15}
-                    text={`${lengthMeters} m`}
-                    fontSize={14}
-                    fontFamily="sans-serif"
-                    fill="#3b82f6"
-                    padding={4}
-                    background="white"
+                >
+                  <Rect
+                    width={windowObj.width || 100}
+                    height={10}
+                    fill={isSelected ? "#0d9488" : "#14b8a6"}
+                    stroke={isSelected ? "#115e59" : "#0f766e"}
+                    strokeWidth={2}
+                    offsetX={(windowObj.width || 100) / 2}
+                    offsetY={5}
+                    cornerRadius={2}
                   />
-                )}
-              </Group>
-            );
-          })}
+                  <Line points={[-(windowObj.width || 100) / 2, 0, (windowObj.width || 100) / 2, 0]} stroke="#ccfbf1" strokeWidth={3} />
+                </Group>
+              );
+            })}
 
-          {drawing && mode === 'wall' && currentLine && currentLine.length === 4 && (
-            <Group>
-              <Line points={currentLine} stroke="#ef4444" strokeWidth={5} lineCap="round" />
-              <Text
-                x={getCenter(currentLine).x + 15}
-                y={getCenter(currentLine).y + 15}
-                text={`${calculateLength(currentLine)} m`}
-                fontSize={14}
-                fontFamily="sans-serif"
-                fill="#ef4444"
-                padding={4}
+            {actualDoors.map((door) => {
+              if (!door) return null;
+              const isSelected = selectedDoorId === door.id;
+              return (
+                <Group
+                  key={door.id}
+                  x={door.x}
+                  y={door.y}
+                  rotation={door.rotation}
+                  draggable={mode === 'select'}
+                  onClick={() => selectElement('door', door.id)}
+                  onTap={() => selectElement('door', door.id)}
+                  onDragEnd={(e) => {
+                    const node = e.target;
+                    const dx = snapToGrid(node.x());
+                    const dy = snapToGrid(node.y());
+                    actualSetDoors((prev: any[]) =>
+                      prev.map((d) => (d.id === door.id ? { ...d, x: dx, y: dy } : d))
+                    );
+                  }}
+                >
+                  <Rect
+                    width={70}
+                    height={8}
+                    fill={isSelected ? "#d97706" : "#f59e0b"}
+                    stroke={isSelected ? "#92400e" : "#b45309"}
+                    strokeWidth={2}
+                    offsetX={35}
+                    offsetY={4}
+                  />
+                  <Arc
+                    x={-35}
+                    y={-4}
+                    innerRadius={68}
+                    outerRadius={70}
+                    angle={90}
+                    fill="#f59e0b"
+                    opacity={0.5}
+                  />
+                </Group>
+              );
+            })}
+
+            {currentRect && (
+              <Rect
+                x={currentRect.w < 0 ? currentRect.x + currentRect.w : currentRect.x}
+                y={currentRect.h < 0 ? currentRect.y + currentRect.h : currentRect.y}
+                width={Math.abs(currentRect.w)}
+                height={Math.abs(currentRect.h)}
+                fill="#3b82f6"
+                opacity={0.2}
+                stroke="#2563eb"
+                strokeWidth={2}
+                dash={[6, 6]}
               />
-            </Group>
-          )}
-        </Layer>
-      </Stage>
+            )}
+
+            {walls.map((wall: Wall) => {
+              if (!wall || !wall.points || wall.points.length < 4) return null;
+              const center = getCenter(wall.points);
+              const lengthMeters = calculateLength(wall.points);
+              const isSelected = selectedWallId === wall.id;
+
+              return (
+                <Group key={wall.id}>
+                  <Line
+                    points={wall.points}
+                    stroke={isSelected ? "#2563eb" : "#0f172a"}
+                    strokeWidth={isSelected ? 8 : 6}
+                    lineCap="round"
+                    lineJoin="round"
+                    hitStrokeWidth={24}
+                    draggable={mode === 'select'}
+                    onClick={() => selectElement('wall', wall.id)}
+                    onTap={() => selectElement('wall', wall.id)}
+                    onDragEnd={(e) => {
+                      const node = e.target;
+                      const dx = snapToGrid(node.x());
+                      const dy = snapToGrid(node.y());
+                      node.position({ x: 0, y: 0 });
+                      
+                      const updatedPoints = [
+                        wall.points[0] + dx, wall.points[1] + dy,
+                        wall.points[2] + dx, wall.points[3] + dy,
+                      ];
+                      setWalls((prevWalls: any[]) =>
+                        prevWalls.map((w: Wall) => w.id === wall.id ? { ...w, points: updatedPoints } : w)
+                      );
+                    }}
+                  />
+                  {(isSelected || Number(lengthMeters) > 0.5) && (
+                    <Text
+                      x={center.x + 10}
+                      y={center.y + 10}
+                      text={`${lengthMeters} m`}
+                      fontSize={12}
+                      fontFamily="sans-serif"
+                      fill={isSelected ? "#2563eb" : "#475569"}
+                      padding={3}
+                    />
+                  )}
+                </Group>
+              );
+            })}
+
+            {drawing && mode === 'wall' && currentLine && currentLine.length === 4 && (
+              <Group>
+                <Line points={currentLine} stroke="#ef4444" strokeWidth={6} lineCap="round" />
+                <Text
+                  x={getCenter(currentLine).x + 10}
+                  y={getCenter(currentLine).y + 10}
+                  text={`${calculateLength(currentLine)} m`}
+                  fontSize={12}
+                  fontFamily="sans-serif"
+                  fill="#ef4444"
+                />
+              </Group>
+            )}
+          </Layer>
+        </Stage>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import type { ReactNode, Dispatch, SetStateAction } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-interface Project {
+export interface Project {
   _id: string;
   projectName: string;
   location: string;

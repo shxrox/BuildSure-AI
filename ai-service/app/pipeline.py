@@ -19,7 +19,7 @@ class AEPipelineManager:
 
         # Quantized Stable Diffusion v1.5 baseline
         self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
-            "runwayml/stable-diffusion-v1.5",
+            "stable-diffusion-v1-5/stable-diffusion-v1-5",
             controlnet=controlnet,
             torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
         )

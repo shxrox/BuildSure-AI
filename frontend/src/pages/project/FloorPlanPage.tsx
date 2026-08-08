@@ -91,11 +91,11 @@ interface FurnitureItem {
   id: string;
   name: string;
   category:
-    | "Living"
-    | "Bedroom"
-    | "Kitchen"
-    | "Bathroom"
-    | "Office";
+  | "Living"
+  | "Bedroom"
+  | "Kitchen"
+  | "Bathroom"
+  | "Office";
   icon: string;
   x: number;
   y: number;
@@ -106,13 +106,13 @@ interface FurnitureItem {
 
 interface DragState {
   type:
-    | "wall-start"
-    | "wall-end"
-    | "door"
-    | "window"
-    | "room"
-    | "furniture"
-    | null;
+  | "wall-start"
+  | "wall-end"
+  | "door"
+  | "window"
+  | "room"
+  | "furniture"
+  | null;
 
   id: string | null;
 
@@ -157,126 +157,126 @@ const CATALOG_ITEMS: Omit<
   FurnitureItem,
   "id" | "x" | "y" | "rotation"
 >[] = [
-  {
-    name: "2-Seater Sofa",
-    category: "Living",
-    icon: "sofa",
-    width: 160,
-    height: 85,
-  },
-  {
-    name: "3-Seater Sofa",
-    category: "Living",
-    icon: "sofa",
-    width: 210,
-    height: 90,
-  },
-  {
-    name: "L-Shaped Sofa",
-    category: "Living",
-    icon: "sofa",
-    width: 270,
-    height: 170,
-  },
-  {
-    name: "Armchair",
-    category: "Living",
-    icon: "armchair",
-    width: 85,
-    height: 80,
-  },
-  {
-    name: "Coffee Table",
-    category: "Living",
-    icon: "table",
-    width: 110,
-    height: 60,
-  },
-  {
-    name: "TV Stand",
-    category: "Living",
-    icon: "monitor",
-    width: 140,
-    height: 40,
-  },
-  {
-    name: "Queen Bed",
-    category: "Bedroom",
-    icon: "bed",
-    width: 160,
-    height: 200,
-  },
-  {
-    name: "King Bed",
-    category: "Bedroom",
-    icon: "bed",
-    width: 190,
-    height: 200,
-  },
-  {
-    name: "Nightstand",
-    category: "Bedroom",
-    icon: "nightstand",
-    width: 50,
-    height: 50,
-  },
-  {
-    name: "Wardrobe",
-    category: "Bedroom",
-    icon: "wardrobe",
-    width: 180,
-    height: 60,
-  },
-  {
-    name: "Dining Table",
-    category: "Kitchen",
-    icon: "dining",
-    width: 160,
-    height: 90,
-  },
-  {
-    name: "Kitchen Island",
-    category: "Kitchen",
-    icon: "kitchen",
-    width: 200,
-    height: 90,
-  },
-  {
-    name: "Refrigerator",
-    category: "Kitchen",
-    icon: "fridge",
-    width: 70,
-    height: 70,
-  },
-  {
-    name: "Toilet",
-    category: "Bathroom",
-    icon: "toilet",
-    width: 50,
-    height: 70,
-  },
-  {
-    name: "Bathtub",
-    category: "Bathroom",
-    icon: "bath",
-    width: 150,
-    height: 75,
-  },
-  {
-    name: "Office Desk",
-    category: "Office",
-    icon: "desk",
-    width: 140,
-    height: 70,
-  },
-  {
-    name: "Office Chair",
-    category: "Office",
-    icon: "chair",
-    width: 60,
-    height: 60,
-  },
-];
+    {
+      name: "2-Seater Sofa",
+      category: "Living",
+      icon: "sofa",
+      width: 160,
+      height: 85,
+    },
+    {
+      name: "3-Seater Sofa",
+      category: "Living",
+      icon: "sofa",
+      width: 210,
+      height: 90,
+    },
+    {
+      name: "L-Shaped Sofa",
+      category: "Living",
+      icon: "sofa",
+      width: 270,
+      height: 170,
+    },
+    {
+      name: "Armchair",
+      category: "Living",
+      icon: "armchair",
+      width: 85,
+      height: 80,
+    },
+    {
+      name: "Coffee Table",
+      category: "Living",
+      icon: "table",
+      width: 110,
+      height: 60,
+    },
+    {
+      name: "TV Stand",
+      category: "Living",
+      icon: "monitor",
+      width: 140,
+      height: 40,
+    },
+    {
+      name: "Queen Bed",
+      category: "Bedroom",
+      icon: "bed",
+      width: 160,
+      height: 200,
+    },
+    {
+      name: "King Bed",
+      category: "Bedroom",
+      icon: "bed",
+      width: 190,
+      height: 200,
+    },
+    {
+      name: "Nightstand",
+      category: "Bedroom",
+      icon: "nightstand",
+      width: 50,
+      height: 50,
+    },
+    {
+      name: "Wardrobe",
+      category: "Bedroom",
+      icon: "wardrobe",
+      width: 180,
+      height: 60,
+    },
+    {
+      name: "Dining Table",
+      category: "Kitchen",
+      icon: "dining",
+      width: 160,
+      height: 90,
+    },
+    {
+      name: "Kitchen Island",
+      category: "Kitchen",
+      icon: "kitchen",
+      width: 200,
+      height: 90,
+    },
+    {
+      name: "Refrigerator",
+      category: "Kitchen",
+      icon: "fridge",
+      width: 70,
+      height: 70,
+    },
+    {
+      name: "Toilet",
+      category: "Bathroom",
+      icon: "toilet",
+      width: 50,
+      height: 70,
+    },
+    {
+      name: "Bathtub",
+      category: "Bathroom",
+      icon: "bath",
+      width: 150,
+      height: 75,
+    },
+    {
+      name: "Office Desk",
+      category: "Office",
+      icon: "desk",
+      width: 140,
+      height: 70,
+    },
+    {
+      name: "Office Chair",
+      category: "Office",
+      icon: "chair",
+      width: 60,
+      height: 60,
+    },
+  ];
 
 function snapToGrid(v: number) {
   return Math.round(v / GRID_SIZE) * GRID_SIZE;
@@ -380,9 +380,9 @@ function polygonArea(
 
     a +=
       pts[i].x *
-        pts[j].y -
+      pts[j].y -
       pts[j].x *
-        pts[i].y;
+      pts[i].y;
   }
 
   return Math.abs(a / 2);
@@ -1026,7 +1026,7 @@ function FloorPlanPage() {
         gx <
         w0 + wW;
         gx +=
-          GRID_SIZE * 5
+        GRID_SIZE * 5
       ) {
         ctx.beginPath();
 
@@ -1048,7 +1048,7 @@ function FloorPlanPage() {
         gy <
         h0 + wH;
         gy +=
-          GRID_SIZE * 5
+        GRID_SIZE * 5
       ) {
         ctx.beginPath();
 
@@ -1083,9 +1083,9 @@ function FloorPlanPage() {
 
         const sel =
           selectedType ===
-            "room" &&
+          "room" &&
           selectedId ===
-            room.id;
+          room.id;
 
         ctx.beginPath();
 
@@ -1145,14 +1145,13 @@ function FloorPlanPage() {
           ) *
           (SCALE_MM_PER_PX /
             1000) **
-            2;
+          2;
 
         ctx.fillStyle =
           "#1e293b";
 
-        ctx.font = `bold ${
-          12 / zoom
-        }px Inter, sans-serif`;
+        ctx.font = `bold ${12 / zoom
+          }px Inter, sans-serif`;
 
         ctx.textAlign =
           "center";
@@ -1161,12 +1160,11 @@ function FloorPlanPage() {
           room.name,
           cx,
           cy -
-            6 / zoom
+          6 / zoom
         );
 
-        ctx.font = `${
-          10 / zoom
-        }px Inter, sans-serif`;
+        ctx.font = `${10 / zoom
+          }px Inter, sans-serif`;
 
         ctx.fillStyle =
           "#64748b";
@@ -1177,7 +1175,7 @@ function FloorPlanPage() {
           )} m²`,
           cx,
           cy +
-            8 / zoom
+          8 / zoom
         );
       }
     );
@@ -1192,9 +1190,9 @@ function FloorPlanPage() {
       (wall) => {
         const sel =
           selectedType ===
-            "wall" &&
+          "wall" &&
           selectedId ===
-            wall.id;
+          wall.id;
 
         const ang =
           wallAngle(wall);
@@ -1287,9 +1285,8 @@ function FloorPlanPage() {
             ctx.fillStyle =
               "#64748b";
 
-            ctx.font = `${
-              10 / zoom
-            }px Inter, sans-serif`;
+            ctx.font = `${10 / zoom
+              }px Inter, sans-serif`;
 
             ctx.textAlign =
               "center";
@@ -1443,9 +1440,9 @@ function FloorPlanPage() {
       (door) => {
         const sel =
           selectedType ===
-            "door" &&
+          "door" &&
           selectedId ===
-            door.id;
+          door.id;
 
         ctx.save();
 
@@ -1499,9 +1496,9 @@ function FloorPlanPage() {
       (win) => {
         const sel =
           selectedType ===
-            "window" &&
+          "window" &&
           selectedId ===
-            win.id;
+          win.id;
 
         ctx.save();
 
@@ -1564,9 +1561,9 @@ function FloorPlanPage() {
       (item) => {
         const sel =
           selectedType ===
-            "furniture" &&
+          "furniture" &&
           selectedId ===
-            item.id;
+          item.id;
 
         ctx.save();
 
@@ -1702,9 +1699,8 @@ function FloorPlanPage() {
           ctx.fillStyle =
             "#475569";
 
-          ctx.font = `${
-            8 / zoom
-          }px Inter, sans-serif`;
+          ctx.font = `${8 / zoom
+            }px Inter, sans-serif`;
 
           ctx.textAlign =
             "center";
@@ -1719,7 +1715,7 @@ function FloorPlanPage() {
             label,
             0,
             fh / 2 +
-              5 / zoom
+            5 / zoom
           );
         }
 
@@ -1784,7 +1780,7 @@ function FloorPlanPage() {
         gx <
         w0 + wW;
         gx +=
-          GRID_SIZE * 5
+        GRID_SIZE * 5
       ) {
         const sx =
           gx * zoom +
@@ -1793,7 +1789,7 @@ function FloorPlanPage() {
         if (
           sx < 30 ||
           sx >
-            canvas.width
+          canvas.width
         ) {
           continue;
         }
@@ -1822,7 +1818,7 @@ function FloorPlanPage() {
         gy <
         h0 + wH;
         gy +=
-          GRID_SIZE * 5
+        GRID_SIZE * 5
       ) {
         const sy =
           gy * zoom +
@@ -1831,7 +1827,7 @@ function FloorPlanPage() {
         if (
           sy < 30 ||
           sy >
-            canvas.height
+          canvas.height
         ) {
           continue;
         }
@@ -1907,7 +1903,7 @@ function FloorPlanPage() {
 
     for (
       let i = 0,
-        j = pts.length - 1;
+      j = pts.length - 1;
       i < pts.length;
       j = i++
     ) {
@@ -1925,12 +1921,12 @@ function FloorPlanPage() {
 
       if (
         (yi > py) !==
-          (yj > py) &&
+        (yj > py) &&
         px <
-          ((xj - xi) *
-            (py - yi)) /
-            (yj - yi) +
-            xi
+        ((xj - xi) *
+          (py - yi)) /
+        (yj - yi) +
+        xi
       ) {
         inside = !inside;
       }
@@ -1970,11 +1966,11 @@ function FloorPlanPage() {
             Math.abs(
               wx - f.x
             ) <
-              fw / 2 &&
+            fw / 2 &&
             Math.abs(
               wy - f.y
             ) <
-              fh / 2
+            fh / 2
           ) {
             return {
               type:
@@ -2148,16 +2144,15 @@ function FloorPlanPage() {
 
         const color =
           ROOM_COLORS[
-            rooms.length %
-              ROOM_COLORS.length
+          rooms.length %
+          ROOM_COLORS.length
           ];
 
         const newRoom: Room = {
           id: Date.now().toString(),
 
-          name: `Room ${
-            rooms.length + 1
-          }`,
+          name: `Room ${rooms.length + 1
+            }`,
 
           points: roomPoints,
 
@@ -2167,7 +2162,7 @@ function FloorPlanPage() {
             ) *
             (SCALE_MM_PER_PX /
               1000) **
-              2,
+            2,
 
           color,
         };
@@ -2370,34 +2365,34 @@ function FloorPlanPage() {
 
       if (
         tool ===
-          "furniture" &&
+        "furniture" &&
         activeFurniture
       ) {
         const newFurniture: FurnitureItem =
-          {
-            id:
-              Date.now().toString(),
+        {
+          id:
+            Date.now().toString(),
 
-            name:
-              activeFurniture.name,
+          name:
+            activeFurniture.name,
 
-            category:
-              activeFurniture.category,
+          category:
+            activeFurniture.category,
 
-            icon:
-              activeFurniture.icon,
+          icon:
+            activeFurniture.icon,
 
-            x: wp.x,
-            y: wp.y,
+          x: wp.x,
+          y: wp.y,
 
-            width:
-              activeFurniture.width,
+          width:
+            activeFurniture.width,
 
-            height:
-              activeFurniture.height,
+          height:
+            activeFurniture.height,
 
-            rotation: 0,
-          };
+          rotation: 0,
+        };
 
         updatedFurniture = [
           ...furniture,
@@ -2474,21 +2469,21 @@ function FloorPlanPage() {
 
             if (obj) {
               dragRef.current =
-                {
-                  type:
-                    "furniture",
+              {
+                type:
+                  "furniture",
 
-                  id:
-                    hit.id,
+                id:
+                  hit.id,
 
-                  offsetX:
-                    raw.x -
-                    obj.x,
+                offsetX:
+                  raw.x -
+                  obj.x,
 
-                  offsetY:
-                    raw.y -
-                    obj.y,
-                };
+                offsetY:
+                  raw.y -
+                  obj.y,
+              };
             }
           }
 
@@ -2509,21 +2504,21 @@ function FloorPlanPage() {
 
             if (obj) {
               dragRef.current =
-                {
-                  type:
-                    "door",
+              {
+                type:
+                  "door",
 
-                  id:
-                    hit.id,
+                id:
+                  hit.id,
 
-                  offsetX:
-                    raw.x -
-                    obj.x,
+                offsetX:
+                  raw.x -
+                  obj.x,
 
-                  offsetY:
-                    raw.y -
-                    obj.y,
-                };
+                offsetY:
+                  raw.y -
+                  obj.y,
+              };
             }
           }
 
@@ -2544,21 +2539,21 @@ function FloorPlanPage() {
 
             if (obj) {
               dragRef.current =
-                {
-                  type:
-                    "window",
+              {
+                type:
+                  "window",
 
-                  id:
-                    hit.id,
+                id:
+                  hit.id,
 
-                  offsetX:
-                    raw.x -
-                    obj.x,
+                offsetX:
+                  raw.x -
+                  obj.x,
 
-                  offsetY:
-                    raw.y -
-                    obj.y,
-                };
+                offsetY:
+                  raw.y -
+                  obj.y,
+              };
             }
           }
         } else {
@@ -2803,7 +2798,7 @@ function FloorPlanPage() {
       ) {
         if (
           roomPoints.length >=
-            3 &&
+          3 &&
           dist(
             wp.x,
             wp.y,
@@ -2946,18 +2941,18 @@ function FloorPlanPage() {
             p.map(
               (d) =>
                 d.id ===
-                dr.id
+                  dr.id
                   ? {
-                      ...d,
+                    ...d,
 
-                      x:
-                        raw.x -
-                        dr.offsetX,
+                    x:
+                      raw.x -
+                      dr.offsetX,
 
-                      y:
-                        raw.y -
-                        dr.offsetY,
-                    }
+                    y:
+                      raw.y -
+                      dr.offsetY,
+                  }
                   : d
             )
         );
@@ -2976,18 +2971,18 @@ function FloorPlanPage() {
             p.map(
               (w) =>
                 w.id ===
-                dr.id
+                  dr.id
                   ? {
-                      ...w,
+                    ...w,
 
-                      x:
-                        raw.x -
-                        dr.offsetX,
+                    x:
+                      raw.x -
+                      dr.offsetX,
 
-                      y:
-                        raw.y -
-                        dr.offsetY,
-                    }
+                    y:
+                      raw.y -
+                      dr.offsetY,
+                  }
                   : w
             )
         );
@@ -3009,18 +3004,18 @@ function FloorPlanPage() {
             p.map(
               (f) =>
                 f.id ===
-                dr.id
+                  dr.id
                   ? {
-                      ...f,
+                    ...f,
 
-                      x:
-                        raw.x -
-                        dr.offsetX,
+                    x:
+                      raw.x -
+                      dr.offsetX,
 
-                      y:
-                        raw.y -
-                        dr.offsetY,
-                    }
+                    y:
+                      raw.y -
+                      dr.offsetY,
+                  }
                   : f
             )
         );
@@ -3128,12 +3123,12 @@ function FloorPlanPage() {
         x:
           cx -
           (cx - p.x) *
-            (nz / zoom),
+          (nz / zoom),
 
         y:
           cy -
           (cy - p.y) *
-            (nz / zoom),
+          (nz / zoom),
       }));
 
       setZoom(nz);
@@ -3256,9 +3251,9 @@ function FloorPlanPage() {
         polygonArea(
           r.points
         ) *
-          (SCALE_MM_PER_PX /
-            1000) **
-            2,
+        (SCALE_MM_PER_PX /
+          1000) **
+        2,
       0
     );
 
@@ -3270,32 +3265,32 @@ function FloorPlanPage() {
 
   const selectedWall =
     selectedType ===
-    "wall"
+      "wall"
       ? walls.find(
-          (x) =>
-            x.id ===
-            selectedId
-        )
+        (x) =>
+          x.id ===
+          selectedId
+      )
       : null;
 
   const selectedRoom =
     selectedType ===
-    "room"
+      "room"
       ? rooms.find(
-          (x) =>
-            x.id ===
-            selectedId
-        )
+        (x) =>
+          x.id ===
+          selectedId
+      )
       : null;
 
   const selectedFurniture =
     selectedType ===
-    "furniture"
+      "furniture"
       ? furniture.find(
-          (x) =>
-            x.id ===
-            selectedId
-        )
+        (x) =>
+          x.id ===
+          selectedId
+      )
       : null;
 
   /*
@@ -3462,7 +3457,24 @@ function FloorPlanPage() {
               ? "Saving..."
               : "Save Plan"}
           </button>
+              <button
+  onClick={() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      alert("Canvas not found!");
+      return;
+    }
+    // Capture the current canvas drawing as an image URL
+    const dataUrl = canvas.toDataURL("image/png");
 
+    navigate(`/projects/${id}/ai-render`, {
+      state: { initialImage: dataUrl },
+    });
+  }}
+  className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors flex items-center gap-2 shadow-xs"
+>
+  ✨ AI 3D Render
+</button>
           <button
             onClick={() =>
               navigate(
@@ -3506,40 +3518,39 @@ function FloorPlanPage() {
                       tab
                     )
                   }
-                  className={`flex-1 py-2 text-xs font-bold rounded-md capitalize cursor-pointer transition-all ${
-                    activeSidebarTab ===
-                    tab
+                  className={`flex-1 py-2 text-xs font-bold rounded-md capitalize cursor-pointer transition-all ${activeSidebarTab ===
+                      tab
                       ? "bg-white text-blue-600 shadow-xs"
                       : "text-slate-500 hover:text-slate-800"
-                  }`}
+                    }`}
                 >
                   <span className="flex items-center justify-center gap-1.5">
                     {tab ===
                       "objects" && (
-                      <Box
-                        size={
-                          13
-                        }
-                      />
-                    )}
+                        <Box
+                          size={
+                            13
+                          }
+                        />
+                      )}
 
                     {tab ===
                       "layers" && (
-                      <Layers
-                        size={
-                          13
-                        }
-                      />
-                    )}
+                        <Layers
+                          size={
+                            13
+                          }
+                        />
+                      )}
 
                     {tab ===
                       "settings" && (
-                      <Settings
-                        size={
-                          13
-                        }
-                      />
-                    )}
+                        <Settings
+                          size={
+                            13
+                          }
+                        />
+                      )}
 
                     {tab}
                   </span>
@@ -3554,221 +3565,219 @@ function FloorPlanPage() {
 
           {activeSidebarTab ===
             "objects" && (
-            <div className="flex flex-col flex-1 p-4 overflow-y-auto gap-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search catalog..."
-                  value={
-                    searchQuery
-                  }
-                  onChange={(
-                    e
-                  ) =>
-                    setSearchQuery(
-                      e.target
-                        .value
-                    )
-                  }
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-blue-500"
-                />
-
-                <Search
-                  size={15}
-                  className="absolute left-3 top-2.5 text-slate-400"
-                />
-              </div>
-
-              {activeFurniture && (
-                <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-xs text-amber-800 flex justify-between items-center">
-                  <span>
-                    Placing:{" "}
-                    <b>
-                      {
-                        activeFurniture.name
-                      }
-                    </b>
-                  </span>
-
-                  <button
-                    onClick={() => {
-                      setActiveFurniture(
-                        null
-                      );
-
-                      setTool(
-                        "select"
-                      );
-                    }}
-                    className="font-bold text-amber-600 hover:text-amber-900 cursor-pointer"
-                  >
-                    <X
-                      size={14}
-                    />
-                  </button>
-                </div>
-              )}
-
-              <div>
-                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
-                  Structure Tools
-                </h4>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    {
-                      key: "wall",
-                      label: "Wall",
-                      icon: BrickWall,
-                    },
-                    {
-                      key: "door",
-                      label: "Door",
-                      icon: DoorOpen,
-                    },
-                    {
-                      key: "window",
-                      label: "Window",
-                      icon: PanelTop,
-                    },
-                    {
-                      key: "room",
-                      label: "Room",
-                      icon: Hexagon,
-                    },
-                  ].map(
-                    (t) => {
-                      const Icon =
-                        t.icon;
-
-                      return (
-                        <button
-                          key={
-                            t.key
-                          }
-                          onClick={() => {
-                            setTool(
-                              t.key as Tool
-                            );
-
-                            setActiveFurniture(
-                              null
-                            );
-
-                            if (
-                              t.key !==
-                              "wall"
-                            ) {
-                              setDrawStart(
-                                null
-                              );
-
-                              setPreviewEnd(
-                                null
-                              );
-                            }
-
-                            if (
-                              t.key !==
-                              "room"
-                            ) {
-                              setRoomPoints(
-                                []
-                              );
-                            }
-                          }}
-                          className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 cursor-pointer transition-all ${
-                            tool ===
-                            t.key
-                              ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs"
-                              : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
-                          }`}
-                        >
-                          <Icon
-                            size={
-                              18
-                            }
-                          />
-
-                          <span className="text-xs font-bold">
-                            {
-                              t.label
-                            }
-                          </span>
-                        </button>
-                      );
+              <div className="flex flex-col flex-1 p-4 overflow-y-auto gap-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search catalog..."
+                    value={
+                      searchQuery
                     }
-                  )}
+                    onChange={(
+                      e
+                    ) =>
+                      setSearchQuery(
+                        e.target
+                          .value
+                      )
+                    }
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-blue-500"
+                  />
+
+                  <Search
+                    size={15}
+                    className="absolute left-3 top-2.5 text-slate-400"
+                  />
                 </div>
-              </div>
 
-              <div className="flex-1">
-                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
-                  Furniture & Fixtures
-                </h4>
+                {activeFurniture && (
+                  <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-xs text-amber-800 flex justify-between items-center">
+                    <span>
+                      Placing:{" "}
+                      <b>
+                        {
+                          activeFurniture.name
+                        }
+                      </b>
+                    </span>
 
-                <div className="grid grid-cols-2 gap-2">
-                  {filteredCatalog.map(
-                    (
-                      item
-                    ) => {
-                      const Icon =
-                        getFurnitureIcon(
-                          item.icon
+                    <button
+                      onClick={() => {
+                        setActiveFurniture(
+                          null
                         );
 
-                      return (
-                        <div
-                          key={
-                            item.name
-                          }
-                          onClick={() => {
-                            setActiveFurniture(
-                              item
-                            );
+                        setTool(
+                          "select"
+                        );
+                      }}
+                      className="font-bold text-amber-600 hover:text-amber-900 cursor-pointer"
+                    >
+                      <X
+                        size={14}
+                      />
+                    </button>
+                  </div>
+                )}
 
-                            setTool(
-                              "furniture"
-                            );
-                          }}
-                          className={`p-3 rounded-xl border text-left flex flex-col gap-1.5 cursor-pointer transition-all bg-white hover:border-blue-400 hover:shadow-xs ${
-                            activeFurniture?.name ===
-                            item.name
-                              ? "border-blue-500 bg-blue-50/50"
-                              : "border-slate-200"
-                          }`}
-                        >
-                          <Icon
-                            size={
-                              24
+                <div>
+                  <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
+                    Structure Tools
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      {
+                        key: "wall",
+                        label: "Wall",
+                        icon: BrickWall,
+                      },
+                      {
+                        key: "door",
+                        label: "Door",
+                        icon: DoorOpen,
+                      },
+                      {
+                        key: "window",
+                        label: "Window",
+                        icon: PanelTop,
+                      },
+                      {
+                        key: "room",
+                        label: "Room",
+                        icon: Hexagon,
+                      },
+                    ].map(
+                      (t) => {
+                        const Icon =
+                          t.icon;
+
+                        return (
+                          <button
+                            key={
+                              t.key
                             }
-                            className="text-slate-700"
-                          />
+                            onClick={() => {
+                              setTool(
+                                t.key as Tool
+                              );
 
-                          <div className="text-xs font-bold text-slate-800">
-                            {
+                              setActiveFurniture(
+                                null
+                              );
+
+                              if (
+                                t.key !==
+                                "wall"
+                              ) {
+                                setDrawStart(
+                                  null
+                                );
+
+                                setPreviewEnd(
+                                  null
+                                );
+                              }
+
+                              if (
+                                t.key !==
+                                "room"
+                              ) {
+                                setRoomPoints(
+                                  []
+                                );
+                              }
+                            }}
+                            className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 cursor-pointer transition-all ${tool ===
+                                t.key
+                                ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs"
+                                : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
+                              }`}
+                          >
+                            <Icon
+                              size={
+                                18
+                              }
+                            />
+
+                            <span className="text-xs font-bold">
+                              {
+                                t.label
+                              }
+                            </span>
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
+                    Furniture & Fixtures
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {filteredCatalog.map(
+                      (
+                        item
+                      ) => {
+                        const Icon =
+                          getFurnitureIcon(
+                            item.icon
+                          );
+
+                        return (
+                          <div
+                            key={
                               item.name
                             }
-                          </div>
+                            onClick={() => {
+                              setActiveFurniture(
+                                item
+                              );
 
-                          <div className="text-[10px] text-slate-400">
-                            {
-                              item.width
-                            }{" "}
-                            ×{" "}
-                            {
-                              item.height
-                            }{" "}
-                            cm
+                              setTool(
+                                "furniture"
+                              );
+                            }}
+                            className={`p-3 rounded-xl border text-left flex flex-col gap-1.5 cursor-pointer transition-all bg-white hover:border-blue-400 hover:shadow-xs ${activeFurniture?.name ===
+                                item.name
+                                ? "border-blue-500 bg-blue-50/50"
+                                : "border-slate-200"
+                              }`}
+                          >
+                            <Icon
+                              size={
+                                24
+                              }
+                              className="text-slate-700"
+                            />
+
+                            <div className="text-xs font-bold text-slate-800">
+                              {
+                                item.name
+                              }
+                            </div>
+
+                            <div className="text-[10px] text-slate-400">
+                              {
+                                item.width
+                              }{" "}
+                              ×{" "}
+                              {
+                                item.height
+                              }{" "}
+                              cm
+                            </div>
                           </div>
-                        </div>
-                      );
-                    }
-                  )}
+                        );
+                      }
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* =================================================
               LAYERS
@@ -3776,148 +3785,145 @@ function FloorPlanPage() {
 
           {activeSidebarTab ===
             "layers" && (
-            <div className="p-4 flex-1 overflow-y-auto space-y-1 text-xs">
-              <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
-                Canvas Elements
-              </h4>
+              <div className="p-4 flex-1 overflow-y-auto space-y-1 text-xs">
+                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
+                  Canvas Elements
+                </h4>
 
-              {walls.map(
-                (w, i) => (
-                  <div
-                    key={w.id}
-                    onClick={() => {
-                      setSelectedId(
-                        w.id
-                      );
-
-                      setSelectedType(
-                        "wall"
-                      );
-                    }}
-                    className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${
-                      selectedId ===
-                      w.id
-                        ? "bg-blue-50 text-blue-700 font-bold"
-                        : "hover:bg-slate-50 text-slate-700"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <BrickWall
-                        size={
-                          14
-                        }
-                      />
-
-                      Wall #
-                      {i + 1}
-                    </span>
-
-                    <span className="text-[10px] text-slate-400">
-                      {mmToLabel(
-                        pxToMm(
-                          wallLength(
-                            w
-                          )
-                        )
-                      )}
-                    </span>
-                  </div>
-                )
-              )}
-
-              {rooms.map(
-                (r) => (
-                  <div
-                    key={r.id}
-                    onClick={() => {
-                      setSelectedId(
-                        r.id
-                      );
-
-                      setSelectedType(
-                        "room"
-                      );
-                    }}
-                    className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${
-                      selectedId ===
-                      r.id
-                        ? "bg-blue-50 text-blue-700 font-bold"
-                        : "hover:bg-slate-50 text-slate-700"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Hexagon
-                        size={
-                          14
-                        }
-                      />
-
-                      {
-                        r.name
-                      }
-                    </span>
-
-                    <span className="text-[10px] text-slate-400">
-                      {(
-                        polygonArea(
-                          r.points
-                        ) *
-                        (SCALE_MM_PER_PX /
-                          1e6)
-                      ).toFixed(
-                        2
-                      )}{" "}
-                      m²
-                    </span>
-                  </div>
-                )
-              )}
-
-              {furniture.map(
-                (f) => {
-                  const Icon =
-                    getFurnitureIcon(
-                      f.icon
-                    );
-
-                  return (
+                {walls.map(
+                  (w, i) => (
                     <div
-                      key={
-                        f.id
-                      }
+                      key={w.id}
                       onClick={() => {
                         setSelectedId(
-                          f.id
+                          w.id
                         );
 
                         setSelectedType(
-                          "furniture"
+                          "wall"
                         );
                       }}
-                      className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${
-                        selectedId ===
-                        f.id
+                      className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${selectedId ===
+                          w.id
                           ? "bg-blue-50 text-blue-700 font-bold"
                           : "hover:bg-slate-50 text-slate-700"
-                      }`}
+                        }`}
                     >
                       <span className="flex items-center gap-2">
-                        <Icon
+                        <BrickWall
+                          size={
+                            14
+                          }
+                        />
+
+                        Wall #
+                        {i + 1}
+                      </span>
+
+                      <span className="text-[10px] text-slate-400">
+                        {mmToLabel(
+                          pxToMm(
+                            wallLength(
+                              w
+                            )
+                          )
+                        )}
+                      </span>
+                    </div>
+                  )
+                )}
+
+                {rooms.map(
+                  (r) => (
+                    <div
+                      key={r.id}
+                      onClick={() => {
+                        setSelectedId(
+                          r.id
+                        );
+
+                        setSelectedType(
+                          "room"
+                        );
+                      }}
+                      className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${selectedId ===
+                          r.id
+                          ? "bg-blue-50 text-blue-700 font-bold"
+                          : "hover:bg-slate-50 text-slate-700"
+                        }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Hexagon
                           size={
                             14
                           }
                         />
 
                         {
-                          f.name
+                          r.name
                         }
                       </span>
+
+                      <span className="text-[10px] text-slate-400">
+                        {(
+                          polygonArea(
+                            r.points
+                          ) *
+                          (SCALE_MM_PER_PX /
+                            1e6)
+                        ).toFixed(
+                          2
+                        )}{" "}
+                        m²
+                      </span>
                     </div>
-                  );
-                }
-              )}
-            </div>
-          )}
+                  )
+                )}
+
+                {furniture.map(
+                  (f) => {
+                    const Icon =
+                      getFurnitureIcon(
+                        f.icon
+                      );
+
+                    return (
+                      <div
+                        key={
+                          f.id
+                        }
+                        onClick={() => {
+                          setSelectedId(
+                            f.id
+                          );
+
+                          setSelectedType(
+                            "furniture"
+                          );
+                        }}
+                        className={`p-2.5 rounded-lg flex justify-between items-center cursor-pointer ${selectedId ===
+                            f.id
+                            ? "bg-blue-50 text-blue-700 font-bold"
+                            : "hover:bg-slate-50 text-slate-700"
+                          }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Icon
+                            size={
+                              14
+                            }
+                          />
+
+                          {
+                            f.name
+                          }
+                        </span>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+            )}
 
           {/* =================================================
               SETTINGS
@@ -3925,56 +3931,56 @@ function FloorPlanPage() {
 
           {activeSidebarTab ===
             "settings" && (
-            <div className="p-4 space-y-4 text-xs">
-              <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">
-                Preferences
-              </h4>
+              <div className="p-4 space-y-4 text-xs">
+                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">
+                  Preferences
+                </h4>
 
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-slate-700 font-medium">
-                  Show Grid Lines
-                </span>
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-slate-700 font-medium">
+                    Show Grid Lines
+                  </span>
 
-                <input
-                  type="checkbox"
-                  checked={
-                    showGrid
-                  }
-                  onChange={(
-                    e
-                  ) =>
-                    setShowGrid(
-                      e.target
-                        .checked
-                    )
-                  }
-                  className="rounded text-blue-600 focus:ring-0 w-4 h-4"
-                />
-              </label>
+                  <input
+                    type="checkbox"
+                    checked={
+                      showGrid
+                    }
+                    onChange={(
+                      e
+                    ) =>
+                      setShowGrid(
+                        e.target
+                          .checked
+                      )
+                    }
+                    className="rounded text-blue-600 focus:ring-0 w-4 h-4"
+                  />
+                </label>
 
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-slate-700 font-medium">
-                  Show Dimensions
-                </span>
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-slate-700 font-medium">
+                    Show Dimensions
+                  </span>
 
-                <input
-                  type="checkbox"
-                  checked={
-                    showDimensions
-                  }
-                  onChange={(
-                    e
-                  ) =>
-                    setShowDimensions(
-                      e.target
-                        .checked
-                    )
-                  }
-                  className="rounded text-blue-600 focus:ring-0 w-4 h-4"
-                />
-              </label>
-            </div>
-          )}
+                  <input
+                    type="checkbox"
+                    checked={
+                      showDimensions
+                    }
+                    onChange={(
+                      e
+                    ) =>
+                      setShowDimensions(
+                        e.target
+                          .checked
+                      )
+                    }
+                    className="rounded text-blue-600 focus:ring-0 w-4 h-4"
+                  />
+                </label>
+              </div>
+            )}
         </aside>
 
         {/* ==================================================
@@ -4019,19 +4025,19 @@ function FloorPlanPage() {
             style={{
               cursor:
                 tool ===
-                "pan"
+                  "pan"
                   ? panRef
-                      .current
-                      .active
+                    .current
+                    .active
                     ? "grabbing"
                     : "grab"
                   : tool ===
                     "select"
-                  ? "default"
-                  : tool ===
-                    "eraser"
-                  ? "cell"
-                  : "crosshair",
+                    ? "default"
+                    : tool ===
+                      "eraser"
+                      ? "cell"
+                      : "crosshair",
             }}
           />
 
@@ -4120,12 +4126,11 @@ function FloorPlanPage() {
                     title={
                       t.label
                     }
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold cursor-pointer transition-all ${
-                      tool ===
-                      t.key
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold cursor-pointer transition-all ${tool ===
+                        t.key
                         ? "bg-blue-600 text-white shadow-md"
                         : "hover:bg-slate-100 text-slate-700"
-                    }`}
+                      }`}
                   >
                     <Icon
                       size={
@@ -4159,7 +4164,7 @@ function FloorPlanPage() {
           {tool ===
             "room" &&
             roomPoints.length >
-              0 && (
+            0 && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur border border-slate-200 shadow-lg rounded-xl px-4 py-2 text-xs text-slate-600">
                 <b className="text-blue-600">
                   Room drawing
@@ -4370,11 +4375,11 @@ function FloorPlanPage() {
                             rooms.map(
                               (r) =>
                                 r.id ===
-                                selectedRoom.id
+                                  selectedRoom.id
                                   ? {
-                                      ...r,
-                                      name,
-                                    }
+                                    ...r,
+                                    name,
+                                  }
                                   : r
                             );
 
@@ -4570,6 +4575,8 @@ function FloorPlanPage() {
 
                       Delete Item
                     </button>
+
+
                   </>
                 )}
               </div>

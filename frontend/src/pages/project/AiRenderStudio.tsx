@@ -1,6 +1,8 @@
-import React, { useState, type ChangeEvent } from "react";
+import React, { useState, useEffect, type ChangeEvent } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function AiRenderStudio(): React.JSX.Element {
+  const location = useLocation();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [prompt, setPrompt] = useState<string>(
@@ -8,6 +10,22 @@ export default function AiRenderStudio(): React.JSX.Element {
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [outputImage, setOutputImage] = useState<string>("");
+
+  // Auto-load canvas image if passed from FloorPlanPage
+  useEffect(() => {
+    const state = location.state as { initialImage?: string };
+    if (state?.initialImage) {
+      setPreviewUrl(state.initialImage);
+
+      // Convert dataURL to File object for FormData upload
+      fetch(state.initialImage)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const file = new File([blob], "floor-plan-sketch.png", { type: "image/png" });
+          setSelectedImage(file);
+        });
+    }
+  }, [location.state]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
@@ -19,7 +37,7 @@ export default function AiRenderStudio(): React.JSX.Element {
 
   const handleGenerate = async (): Promise<void> => {
     if (!selectedImage) {
-      alert("Please upload or select a 2D floor plan/sketch image first!");
+      alert("Please draw on your floor plan first or select an image!");
       return;
     }
 
@@ -53,19 +71,19 @@ export default function AiRenderStudio(): React.JSX.Element {
     <div style={{ padding: "24px", background: "#f8fafc", minHeight: "100vh", fontFamily: "sans-serif" }}>
       <h2 style={{ color: "#1e293b", marginBottom: "8px" }}>AI Style Injection Studio</h2>
       <p style={{ color: "#64748b", marginBottom: "24px" }}>
-        Transform your 2D floor plans and layout sketches into photo-realistic 3D architectural renders locally.
+        Your drawn floor plan has been loaded. Select a style prompt and convert it to a 3D architectural render.
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
         {/* Input Panel */}
         <div style={{ background: "#ffffff", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-          <h3>1. Upload 2D Plan / Sketch</h3>
+          <h3>1. Captured Floor Plan</h3>
           <input type="file" accept="image/*" onChange={handleFileChange} style={{ margin: "12px 0" }} />
           
           {previewUrl && (
             <div style={{ margin: "12px 0" }}>
               <p>Source Preview:</p>
-              <img src={previewUrl} alt="2D Preview" style={{ width: "100%", maxHeight: "250px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+              <img src={previewUrl} alt="2D Preview" style={{ width: "100%", maxHeight: "250px", objectFit: "contain", border: "1px solid #cbd5e1", background: "#fff" }} />
             </div>
           )}
 

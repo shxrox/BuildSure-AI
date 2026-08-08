@@ -1,21 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, type ChangeEvent } from "react";
 
-export default function AiRenderStudio() {
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [prompt, setPrompt] = useState("modern architectural luxury house, photorealistic, 8k resolution, highly detailed exterior view");
-  const [loading, setLoading] = useState(false);
-  const [outputImage, setOutputImage] = useState("");
+export default function AiRenderStudio(): React.JSX.Element {
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [prompt, setPrompt] = useState<string>(
+    "modern architectural luxury house, photorealistic, 8k resolution, highly detailed exterior view"
+  );
+  const [loading, setLoading] = useState<boolean>(false);
+  const [outputImage, setOutputImage] = useState<string>("");
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (): Promise<void> => {
     if (!selectedImage) {
       alert("Please upload or select a 2D floor plan/sketch image first!");
       return;
@@ -25,7 +27,7 @@ export default function AiRenderStudio() {
     const formData = new FormData();
     formData.append("file", selectedImage);
     formData.append("prompt", prompt);
-    formData.append("steps", 20);
+    formData.append("steps", "20");
 
     try {
       const response = await fetch("http://127.0.0.1:8000/generate-render", {
@@ -56,7 +58,7 @@ export default function AiRenderStudio() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
         {/* Input Panel */}
-        <div style={{ background: "#white", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+        <div style={{ background: "#ffffff", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
           <h3>1. Upload 2D Plan / Sketch</h3>
           <input type="file" accept="image/*" onChange={handleFileChange} style={{ margin: "12px 0" }} />
           
@@ -71,7 +73,7 @@ export default function AiRenderStudio() {
             <label style={{ display: "block", fontWeight: "bold", marginBottom: "6px" }}>Style Prompt:</label>
             <textarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
               rows={3}
               style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
             />

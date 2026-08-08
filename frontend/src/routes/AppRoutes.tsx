@@ -21,6 +21,7 @@ import BlueprintPage from "../pages/project/BlueprintPage";
 
 import RoleRoute from "./RoleRoute";
 
+import AiRenderStudio from "../pages/project/AiRenderStudio";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -111,6 +112,13 @@ function AppRoutes() {
             path="blueprint"
             element={
               <BlueprintPage />
+            }
+          />
+
+          <Route
+            path="ai-render"
+            element={
+              <AiRenderStudio />
             }
           />
         </Route>

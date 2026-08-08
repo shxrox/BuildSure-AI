@@ -1,0 +1,122 @@
+import React, { useState } from "react";
+
+export default function AiRenderStudio() {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [prompt, setPrompt] = useState("modern architectural luxury house, photorealistic, 8k resolution, highly detailed exterior view");
+  const [loading, setLoading] = useState(false);
+  const [outputImage, setOutputImage] = useState("");
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedImage) {
+      alert("Please upload or select a 2D floor plan/sketch image first!");
+      return;
+    }
+
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("file", selectedImage);
+    formData.append("prompt", prompt);
+    formData.append("steps", 20);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/generate-render", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate AI render from backend.");
+      }
+
+      const blob = await response.blob();
+      setOutputImage(URL.createObjectURL(blob));
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to the AI microservice. Ensure FastAPI is running on port 8000.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: "24px", background: "#f8fafc", minHeight: "100vh", fontFamily: "sans-serif" }}>
+      <h2 style={{ color: "#1e293b", marginBottom: "8px" }}>AI Style Injection Studio</h2>
+      <p style={{ color: "#64748b", marginBottom: "24px" }}>
+        Transform your 2D floor plans and layout sketches into photo-realistic 3D architectural renders locally.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+        {/* Input Panel */}
+        <div style={{ background: "#white", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+          <h3>1. Upload 2D Plan / Sketch</h3>
+          <input type="file" accept="image/*" onChange={handleFileChange} style={{ margin: "12px 0" }} />
+          
+          {previewUrl && (
+            <div style={{ margin: "12px 0" }}>
+              <p>Source Preview:</p>
+              <img src={previewUrl} alt="2D Preview" style={{ width: "100%", maxHeight: "250px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+            </div>
+          )}
+
+          <div style={{ marginTop: "16px" }}>
+            <label style={{ display: "block", fontWeight: "bold", marginBottom: "6px" }}>Style Prompt:</label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={3}
+              style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+            />
+          </div>
+
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            style={{
+              marginTop: "16px",
+              background: loading ? "#94a3b8" : "#2563eb",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "6px",
+              cursor: loading ? "not-allowed" : "pointer",
+              fontWeight: "bold",
+              width: "100%"
+            }}
+          >
+            {loading ? "Generating 3D Render (Local GPU/CPU)..." : "Generate 3D Render"}
+          </button>
+        </div>
+
+        {/* Output Panel */}
+        <div style={{ background: "white", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+          <h3>2. Resulting 3D Architectural Render</h3>
+          {outputImage ? (
+            <div style={{ marginTop: "16px", textAlign: "center" }}>
+              <img src={outputImage} alt="3D Render Output" style={{ width: "100%", maxHeight: "350px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+              <a
+                href={outputImage}
+                download="architectural-render.png"
+                style={{ display: "inline-block", marginTop: "12px", color: "#2563eb", textDecoration: "none", fontWeight: "bold" }}
+              >
+                Download Render Image
+              </a>
+            </div>
+          ) : (
+            <div style={{ display: "flex", height: "300px", alignItems: "center", justifyContent: "center", color: "#94a3b8", border: "2px dashed #cbd5e1", marginTop: "16px", borderRadius: "6px" }}>
+              {loading ? "Processing inference pipeline..." : "Your generated 3D render will appear here"}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

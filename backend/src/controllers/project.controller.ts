@@ -1,3 +1,5 @@
+
+
 import {
   Request,
   Response,
@@ -198,7 +200,7 @@ export const getProjectById =
     }
   };
 
-// UPDATE PROJECT (ADDED TO FIX TIMELINE & MILESTONES PERSISTENCE)
+// UPDATE PROJECT
 
 export const updateProject = async (
   req: Request,
@@ -230,6 +232,7 @@ export const updateProject = async (
     if (req.body.status !== undefined) project.status = req.body.status;
     if (req.body.completedMilestones !== undefined) project.completedMilestones = req.body.completedMilestones;
     if (req.body.customMilestones !== undefined) project.customMilestones = req.body.customMilestones;
+    if (req.body.collaborators !== undefined) project.collaborators = req.body.collaborators;
 
     await project.save();
 
@@ -564,16 +567,14 @@ export const getDigitalPlan =
     }
   };
 
-// UPDATE DIGITAL PLAN
+// UPDATE DIGITAL PLAN (FIXED WITH findByIdAndUpdate TO PREVENT CASTING ERRORS)
 
 export const updateDigitalPlan = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const project = await Project.findById(
-      req.params.id
-    );
+    const project = await Project.findById(req.params.id);
 
     if (!project) {
       return res.status(404).json({
@@ -593,21 +594,27 @@ export const updateDigitalPlan = async (
       }
     };
 
-    project.digitalPlan = {
-      walls: req.body.walls || project.digitalPlan?.walls || [],
-      rooms: req.body.rooms || project.digitalPlan?.rooms || [],
-      doors: req.body.doors || project.digitalPlan?.doors || [],
-      windows: req.body.windows || project.digitalPlan?.windows || [],
-      furniture: req.body.furniture || project.digitalPlan?.furniture || [],
-      costSettings: req.body.costSettings || existingCostSettings,
-    };
+    const costSettingsToSave = req.body.costSettings || existingCostSettings;
 
-    await project.save();
+    const updatedProject = await Project.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          "digitalPlan.walls": req.body.walls || project.digitalPlan?.walls || [],
+          "digitalPlan.rooms": req.body.rooms || project.digitalPlan?.rooms || [],
+          "digitalPlan.doors": req.body.doors || project.digitalPlan?.doors || [],
+          "digitalPlan.windows": req.body.windows || project.digitalPlan?.windows || [],
+          "digitalPlan.furniture": req.body.furniture || project.digitalPlan?.furniture || [],
+          "digitalPlan.costSettings": costSettingsToSave,
+        }
+      },
+      { new: true, runValidators: false }
+    );
 
     return successResponse(
       res,
       "Digital plan updated successfully",
-      project.digitalPlan
+      updatedProject?.digitalPlan
     );
   }
   catch (error) {
@@ -623,6 +630,24 @@ export const updateDigitalPlan = async (
           ? error.message
           : "Failed to update digital plan"
     });
+  }
+};
+
+// UPDATE COLLABORATORS
+
+export const updateCollaborators = async (req: Request, res: Response) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    project.collaborators = req.body.collaborators || [];
+    await project.save();
+
+    return successResponse(res, "Collaborators updated successfully", project);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to update collaborators" });
   }
 };
 

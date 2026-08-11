@@ -26,7 +26,7 @@ export interface IProject extends Document {
     email: { type: String, required: true },
     permission: { type: String, enum: ["view", "edit"], default: "view" },
   }],
-  
+
   blueprint?: {
     fileName: string;
     fileType: string;
@@ -123,11 +123,7 @@ const projectSchema = new Schema<IProject>(
     },
     status: {
       type: String,
-      enum: [
-        "PLANNING",
-        "IN_PROGRESS",
-        "COMPLETED",
-      ],
+      enum: ["PLANNING", "FOUNDATION", "STRUCTURAL", "FINISHING", "COMPLETED"],
       default: "PLANNING",
     },
     completedMilestones: [{ type: String }],

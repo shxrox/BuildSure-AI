@@ -107,7 +107,7 @@ function HomeownerDashboard() {
   const [
     activeTab,
     setActiveTab,
-  ] = useState<"projects" | "activity" | "profile">("projects");
+  ] = useState<"projects" | "profile">("projects");
 
   const loadProjects =
     async () => {
@@ -268,16 +268,6 @@ function HomeownerDashboard() {
             My Projects ({projects.length})
           </button>
           <button
-            onClick={() => setActiveTab("activity")}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "activity"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-transparent text-slate-600 hover:bg-slate-200/50"
-            }`}
-          >
-            Recent Activity & Notifications
-          </button>
-          <button
             onClick={() => setActiveTab("profile")}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "profile"
@@ -307,7 +297,8 @@ function HomeownerDashboard() {
                 <option value="ALL">All Statuses</option>
                 <option value="PLANNING">Planning</option>
                 <option value="FOUNDATION">Foundation</option>
-                <option value="STRUCTURE">Structure</option>
+                <option value="STRUCTURAL">Structural</option>
+                <option value="ROOFING">Roofing</option>
                 <option value="FINISHING">Finishing</option>
                 <option value="COMPLETED">Completed</option>
               </select>
@@ -367,26 +358,6 @@ function HomeownerDashboard() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {activeTab === "activity" && (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xs">
-            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-100 pb-3">Recent System Activities & Alerts</h3>
-            <ul className="space-y-3 text-xs text-slate-600">
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                Digital floor plan wall configuration verified successfully.
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                Sri Lankan material cost estimation indexes updated to current LKR standards.
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                Collaboration access link generated for project review.
-              </li>
-            </ul>
           </div>
         )}
 

@@ -198,6 +198,55 @@ export const getProjectById =
     }
   };
 
+// UPDATE PROJECT (ADDED TO FIX TIMELINE & MILESTONES PERSISTENCE)
+
+export const updateProject = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const clerkId = req.auth?.userId;
+    if (!clerkId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const user = await User.findOne({ clerkId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+      ownerId: user._id,
+    });
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    if (req.body.projectName !== undefined) project.projectName = req.body.projectName;
+    if (req.body.location !== undefined) project.location = req.body.location;
+    if (req.body.description !== undefined) project.description = req.body.description;
+    if (req.body.status !== undefined) project.status = req.body.status;
+    if (req.body.completedMilestones !== undefined) project.completedMilestones = req.body.completedMilestones;
+    if (req.body.customMilestones !== undefined) project.customMilestones = req.body.customMilestones;
+
+    await project.save();
+
+    return successResponse(
+      res,
+      "Project updated successfully",
+      project
+    );
+  } catch (error) {
+    console.error("UPDATE PROJECT ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to update project",
+    });
+  }
+};
+
 // DELETE PROJECT
 
 export const deleteProject =
@@ -404,7 +453,7 @@ export const downloadBlueprint =
     }
   };
 
-// DELETE BLUEPRINT (ADDED)
+// DELETE BLUEPRINT
 
 export const deleteBlueprint =
   async (
@@ -517,61 +566,6 @@ export const getDigitalPlan =
 
 // UPDATE DIGITAL PLAN
 
-// export const updateDigitalPlan =
-//   async (
-//     req: Request,
-//     res: Response
-//   ) => {
-//     try {
-//       const project =
-//         await Project.findById(
-//           req.params.id
-//         );
-
-//       if (!project) {
-//         return res.status(404).json({
-//           success: false,
-//           message: "Project not found"
-//         });
-//       }
-
-//       project.digitalPlan = {
-//         walls:
-//           req.body.walls || [],
-//         rooms:
-//           req.body.rooms || [],
-//         doors:
-//           req.body.doors || [],
-//         windows:
-//           req.body.windows || [],
-//         furniture:
-//           req.body.furniture || [],
-//       };
-
-//       await project.save();
-
-//       return successResponse(
-//         res,
-//         "Digital plan updated successfully",
-//         project.digitalPlan
-//       );
-//     }
-//     catch (error) {
-//       console.error(
-//         "UPDATE DIGITAL PLAN ERROR:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-//         message:
-//           error instanceof Error
-//             ? error.message
-//             : "Failed to update digital plan"
-//       });
-//     }
-//   };
-// UPDATE DIGITAL PLAN
 export const updateDigitalPlan = async (
   req: Request,
   res: Response
@@ -588,8 +582,6 @@ export const updateDigitalPlan = async (
       });
     }
 
-    // Preserve existing costSettings if not provided in the request body, 
-    // or update them if they are included.
     const existingCostSettings = project.digitalPlan?.costSettings || {
       actualSpent: 0,
       rates: {
@@ -633,6 +625,7 @@ export const updateDigitalPlan = async (
     });
   }
 };
+
 // PROCESS SVG BLUEPRINT INTO DIGITAL PLAN
 
 export const processBlueprint =

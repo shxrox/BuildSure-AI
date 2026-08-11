@@ -517,61 +517,122 @@ export const getDigitalPlan =
 
 // UPDATE DIGITAL PLAN
 
-export const updateDigitalPlan =
-  async (
-    req: Request,
-    res: Response
-  ) => {
-    try {
-      const project =
-        await Project.findById(
-          req.params.id
-        );
+// export const updateDigitalPlan =
+//   async (
+//     req: Request,
+//     res: Response
+//   ) => {
+//     try {
+//       const project =
+//         await Project.findById(
+//           req.params.id
+//         );
 
-      if (!project) {
-        return res.status(404).json({
-          success: false,
-          message: "Project not found"
-        });
-      }
+//       if (!project) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Project not found"
+//         });
+//       }
 
-      project.digitalPlan = {
-        walls:
-          req.body.walls || [],
-        rooms:
-          req.body.rooms || [],
-        doors:
-          req.body.doors || [],
-        windows:
-          req.body.windows || [],
-        furniture:
-          req.body.furniture || [],
-      };
+//       project.digitalPlan = {
+//         walls:
+//           req.body.walls || [],
+//         rooms:
+//           req.body.rooms || [],
+//         doors:
+//           req.body.doors || [],
+//         windows:
+//           req.body.windows || [],
+//         furniture:
+//           req.body.furniture || [],
+//       };
 
-      await project.save();
+//       await project.save();
 
-      return successResponse(
-        res,
-        "Digital plan updated successfully",
-        project.digitalPlan
-      );
-    }
-    catch (error) {
-      console.error(
-        "UPDATE DIGITAL PLAN ERROR:",
-        error
-      );
+//       return successResponse(
+//         res,
+//         "Digital plan updated successfully",
+//         project.digitalPlan
+//       );
+//     }
+//     catch (error) {
+//       console.error(
+//         "UPDATE DIGITAL PLAN ERROR:",
+//         error
+//       );
 
-      return res.status(500).json({
+//       return res.status(500).json({
+//         success: false,
+//         message:
+//           error instanceof Error
+//             ? error.message
+//             : "Failed to update digital plan"
+//       });
+//     }
+//   };
+// UPDATE DIGITAL PLAN
+export const updateDigitalPlan = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const project = await Project.findById(
+      req.params.id
+    );
+
+    if (!project) {
+      return res.status(404).json({
         success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to update digital plan"
+        message: "Project not found"
       });
     }
-  };
 
+    // Preserve existing costSettings if not provided in the request body, 
+    // or update them if they are included.
+    const existingCostSettings = project.digitalPlan?.costSettings || {
+      actualSpent: 0,
+      rates: {
+        cementRate: 2800,
+        brickRate: 35,
+        sandRate: 25000,
+        tileRate: 4500,
+        laborRatePerSqm: 18000,
+      }
+    };
+
+    project.digitalPlan = {
+      walls: req.body.walls || project.digitalPlan?.walls || [],
+      rooms: req.body.rooms || project.digitalPlan?.rooms || [],
+      doors: req.body.doors || project.digitalPlan?.doors || [],
+      windows: req.body.windows || project.digitalPlan?.windows || [],
+      furniture: req.body.furniture || project.digitalPlan?.furniture || [],
+      costSettings: req.body.costSettings || existingCostSettings,
+    };
+
+    await project.save();
+
+    return successResponse(
+      res,
+      "Digital plan updated successfully",
+      project.digitalPlan
+    );
+  }
+  catch (error) {
+    console.error(
+      "UPDATE DIGITAL PLAN ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update digital plan"
+    });
+  }
+};
 // PROCESS SVG BLUEPRINT INTO DIGITAL PLAN
 
 export const processBlueprint =

@@ -404,6 +404,69 @@ export const downloadBlueprint =
     }
   };
 
+// DELETE BLUEPRINT (ADDED)
+
+export const deleteBlueprint =
+  async (
+    req: Request,
+    res: Response
+  ) => {
+    try {
+      const clerkId = req.auth?.userId;
+
+      if (!clerkId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized"
+        });
+      }
+
+      const user = await User.findOne({ clerkId });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+
+      const project = await Project.findOne({
+        _id: req.params.id,
+        ownerId: user._id
+      });
+
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found"
+        });
+      }
+
+      project.blueprint = undefined as any;
+      await project.save();
+
+      return successResponse(
+        res,
+        "Blueprint deleted successfully",
+        project
+      );
+    }
+    catch (error) {
+      console.error(
+        "DELETE BLUEPRINT ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete blueprint"
+      });
+    }
+  };
+
 // GET DIGITAL PLAN
 
 export const getDigitalPlan =

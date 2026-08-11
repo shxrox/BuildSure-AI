@@ -5,7 +5,7 @@ import multer from "multer";
 
 
 const storage =
-multer.memoryStorage();
+    multer.memoryStorage();
 
 
 
@@ -14,52 +14,35 @@ multer.memoryStorage();
 
 
 const fileFilter =
-(
-    req: any,
-    file: Express.Multer.File,
-    cb: multer.FileFilterCallback
-) => {
+    (
+        req: any,
+        file: Express.Multer.File,
+        cb: multer.FileFilterCallback
+    ) => {
 
 
 
 
-    const allowedTypes = [
+        const allowedTypes = [
 
-        "application/json",
+            "application/json",
 
-        "image/svg+xml",
+            "image/svg+xml",
 
-        "application/dxf"
+            "application/dxf"
 
-    ];
-
-
-
-
-
-
-    const allowedExtensions = [
-
-        ".json",
-
-        ".svg",
-
-        ".dxf"
-
-    ];
+        ];
 
 
 
 
 
 
+        const allowedExtensions = [
 
-    const fileExtension =
-        file.originalname
-        .toLowerCase()
-        .substring(
-            file.originalname.lastIndexOf(".")
-        );
+            '.svg', '.json', '.dxf', '.pdf', '.jpg', '.jpeg', '.png', '.webp', '.csv'
+
+        ];
 
 
 
@@ -67,42 +50,55 @@ const fileFilter =
 
 
 
-    if (
-
-        allowedTypes.includes(
-            file.mimetype
-        )
-
-        ||
-
-        allowedExtensions.includes(
-            fileExtension
-        )
-
-    ) {
+        const fileExtension =
+            file.originalname
+                .toLowerCase()
+                .substring(
+                    file.originalname.lastIndexOf(".")
+                );
 
 
-        cb(null, true);
 
 
-    }
-
-    else {
 
 
-        cb(
 
-            new Error(
-                "Only SVG, JSON and DXF blueprint files are allowed"
+        if (
+
+            allowedTypes.includes(
+                file.mimetype
             )
 
-        );
+            ||
+
+            allowedExtensions.includes(
+                fileExtension
+            )
+
+        ) {
 
 
-    }
+            cb(null, true);
 
 
-};
+        }
+
+        else {
+
+
+            cb(
+
+                new Error(
+                    "Only SVG, JSON and DXF blueprint files are allowed"
+                )
+
+            );
+
+
+        }
+
+
+    };
 
 
 
@@ -113,27 +109,27 @@ const fileFilter =
 
 
 const upload =
-multer({
+    multer({
 
 
-    storage,
+        storage,
 
 
-    fileFilter,
+        fileFilter,
 
 
 
-    limits:{
+        limits: {
 
 
-        fileSize:
-            20 * 1024 * 1024
+            fileSize:
+                20 * 1024 * 1024
 
 
-    }
+        }
 
 
-});
+    });
 
 
 

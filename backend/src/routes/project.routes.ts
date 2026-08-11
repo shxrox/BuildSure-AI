@@ -2,7 +2,6 @@ import {
   Router,
 } from "express";
 
-
 import {
   createProject,
   getProjects,
@@ -10,27 +9,17 @@ import {
   deleteProject,
   uploadBlueprint,
   downloadBlueprint,
+  deleteBlueprint, 
   getDigitalPlan,
   updateDigitalPlan,
   processBlueprint
 } from "../controllers/project.controller";
 
-
 import authMiddleware from "../middleware/auth.middleware";
-
 
 import upload from "../middleware/upload.middleware";
 
-
-
-
-
-const router =
-Router();
-
-
-
-
+const router = Router();
 
 // CREATE PROJECT
 router.post(
@@ -39,20 +28,12 @@ router.post(
   createProject
 );
 
-
-
-
-
 // GET ALL PROJECTS
 router.get(
   "/",
   authMiddleware,
   getProjects
 );
-
-
-
-
 
 // GET PROJECT BY ID
 router.get(
@@ -61,10 +42,6 @@ router.get(
   getProjectById
 );
 
-
-
-
-
 // DELETE PROJECT
 router.delete(
   "/:id",
@@ -72,79 +49,44 @@ router.delete(
   deleteProject
 );
 
-
-
-
-
-
-
 // UPLOAD BLUEPRINT
 router.post(
-
   "/:id/blueprint",
-
   authMiddleware,
-
-  upload.single(
-    "blueprint"
-  ),
-
+  upload.single("blueprint"),
   uploadBlueprint
-
 );
-
-
-
-
-
-
 
 // DOWNLOAD / VIEW BLUEPRINT
 router.get(
-
   "/:id/blueprint",
-
   authMiddleware,
-
   downloadBlueprint
+);
 
+// DELETE BLUEPRINT <-- 2. Add this route handler
+router.delete(
+  "/:id/blueprint",
+  authMiddleware,
+  deleteBlueprint
 );
 
 router.get(
-
-"/:id/digital-plan",
-
-authMiddleware,
-
-getDigitalPlan
-
+  "/:id/digital-plan",
+  authMiddleware,
+  getDigitalPlan
 );
 
-
-
-
 router.put(
-
-"/:id/digital-plan",
-
-authMiddleware,
-
-updateDigitalPlan
-
+  "/:id/digital-plan",
+  authMiddleware,
+  updateDigitalPlan
 );
 
 router.post(
-
-"/:id/process-blueprint",
-
-authMiddleware,
-
-processBlueprint
-
+  "/:id/process-blueprint",
+  authMiddleware,
+  processBlueprint
 );
-
-
-
-
 
 export default router;

@@ -50,7 +50,7 @@ export const getProjects = async (): Promise<Project[]> => {
 };
 
 export const updateProject = async (id: string, updateData: any) => {
-  const response = await api.patch(`/projects/${id}`, updateData);
+  const response = await api.put(`/projects/${id}`, updateData); // Changed from patch to put if your backend uses put
   return response.data;
 };
 
@@ -83,6 +83,16 @@ export const uploadBlueprint = async (projectId: string, file: File) => {
   });
 
   return response.data.data;
+};
+
+// FIXED: Use a dedicated delete endpoint or match your backend route structure
+export const deleteBlueprint = async (projectId: string): Promise<void> => {
+  try {
+    await api.delete(`/projects/${projectId}/blueprint`);
+  } catch (err) {
+    // Fallback if backend uses PUT/PATCH to clear blueprint
+    await api.put(`/projects/${projectId}`, { blueprint: null });
+  }
 };
 
 export const getDigitalPlan = async (projectId: string) => {

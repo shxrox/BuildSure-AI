@@ -18,10 +18,11 @@ import TimelinePage from "../pages/project/TimelinePage";
 import SharingPage from "../pages/project/SharingPage";
 import ProjectSettings from "../pages/project/ProjectSettings";
 import BlueprintPage from "../pages/project/BlueprintPage";
+import AiRenderStudio from "../pages/project/AiRenderStudio";
 
+import AdminDashboard from "../pages/admin/AdminDashboard";
 import RoleRoute from "./RoleRoute";
 
-import AiRenderStudio from "../pages/project/AiRenderStudio";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -52,12 +53,14 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
+
         <Route
           path="/projects/:id/shared-workspace"
           element={
             <SharedWorkspace />
           }
         />
+
         <Route
           path="/projects/:id"
           element={
@@ -127,6 +130,19 @@ function AppRoutes() {
             }
           />
         </Route>
+
+        <Route
+          path="/admin/dashboard"
+          element={
+            <RoleRoute
+              allowedRoles={[
+                "admin",
+              ]}
+            >
+              <AdminDashboard />
+            </RoleRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

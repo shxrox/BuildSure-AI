@@ -139,39 +139,78 @@ export const getProjects =
 
 // GET PROJECT BY ID
 
+// export const getProjectById =
+//   async (
+//     req: Request,
+//     res: Response
+//   ) => {
+//     try {
+//       const clerkId =
+//         req.auth?.userId;
+
+//       if (!clerkId) {
+//         return res.status(401).json({
+//           success: false,
+//           message: "Unauthorized"
+//         });
+//       }
+
+//       const user =
+//         await User.findOne({
+//           clerkId
+//         });
+
+//       if (!user) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "User not found"
+//         });
+//       }
+
+//       const project =
+//         await Project.findOne({
+//           _id: req.params.id,
+//           ownerId: user._id
+//         });
+
+//       if (!project) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Project not found"
+//         });
+//       }
+
+//       return successResponse(
+//         res,
+//         "Project fetched successfully",
+//         project
+//       );
+//     }
+//     catch (error) {
+//       console.error(
+//         "GET PROJECT ERROR:",
+//         error
+//       );
+
+//       return res.status(500).json({
+//         success: false,
+//         message:
+//           "Failed to fetch project"
+//       });
+//     }
+//   };
 export const getProjectById =
   async (
     req: Request,
     res: Response
   ) => {
     try {
-      const clerkId =
-        req.auth?.userId;
-
-      if (!clerkId) {
-        return res.status(401).json({
-          success: false,
-          message: "Unauthorized"
-        });
-      }
-
-      const user =
-        await User.findOne({
-          clerkId
-        });
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found"
-        });
-      }
+      const projectId = String(req.params.id);
 
       const project =
         await Project.findOne({
-          _id: req.params.id,
-          ownerId: user._id
-        });
+          _id: projectId
+        } as any);
 
       if (!project) {
         return res.status(404).json({
@@ -199,7 +238,6 @@ export const getProjectById =
       });
     }
   };
-
 // UPDATE PROJECT
 
 export const updateProject = async (

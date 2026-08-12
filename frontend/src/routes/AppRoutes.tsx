@@ -9,7 +9,7 @@ import Register from "../pages/Register";
 
 import HomeownerDashboard from "../pages/homeowner/HomeownerDashboard";
 import ProjectWorkspace from "../pages/homeowner/ProjectWorkspace";
-
+import SharedWorkspace from "../pages/homeowner/SharedWorkspace";
 import ProjectOverview from "../pages/project/ProjectOverview";
 import FloorPlanPage from "../pages/project/FloorPlanPage";
 import BOQPage from "../pages/project/BOQPage";
@@ -52,7 +52,12 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
-
+        <Route
+          path="/projects/:id/shared-workspace"
+          element={
+            <SharedWorkspace />
+          }
+        />
         <Route
           path="/projects/:id"
           element={

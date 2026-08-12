@@ -3,41 +3,77 @@ import { useLocation } from "react-router-dom";
 
 export default function AiRenderStudio(): React.JSX.Element {
   const location = useLocation();
+
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  
-  // FIXED: Changed default prompt to target top-down colorful floor plan layout instead of an exterior house photo
-  const [prompt, setPrompt] = useState<string>(
-    "top-down 2D architectural floor plan, colorful interior design layout, wooden flooring, tiled bathroom, furnished rooms, vector illustration, professional real estate blueprint, top view"
-  );
-  
   const [loading, setLoading] = useState<boolean>(false);
   const [outputImage, setOutputImage] = useState<string>("");
 
-  // Auto-load canvas image if passed from FloorPlanPage
+  // ============================================================
+  // STRICT 2D TECHNICAL CAD PROMPT (No wood/brown textures)
+  // ============================================================
+  const ARCHITECTURAL_PROMPT = `
+    Clean 2D architectural blueprint floor plan, top-down orthographic view, 
+    crisp black architectural lines, technical CAD drawing style, 
+    pure solid white background, flat white interior floor spaces, 
+    minimalist vector blueprint, professional real estate CAD presentation, 
+    sharp black walls, zero wood texture, zero brown coloring.
+  `;
+
+  // ============================================================
+  // STRICT NEGATIVE PROMPT (Blocks wood and 3D perspectives)
+  // ============================================================
+  const NEGATIVE_PROMPT = `
+    wooden floor, wood texture, brown background, wood flooring, 
+    photorealistic interior, 3D render, photo, realistic wood, tiles, 
+    3D exterior house, exterior building, building elevation, front elevation, 
+    side elevation, street view, house photograph, landscape, garden, road, cars, 
+    people, sky, clouds, perspective view, angled view, isometric view, 
+    blurry, low resolution, noisy, watermarks, text, logo
+  `;
+
+  // ============================================================
+  // AUTO-LOAD CANVAS IMAGE FROM FLOOR PLAN PAGE
+  // ============================================================
   useEffect(() => {
-    const state = location.state as { initialImage?: string };
+    const state = location.state as {
+      initialImage?: string;
+    };
+
     if (state?.initialImage) {
       setPreviewUrl(state.initialImage);
 
-      // Convert dataURL to File object for FormData upload
       fetch(state.initialImage)
         .then((res) => res.blob())
         .then((blob) => {
-          const file = new File([blob], "floor-plan-sketch.png", { type: "image/png" });
+          const file = new File(
+            [blob],
+            "floor-plan-sketch.png",
+            { type: "image/png" }
+          );
           setSelectedImage(file);
+        })
+        .catch((err) => {
+          console.error("Failed to load initial floor plan:", err);
         });
     }
   }, [location.state]);
 
+  // ============================================================
+  // FILE UPLOAD
+  // ============================================================
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
+      setOutputImage("");
     }
   };
 
+  // ============================================================
+  // GENERATE MODERN FLOOR PLAN
+  // ============================================================
   const handleGenerate = async (): Promise<void> => {
     if (!selectedImage) {
       alert("Please draw on your floor plan first or select an image!");
@@ -45,17 +81,22 @@ export default function AiRenderStudio(): React.JSX.Element {
     }
 
     setLoading(true);
+    setOutputImage("");
+
     const formData = new FormData();
     formData.append("file", selectedImage);
-    formData.append("prompt", prompt);
-    formData.append("negative_prompt", "3d exterior house photo, realistic building, perspective view, elevation, low quality");
-    formData.append("steps", "20");
+    formData.append("prompt", ARCHITECTURAL_PROMPT);
+    formData.append("negative_prompt", NEGATIVE_PROMPT);
+    formData.append("steps", "25");
 
     try {
-      const response = await fetch("https://unremovable-dully-connor.ngrok-free.dev/generate-render", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://unremovable-dully-connor.ngrok-free.dev/generate-render",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to generate AI render from backend.");
@@ -65,81 +106,93 @@ export default function AiRenderStudio(): React.JSX.Element {
       setOutputImage(URL.createObjectURL(blob));
     } catch (err) {
       console.error(err);
-      alert("Error connecting to the AI microservice. Ensure your Google Colab backend is running.");
+      alert(
+        "Error connecting to the AI microservice. Ensure your Google Colab backend is running."
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // ============================================================
+  // UI (TAILWIND CSS)
+  // ============================================================
   return (
-    <div style={{ padding: "24px", background: "#f8fafc", minHeight: "100vh", fontFamily: "sans-serif" }}>
-      <h2 style={{ color: "#1e293b", marginBottom: "8px" }}>AI Style Injection Studio</h2>
-      <p style={{ color: "#64748b", marginBottom: "24px" }}>
-        Your drawn floor plan has been loaded. Convert your line blueprint into a colorful 2D architectural plan.
+    <div className="p-8 bg-slate-50 min-h-screen font-sans">
+      <h2 className="text-2xl font-bold text-slate-900 mb-2">
+        AI Style Injection Studio
+      </h2>
+      <p className="text-slate-500 text-xs mb-8">
+        Your drawn floor plan has been loaded. Convert your line blueprint into a clean, modern 2D technical architectural floor plan.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-        {/* Input Panel */}
-        <div style={{ background: "#ffffff", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-          <h3>1. Captured Floor Plan</h3>
-          <input type="file" accept="image/*" onChange={handleFileChange} style={{ margin: "12px 0" }} />
-          
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* INPUT PANEL */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
+            1. Captured Floor Plan
+          </h3>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer mb-4"
+          />
+
           {previewUrl && (
-            <div style={{ margin: "12px 0" }}>
-              <p>Source Preview:</p>
-              <img src={previewUrl} alt="2D Preview" style={{ width: "100%", maxHeight: "250px", objectFit: "contain", border: "1px solid #cbd5e1", background: "#fff" }} />
+            <div className="mb-4">
+              <p className="text-xs font-medium text-slate-600 mb-1">Source Preview:</p>
+              <img
+                src={previewUrl}
+                alt="2D Preview"
+                className="w-full max-h-64 object-contain border border-slate-200 rounded-xl bg-white p-2"
+              />
             </div>
           )}
-
-          <div style={{ marginTop: "16px" }}>
-            <label style={{ display: "block", fontWeight: "bold", marginBottom: "6px" }}>Style Prompt:</label>
-            <textarea
-              value={prompt}
-              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
-              rows={3}
-              style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
-            />
-          </div>
 
           <button
             onClick={handleGenerate}
             disabled={loading}
-            style={{
-              marginTop: "16px",
-              background: loading ? "#94a3b8" : "#2563eb",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: loading ? "not-allowed" : "pointer",
-              fontWeight: "bold",
-              width: "100%"
-            }}
+            className={`w-full py-3 px-4 rounded-xl text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer ${
+              loading ? "bg-slate-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            {loading ? "Colorizing Floor Plan (Cloud GPU)..." : "Generate Colorful Floor Plan"}
+            {loading ? "Processing Clean CAD Plan (Cloud GPU)..." : "Generate Clean 2D Blueprint"}
           </button>
         </div>
 
-        {/* Output Panel */}
-        <div style={{ background: "white", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-          <h3>2. Resulting Architectural Plan</h3>
-          {outputImage ? (
-            <div style={{ marginTop: "16px", textAlign: "center" }}>
-              <img src={outputImage} alt="Blueprint Output" style={{ width: "100%", maxHeight: "350px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
-              <a
-                href={outputImage}
-                download="colorful-floor-plan.png"
-                style={{ display: "inline-block", marginTop: "12px", color: "#2563eb", textDecoration: "none", fontWeight: "bold" }}
-              >
-                Download Floor Plan
-              </a>
-            </div>
-          ) : (
-            <div style={{ display: "flex", height: "300px", alignItems: "center", justifyContent: "center", color: "#94a3b8", border: "2px dashed #cbd5e1", marginTop: "16px", borderRadius: "6px" }}>
-              {loading ? "Processing colorization pipeline..." : "Your generated plan will appear here"}
-            </div>
-          )}
+        {/* OUTPUT PANEL */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
+              2. Resulting Architectural Plan
+            </h3>
+
+            {outputImage ? (
+              <div className="mt-4 text-center">
+                <img
+                  src={outputImage}
+                  alt="Modern Architectural Floor Plan"
+                  className="w-full max-h-80 object-contain border border-slate-200 rounded-xl bg-white p-2 mx-auto"
+                />
+                <a
+                  href={outputImage}
+                  download="clean-floor-plan.jpg"
+                  className="inline-block mt-4 text-xs font-semibold text-blue-600 hover:text-blue-700 underline"
+                >
+                  Download Floor Plan Image
+                </a>
+              </div>
+            ) : (
+              <div className="flex h-72 items-center justify-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl bg-slate-50/50 mt-2">
+                {loading ? "Rendering crisp vector lines..." : "Your generated plan will appear here"}
+              </div>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   );

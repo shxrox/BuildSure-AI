@@ -10,6 +10,7 @@ import Register from "../pages/Register";
 import HomeownerDashboard from "../pages/homeowner/HomeownerDashboard";
 import ProjectWorkspace from "../pages/homeowner/ProjectWorkspace";
 import SharedWorkspace from "../pages/homeowner/SharedWorkspace";
+import PricingPage from "../pages/project/PricingPage";
 import ProjectOverview from "../pages/project/ProjectOverview";
 import FloorPlanPage from "../pages/project/FloorPlanPage";
 import BOQPage from "../pages/project/BOQPage";
@@ -122,6 +123,7 @@ function AppRoutes() {
               <BlueprintPage />
             }
           />
+          
 
           <Route
             path="ai-render"
@@ -129,8 +131,10 @@ function AppRoutes() {
               <AiRenderStudio />
             }
           />
-        </Route>
 
+          
+        </Route>
+  <Route path="/pricing" element={<PricingPage />} />
         <Route
           path="/admin/dashboard"
           element={

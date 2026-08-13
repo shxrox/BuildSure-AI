@@ -24,7 +24,7 @@ export default function PricingPage() {
       name: "Annual Plan",
       price: "$50",
       interval: "per year",
-      priceId: "price_1U3azECC11rBMF9oVH8BlEKy",
+      priceId: "price_1U3z7MCC11rBMF9o7YRuVCQa",
       badge: "Best Value",
       description: "Full year-round uninterrupted access.",
     },

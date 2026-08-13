@@ -1,78 +1,3 @@
-// import express from "express";
-// import cors from "cors";
-// import morgan from "morgan";
-// import Stripe from "stripe";
-
-// import {
-//   clerkMiddleware,
-// } from "@clerk/express";
-
-// import projectRoutes from "./routes/project.routes";
-// import userRoutes from "./routes/user.routes";
-
-// const app = express();
-
-// app.use(
-//   cors({
-//     origin: "http://localhost:5173",
-//     credentials: true,
-//   })
-// );
-
-// app.use(express.json());
-// app.use(morgan("dev"));
-
-// // Clerk MUST come before routes
-// app.use(clerkMiddleware());
-
-// // ==========================================
-// // STRIPE CHECKOUT SESSION ENDPOINT
-// // ==========================================
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-
-// app.post(
-//   "/api/create-checkout-session",
-//   async (req: express.Request, res: express.Response): Promise<any> => {
-//     try {
-//       const { priceId } = req.body;
-
-//       if (!priceId) {
-//         return res.status(400).json({ error: "Price ID is required." });
-//       }
-
-//       const session = await stripe.checkout.sessions.create({
-//         payment_method_types: ["card"],
-//         mode: "subscription",
-//         line_items: [
-//           {
-//             price: priceId,
-//             quantity: 1,
-//           },
-//         ],
-//         success_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/homeowner?success=true`,
-//         cancel_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/pricing?canceled=true`,
-//       });
-
-//       return res.json({ url: session.url });
-//     } catch (error: any) {
-//       console.error("Stripe Error:", error);
-//       return res.status(500).json({ error: error.message });
-//     }
-//   }
-// );
-
-// app.use(
-//   "/api/v1/users",
-//   userRoutes
-// );
-
-// app.use(
-//   "/api/v1/projects",
-//   projectRoutes
-// );
-
-// export default app;
-
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -130,8 +55,26 @@ app.post(
         console.log("📧 Extracted Customer Email:", customerEmail);
 
         if (customerEmail) {
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 30);
+          let expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 30); // Fallback default
+
+          // If it's a subscription, pull the exact correct period end date from Stripe safely using 'any'
+          if (session.subscription) {
+            try {
+              const subscription: any = await stripe.subscriptions.retrieve(
+                session.subscription as string
+              );
+
+              // Check top-level or item-level period end safely
+              const periodEnd = subscription.current_period_end || subscription.items?.data?.[0]?.current_period_end;
+              
+              if (periodEnd) {
+                expiresAt = new Date(periodEnd * 1000);
+              }
+            } catch (stripeErr) {
+              console.error("Failed to fetch subscription details from Stripe:", stripeErr);
+            }
+          }
 
           const updatedUser = await User.findOneAndUpdate(
             { email: customerEmail.toLowerCase().trim() },
@@ -144,7 +87,7 @@ app.post(
           );
 
           if (updatedUser) {
-            console.log(`✅ Successfully upgraded user ${customerEmail} to PRO in MongoDB.`);
+            console.log(`✅ Successfully upgraded user ${customerEmail} to PRO until ${expiresAt.toISOString()}.`);
           } else {
             console.log(`⚠️ User with email ${customerEmail} not found in MongoDB!`);
           }
@@ -158,6 +101,7 @@ app.post(
     }
   }
 );
+
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -180,7 +124,7 @@ app.post(
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "subscription",
-        customer_email: customerEmail || undefined, // Fixed: uses the variable passed from the frontend request
+        customer_email: customerEmail || undefined,
         line_items: [
           {
             price: priceId,

@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProjectById } from "../../services/project.service";
@@ -5,12 +7,51 @@ import { getProjectById } from "../../services/project.service";
 function SharingPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState<boolean>(true);
+  const [isCheckingSub, setIsCheckingSub] = useState<boolean>(true); // Subscription checking state
   const [projectName, setProjectName] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
 
   // Clean shareable link pointing directly to the public shared workspace view
   const publicShareUrl = `${window.origin}/projects/${id}/shared-workspace`;
+
+  // ============================================================
+  // CHECK USER SUBSCRIPTION ON LOAD
+  // ============================================================
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/v1/users/me", {
+          credentials: "include", // Passes Clerk session cookies
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user profile.");
+        }
+
+        const jsonResponse = await response.json();
+        
+        // Safely support both root-level and nested .data responses from successResponse utility
+        const userData = jsonResponse.data || jsonResponse;
+        
+        const isPro = userData.subscription === "PRO";
+        const hasNotExpired = userData.subscriptionExpiresAt && new Date(userData.subscriptionExpiresAt) > new Date();
+
+        if (!isPro || !hasNotExpired) {
+          alert("Project workspace sharing requires an active PRO subscription.");
+          navigate("/pricing"); // Redirect free users to pricing page
+        }
+      } catch (err) {
+        console.error("Subscription validation error:", err);
+        navigate("/pricing");
+      } finally {
+        setIsCheckingSub(false);
+      }
+    };
+
+    checkSubscription();
+  }, [navigate]);
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
@@ -31,8 +72,10 @@ function SharingPage(): React.JSX.Element {
       }
     };
 
-    fetchProjectDetails();
-  }, [id]);
+    if (!isCheckingSub) {
+      fetchProjectDetails();
+    }
+  }, [id, isCheckingSub]);
 
   const handleCopyShareLink = () => {
     navigator.clipboard.writeText(publicShareUrl);
@@ -40,10 +83,11 @@ function SharingPage(): React.JSX.Element {
     setTimeout(() => setCopied(false), 3000);
   };
 
-  if (loading) {
+  // Show a loading screen while validating subscription and project details
+  if (isCheckingSub || loading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500 font-medium text-xs">
-        Loading shareable link configuration...
+        {isCheckingSub ? "Verifying Pro Subscription access..." : "Loading shareable link configuration..."}
       </div>
     );
   }

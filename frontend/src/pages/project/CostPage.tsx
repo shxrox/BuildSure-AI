@@ -1,12 +1,18 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+
+
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { getDigitalPlan, saveCostSettings, getCostSettings } from "../../services/project.service";
 import { calculateMaterials } from "../../utils/volumetricEngine";
 import { calculateSriLankanCost } from "../../utils/pricingEngine";
 
 function CostPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
+  const [isCheckingSub, setIsCheckingSub] = useState<boolean>(true); // Subscription loading state
+  
   const [costData, setCostData] = useState<any>(null);
   const [actualSpent, setActualSpent] = useState<number>(0);
   const [isEditingSpent, setIsEditingSpent] = useState(false);
@@ -20,6 +26,43 @@ function CostPage() {
     tileRate: 4500,
     laborRatePerSqm: 18000,
   });
+
+  // ============================================================
+  // CHECK USER SUBSCRIPTION ON LOAD
+  // ============================================================
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/v1/users/me", {
+          credentials: "include", // Ensures session/Clerk cookies are passed
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user profile.");
+        }
+
+        const jsonResponse = await response.json();
+        
+        // Safely support both root-level and nested .data responses from successResponse utility
+        const userData = jsonResponse.data || jsonResponse;
+        
+        const isPro = userData.subscription === "PRO";
+        const hasNotExpired = userData.subscriptionExpiresAt && new Date(userData.subscriptionExpiresAt) > new Date();
+
+        if (!isPro || !hasNotExpired) {
+          alert("This financial costing module requires an active PRO subscription.");
+          navigate("/pricing"); // Kick free users back to pricing page
+        }
+      } catch (err) {
+        console.error("Subscription validation error:", err);
+        navigate("/pricing");
+      } finally {
+        setIsCheckingSub(false);
+      }
+    };
+
+    checkSubscription();
+  }, [navigate]);
 
   const fetchCosts = async () => {
     if (!id) return;
@@ -67,8 +110,10 @@ function CostPage() {
   };
 
   useEffect(() => {
-    fetchCosts();
-  }, [id]);
+    if (!isCheckingSub) {
+      fetchCosts();
+    }
+  }, [id, isCheckingSub]);
 
   const handleSaveSpent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,10 +156,11 @@ function CostPage() {
     }
   };
 
-  if (loading) {
+  // Show a loading screen while validating the subscription
+  if (isCheckingSub || loading) {
     return (
       <div className="flex items-center justify-center h-64 text-slate-400 font-medium text-xs">
-        Loading cost metrics…
+        {isCheckingSub ? "Verifying Pro Subscription access..." : "Loading cost metrics…"}
       </div>
     );
   }

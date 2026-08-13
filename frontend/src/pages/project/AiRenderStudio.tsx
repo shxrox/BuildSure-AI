@@ -1,13 +1,52 @@
+
 import React, { useState, useEffect, type ChangeEvent } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AiRenderStudio(): React.JSX.Element {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [outputImage, setOutputImage] = useState<string>("");
+  
+  // Subscription verification state
+  const [isCheckingSub, setIsCheckingSub] = useState<boolean>(true);
+
+  // ============================================================
+  // CHECK USER SUBSCRIPTION ON LOAD
+  // ============================================================
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/v1/users/me", {
+          credentials: "include", // Ensures Clerk / session cookies are sent
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user profile.");
+        }
+
+        const userData = await response.json();
+        
+        const isPro = userData.subscription === "PRO";
+        const hasNotExpired = userData.subscriptionExpiresAt && new Date(userData.subscriptionExpiresAt) > new Date();
+
+        if (!isPro || !hasNotExpired) {
+          alert("This studio requires an active PRO subscription.");
+          navigate("/pricing"); // Redirect free users to pricing
+        }
+      } catch (err) {
+        console.error("Subscription validation error:", err);
+        navigate("/pricing");
+      } finally {
+        setIsCheckingSub(false);
+      }
+    };
+
+    checkSubscription();
+  }, [navigate]);
 
   // ============================================================
   // STRICT 2D TECHNICAL CAD PROMPT (No wood/brown textures)
@@ -113,6 +152,15 @@ export default function AiRenderStudio(): React.JSX.Element {
       setLoading(false);
     }
   };
+
+  // Show a loading screen while validating the subscription
+  if (isCheckingSub) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 text-xs text-slate-500">
+        Verifying Pro Subscription access...
+      </div>
+    );
+  }
 
   // ============================================================
   // UI (TAILWIND CSS)

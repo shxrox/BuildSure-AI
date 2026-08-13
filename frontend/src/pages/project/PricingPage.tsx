@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { useUser } from "@clerk/clerk-react"; // Import Clerk hook
 
 export default function PricingPage() {
+  const { user } = useUser(); // Get current logged-in user from Clerk
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
 
-  // REPLACE THESE WITH YOUR ACTUAL STRIPE PRICE IDs
   const PLANS = [
     {
       name: "Trial Pass",
@@ -32,15 +33,26 @@ export default function PricingPage() {
   const handleSubscribe = async (priceId: string) => {
     setLoadingPriceId(priceId);
     try {
+      // Grab the primary email address from the logged-in Clerk user
+      const customerEmail = user?.primaryEmailAddress?.emailAddress;
+
+      if (!customerEmail) {
+        alert("Please log in before subscribing.");
+        return;
+      }
+
       const response = await fetch("http://localhost:5000/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ 
+          priceId, 
+          customerEmail // Pass the logged-in user's email to the backend!
+        }),
       });
 
       const data = await response.json();
       if (data.url) {
-        window.location.href = data.url; // Redirects user to Stripe's secure payment page
+        window.location.href = data.url; 
       } else {
         alert("Failed to initialize checkout session.");
       }

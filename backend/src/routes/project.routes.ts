@@ -1,3 +1,5 @@
+
+
 import {
   Router,
 } from "express";
@@ -18,8 +20,8 @@ import {
 } from "../controllers/project.controller";
 
 import authMiddleware from "../middleware/auth.middleware";
-
 import upload from "../middleware/upload.middleware";
+import { requireActiveSubscription } from "../middleware/subscription.middleware"; // <-- 1. Import your new subscription middleware
 
 const router = Router();
 
@@ -97,9 +99,11 @@ router.put(
   updateDigitalPlan
 );
 
+// PROCESS BLUEPRINT (AI 3D RENDER) - PROTECTED BY SUBSCRIPTION MIDDLEWARE
 router.post(
   "/:id/process-blueprint",
   authMiddleware,
+  requireActiveSubscription, // <-- 2. Inserted here so FREE users are blocked and PRO users can pass
   processBlueprint
 );
 

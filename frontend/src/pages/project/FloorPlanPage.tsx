@@ -821,7 +821,7 @@ function FloorPlanPage() {
 
   useEffect(() => {
     fetchPlan();
-    
+
     const handleFocus = () => fetchPlan();
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
@@ -3279,6 +3279,16 @@ function FloorPlanPage() {
               : "Save Plan"}
           </button>
 
+          {/* Convert to 3D Plan Button */}
+          <button
+            onClick={() => {
+              navigate(`/projects/${id}/3d-plan`);
+            }}
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors flex items-center gap-2 shadow-xs"
+          >
+            🏠 Convert to 3D Plan
+          </button>
+
           {/* AI 3D Render Button with Dynamic Subscription Lock */}
           <button
             onClick={() => {
@@ -3299,9 +3309,8 @@ function FloorPlanPage() {
                 state: { initialImage: dataUrl },
               });
             }}
-            className={`px-4 py-1.5 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors flex items-center gap-2 shadow-xs ${
-              isSubscribed ? "bg-purple-600 hover:bg-purple-700" : "bg-slate-600 hover:bg-slate-700 opacity-90"
-            }`}
+            className={`px-4 py-1.5 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors flex items-center gap-2 shadow-xs ${isSubscribed ? "bg-purple-600 hover:bg-purple-700" : "bg-slate-600 hover:bg-slate-700 opacity-90"
+              }`}
           >
             {isSubscribed ? "✨ AI 3D Render" : <><Lock size={14} /> ✨ AI 3D Render (Locked)</>}
           </button>

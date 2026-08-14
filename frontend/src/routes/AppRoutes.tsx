@@ -20,7 +20,7 @@ import SharingPage from "../pages/project/SharingPage";
 import ProjectSettings from "../pages/project/ProjectSettings";
 import BlueprintPage from "../pages/project/BlueprintPage";
 import AiRenderStudio from "../pages/project/AiRenderStudio";
-
+import ThreeDPlanPage from "../pages/project/ThreeDPlanPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import RoleRoute from "./RoleRoute";
 
@@ -123,7 +123,7 @@ function AppRoutes() {
               <BlueprintPage />
             }
           />
-          
+          <Route path="/projects/:id/3d-plan" element={<ThreeDPlanPage />} />
 
           <Route
             path="ai-render"

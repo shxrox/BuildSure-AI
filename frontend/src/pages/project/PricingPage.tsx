@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react"; // Import Clerk hook
-
+import { ArrowLeft } from "lucide-react";
 export default function PricingPage() {
   const { user } = useUser(); // Get current logged-in user from Clerk
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
@@ -44,15 +44,15 @@ export default function PricingPage() {
       const response = await fetch("http://localhost:5000/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          priceId, 
+        body: JSON.stringify({
+          priceId,
           customerEmail // Pass the logged-in user's email to the backend!
         }),
       });
 
       const data = await response.json();
       if (data.url) {
-        window.location.href = data.url; 
+        window.location.href = data.url;
       } else {
         alert("Failed to initialize checkout session.");
       }
@@ -100,9 +100,18 @@ export default function PricingPage() {
             >
               {loadingPriceId === plan.priceId ? "Redirecting to Stripe..." : "Subscribe Now"}
             </button>
+
           </div>
+
+
         ))}
       </div>
+      <button
+        onClick={() => window.location.href = "/homeowner"}
+        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+      >
+        <ArrowLeft size={14} /> Back to Dashboard
+      </button>
     </div>
   );
 }

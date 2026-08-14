@@ -29,6 +29,7 @@
     "react-konva": "^19.2.5",
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.18.1",
+    "recharts": "^3.10.1",
     "tailwindcss": "^4.3.3",
     "three": "^0.185.1",
     "use-image": "^1.1.4",

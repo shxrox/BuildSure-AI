@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-  Users,
-  FolderKanban,
-  TrendingUp,
-  ShieldAlert,
-  LogOut,
-  DollarSign,
   CreditCard,
   CheckCircle,
   PieChart as PieIcon,
   ArrowUpRight,
+  BarChart3,
+  Activity,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -22,7 +17,8 @@ import {
   BarElement,
   Title,
 } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
+import { Doughnut, Bar } from "react-chartjs-2";
+import AdminNavbar from "./AdminNavbar"; // Adjust path as needed
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -35,7 +31,6 @@ interface FinancialData {
 }
 
 export default function AdminFinancialsPage(): React.JSX.Element {
-  const navigate = useNavigate();
   const [financials, setFinancials] = useState<FinancialData | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,20 +61,6 @@ export default function AdminFinancialsPage(): React.JSX.Element {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:5000/api/v1/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      navigate("/login");
-    } catch (err) {
-      console.error("Logout failed:", err);
-      navigate("/login");
-    }
-  };
-
-  // Doughnut Chart Data for Tier Breakdown
   const tierDistributionData = {
     labels: ["Free Tier", "Pro Subscribers"],
     datasets: [
@@ -87,6 +68,33 @@ export default function AdminFinancialsPage(): React.JSX.Element {
         data: [financials?.tierDistribution.free || 0, financials?.tierDistribution.pro || 0],
         backgroundColor: ["rgba(148, 163, 184, 0.7)", "rgba(37, 99, 235, 0.9)"],
         borderWidth: 1,
+      },
+    ],
+  };
+
+  const revenueComparisonData = {
+    labels: ["Monthly Run-Rate (MRR)", "Annual Run-Rate (ARR)"],
+    datasets: [
+      {
+        label: "Revenue in LKR",
+        data: [financials?.mrr || 0, financials?.arr || 0],
+        backgroundColor: ["rgba(37, 99, 235, 0.85)", "rgba(16, 185, 129, 0.85)"],
+        borderRadius: 8,
+      },
+    ],
+  };
+
+  const healthIndexData = {
+    labels: ["Churn Rate Index", "Retention Rate Index"],
+    datasets: [
+      {
+        label: "Platform Percentage (%)",
+        data: [
+          parseFloat(financials?.estimatedChurnRate || "2.4"),
+          parseFloat(financials?.retentionRate || "97.6"),
+        ],
+        backgroundColor: ["rgba(239, 68, 68, 0.8)", "rgba(16, 185, 129, 0.8)"],
+        borderRadius: 8,
       },
     ],
   };
@@ -101,43 +109,8 @@ export default function AdminFinancialsPage(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Navbar */}
-      <header className="bg-white border-b border-slate-200 px-8 py-4 shadow-xs sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md">
-              <ShieldAlert size={18} />
-            </div>
-            <div>
-              <h1 className="text-sm font-extrabold text-slate-900 tracking-wide uppercase">BuildSure Admin</h1>
-              <p className="text-[10px] text-slate-400 font-medium">SaaS Financials & Payment Trackers</p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all cursor-pointer border border-rose-200 shadow-xs"
-          >
-            <LogOut size={14} /> Logout
-          </button>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="max-w-7xl mx-auto flex gap-2 text-xs font-semibold overflow-x-auto pt-2 border-t border-slate-100">
-          <button onClick={() => navigate("/admin/analytics")} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60 cursor-pointer">
-            <TrendingUp size={15} /> Analytics & Growth
-          </button>
-          <button onClick={() => navigate("/admin/financials")} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white shadow-md cursor-pointer">
-            <DollarSign size={15} /> Financials & Payments
-          </button>
-          <button onClick={() => navigate("/admin/users")} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60 cursor-pointer">
-            <Users size={15} /> User Accounts
-          </button>
-          <button onClick={() => navigate("/admin/projects")} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60 cursor-pointer">
-            <FolderKanban size={15} /> Projects Oversight
-          </button>
-        </div>
-      </header>
+      {/* Centralized Admin Navbar */}
+      <AdminNavbar />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col p-8 overflow-y-auto">
@@ -172,36 +145,32 @@ export default function AdminFinancialsPage(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Breakdown Section & Doughnut Chart */}
+          {/* Charts Section: Three Financial Graphs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs md:col-span-1 flex flex-col items-center justify-center">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center justify-between">
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2 self-start">
                 <PieIcon size={16} className="text-blue-600" /> Tier Distribution
               </h4>
-              <div className="w-48 h-48 flex items-center justify-center">
+              <div className="w-44 h-44 flex items-center justify-center my-2">
                 <Doughnut data={tierDistributionData} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
             </div>
 
-            {/* Financial Summary Info Box */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs md:col-span-2 flex flex-col justify-between">
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Subscription Monetization Breakdown</h4>
-                <p className="text-slate-500 text-xs leading-relaxed mb-6">
-                  Platform monetization is structured around the Extended Pro Plan (LKR 8,656.88 every 6 months). 
-                  Active subscribers directly contribute to recurring revenue flows tracked through automated gateway logs.
-                </p>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <BarChart3 size={16} className="text-emerald-600" /> Revenue Scale (MRR vs ARR)
+              </h4>
+              <div className="flex-1 h-48 flex items-center justify-center">
+                <Bar data={revenueComparisonData} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 text-xs border-t border-slate-100 pt-4">
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block mb-1 font-semibold">Active Pro Payers</span>
-                  <span className="text-base font-extrabold text-blue-600">{financials?.tierDistribution.pro || 0}</span>
-                </div>
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block mb-1 font-semibold">Free Tier Accounts</span>
-                  <span className="text-base font-extrabold text-slate-700">{financials?.tierDistribution.free || 0}</span>
-                </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Activity size={16} className="text-orange-500" /> Churn vs Retention Health Index
+              </h4>
+              <div className="flex-1 h-48 flex items-center justify-center">
+                <Bar data={healthIndexData} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
             </div>
           </div>

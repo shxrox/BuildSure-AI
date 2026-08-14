@@ -188,7 +188,6 @@ import AiRenderStudio from "../pages/project/AiRenderStudio";
 import ThreeDPlanPage from "../pages/project/ThreeDPlanPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import RoleRoute from "./RoleRoute";
-import AdminAnalyticsPage from "../pages/admin/AdminAnalyticsPage";
 import AdminFinancialsPage from "../pages/admin/AdminFinancialsPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminProjectsPage from "../pages/admin/AdminProjectsPage";
@@ -235,14 +234,7 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
-        <Route
-          path="/admin/analytics"
-          element={
-            <RoleRoute allowedRoles={["ADMIN"]}>
-              <AdminAnalyticsPage />
-            </RoleRoute>
-          }
-        />
+
         <Route
           path="/admin/financials"
           element={

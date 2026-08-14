@@ -1,3 +1,5 @@
+
+
 import { Request, Response } from "express";
 import { createClerkClient } from "@clerk/backend";
 
@@ -30,11 +32,15 @@ export const getCurrentUser = async (
       clerkId,
     });
 
-    return successResponse(
-      res,
-      "User profile fetched successfully",
-      user
-    );
+    // Provide 'data: user' for your software context & RoleRoute, 
+    // and root properties for your Pro subscription frontend checks!
+    return res.status(200).json({
+      success: true,
+      message: "User profile fetched successfully",
+      data: user,
+      subscription: user.subscription,
+      subscriptionExpiresAt: user.subscriptionExpiresAt,
+    });
   } catch (error) {
     console.error("GET CURRENT USER ERROR:", error);
 

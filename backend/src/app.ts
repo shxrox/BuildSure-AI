@@ -10,7 +10,7 @@ import {
 import projectRoutes from "./routes/project.routes";
 import userRoutes from "./routes/user.routes";
 import User from "./models/user.model";
-
+import adminRoutes from "./routes/admin.routes";
 const app = express();
 
 app.use(
@@ -67,7 +67,7 @@ app.post(
 
               // Check top-level or item-level period end safely
               const periodEnd = subscription.current_period_end || subscription.items?.data?.[0]?.current_period_end;
-              
+
               if (periodEnd) {
                 expiresAt = new Date(periodEnd * 1000);
               }
@@ -115,7 +115,7 @@ app.post(
   "/api/create-checkout-session",
   async (req: express.Request, res: express.Response): Promise<any> => {
     try {
-      const { priceId, customerEmail } = req.body; 
+      const { priceId, customerEmail } = req.body;
 
       if (!priceId) {
         return res.status(400).json({ error: "Price ID is required." });
@@ -142,7 +142,7 @@ app.post(
     }
   }
 );
-
+app.use("/api/v1/admin", adminRoutes);
 app.use(
   "/api/v1/users",
   userRoutes

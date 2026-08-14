@@ -11,6 +11,8 @@ import projectRoutes from "./routes/project.routes";
 import userRoutes from "./routes/user.routes";
 import User from "./models/user.model";
 import adminRoutes from "./routes/admin.routes";
+import stripeRouter from "./routes/stripe.router";
+
 const app = express();
 
 app.use(
@@ -152,5 +154,5 @@ app.use(
   "/api/v1/projects",
   projectRoutes
 );
-
+app.use("/api/v1/admin", stripeRouter);
 export default app;

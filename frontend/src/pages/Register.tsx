@@ -18,7 +18,7 @@ function Register() {
     >
 
       <SignUp
-        signInUrl="/"
+        signInUrl="/login"
         fallbackRedirectUrl="/homeowner"
       />
 

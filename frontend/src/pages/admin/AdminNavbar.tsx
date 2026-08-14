@@ -8,6 +8,7 @@ import {
   FolderKanban,
   ShieldAlert,
   LogOut,
+  Activity,
 } from "lucide-react";
 
 export default function AdminNavbar(): React.JSX.Element {
@@ -17,7 +18,7 @@ export default function AdminNavbar(): React.JSX.Element {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/", { replace: true });
+    navigate("/home", { replace: true });
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -48,9 +49,9 @@ export default function AdminNavbar(): React.JSX.Element {
       {/* Navigation Links / Tabs */}
       <div className="max-w-7xl mx-auto flex gap-2 text-xs font-semibold overflow-x-auto pt-2 border-t border-slate-100">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/admin/dashboard")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
-            isActive("/")
+            isActive("/admin/dashboard") || isActive("/")
               ? "bg-blue-600 text-white shadow-md"
               : "text-slate-600 hover:bg-slate-100 bg-slate-50 border border-slate-200/60"
           }`}
@@ -89,6 +90,17 @@ export default function AdminNavbar(): React.JSX.Element {
           }`}
         >
           <FolderKanban size={15} /> Projects Oversight
+        </button>
+
+        <button
+          onClick={() => navigate("/admin/health")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+            isActive("/admin/health")
+              ? "bg-blue-600 text-white shadow-md"
+              : "text-slate-600 hover:bg-slate-100 bg-slate-50 border border-slate-200/60"
+          }`}
+        >
+          <Activity size={15} /> Health & Logs
         </button>
       </div>
     </header>

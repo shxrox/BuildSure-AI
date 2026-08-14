@@ -216,7 +216,7 @@ function HomeownerDashboard() {
         await deleteAccount();
 
         await signOut({
-          redirectUrl: "/",
+          redirectUrl: "/home",
         });
       } catch (error) {
         console.log(

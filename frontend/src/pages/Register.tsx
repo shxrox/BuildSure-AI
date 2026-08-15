@@ -1,5 +1,3 @@
-
-
 import { SignUp } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, ArrowLeft, ShieldCheck, Layers, Calculator, CheckCircle2 } from "lucide-react";

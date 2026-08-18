@@ -1,0 +1,75 @@
+name: BuildSure-AI CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-frontend:
+    name: Build & Test Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+
+  build-backend:
+    name: Build & Test Backend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run build
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [build-frontend, build-backend]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deployment Notification
+        run: |
+          echo "CI/CD Pipeline passed successfully! Add your deployment webhooks or CLI deployment steps here (e.g., Render, AWS, Vercel)."

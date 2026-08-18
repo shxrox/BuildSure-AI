@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from "react";
 import {
   CreditCard,
@@ -6,6 +8,7 @@ import {
   ArrowUpRight,
   BarChart3,
   Activity,
+  DollarSign,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -101,7 +104,7 @@ export default function AdminFinancialsPage(): React.JSX.Element {
       {
         data: [financials?.tierDistribution.free || 0, financials?.tierDistribution.pro || 0],
         backgroundColor: ["rgba(148, 163, 184, 0.7)", "rgba(37, 99, 235, 0.9)"],
-        borderWidth: 1,
+        borderWidth: 0,
       },
     ],
   };
@@ -136,50 +139,59 @@ export default function AdminFinancialsPage(): React.JSX.Element {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50 text-xs font-semibold text-slate-500">
-        Loading SaaS Financials & Transactions...
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center animate-spin text-blue-600">
+            <DollarSign size={16} />
+          </div>
+          <span>Loading SaaS Financials & Transactions...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-blue-500/20">
       <AdminNavbar />
 
       <main className="flex-1 flex flex-col p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto w-full space-y-6">
+          
           {/* Top Financial Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Recurring Revenue (MRR)</p>
-              <h3 className="text-2xl font-extrabold text-slate-900">
+              <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
                 USD {financials?.mrr ? financials.mrr.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00"}
               </h3>
-              <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-1">
+              <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-1 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full w-fit">
                 <ArrowUpRight size={12} /> Active subscription flow
               </span>
             </div>
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Annual Recurring Revenue (ARR)</p>
-              <h3 className="text-2xl font-extrabold text-blue-600">
+              <h3 className="text-2xl font-extrabold text-blue-600 tracking-tight">
                 USD {financials?.arr ? financials.arr.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00"}
               </h3>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 block">Projected yearly run-rate</span>
+              <span className="text-[10px] text-slate-500 font-medium mt-1 block">Projected yearly run-rate</span>
             </div>
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Churn Rate</p>
-              <h3 className="text-2xl font-extrabold text-rose-600">{financials?.estimatedChurnRate || "0.0%"}</h3>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 block">Failed / Unpaid checkouts ratio</span>
+              <h3 className="text-2xl font-extrabold text-rose-600 tracking-tight">{financials?.estimatedChurnRate || "0.0%"}</h3>
+              <span className="text-[10px] text-slate-500 font-medium mt-1 block">Failed / Unpaid checkouts ratio</span>
             </div>
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subscriber Retention Rate</p>
-              <h3 className="text-2xl font-extrabold text-emerald-600">{financials?.retentionRate || "100.0%"}</h3>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 block">Successful payment stickiness</span>
+              <h3 className="text-2xl font-extrabold text-emerald-600 tracking-tight">{financials?.retentionRate || "100.0%"}</h3>
+              <span className="text-[10px] text-slate-500 font-medium mt-1 block">Successful payment stickiness</span>
             </div>
           </div>
 
           {/* Charts Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center justify-between">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-between">
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2 self-start">
                 <PieIcon size={16} className="text-blue-600" /> Tier Distribution
               </h4>
@@ -188,7 +200,7 @@ export default function AdminFinancialsPage(): React.JSX.Element {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <BarChart3 size={16} className="text-emerald-600" /> Revenue Scale (MRR vs ARR)
               </h4>
@@ -197,7 +209,7 @@ export default function AdminFinancialsPage(): React.JSX.Element {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Activity size={16} className="text-orange-500" /> Churn vs Retention Health Index
               </h4>
@@ -208,17 +220,19 @@ export default function AdminFinancialsPage(): React.JSX.Element {
           </div>
 
           {/* Payment History & Invoice Transaction Tracker Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <div className="p-5 border-b border-slate-200/80 bg-slate-50/50 flex justify-between items-center">
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                 <CreditCard size={15} className="text-blue-600" /> Payment History & Invoices Tracker
               </h3>
-              <span className="text-xs text-slate-500 font-medium">Total Transactions Logged: {transactions.length}</span>
+              <span className="text-xs text-slate-500 font-semibold bg-white border border-slate-200/60 px-3 py-1 rounded-xl shadow-2xs">
+                Total Transactions Logged: {transactions.length}
+              </span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-400 font-extrabold uppercase tracking-wider border-b border-slate-200">
+                <thead className="bg-slate-50/50 text-slate-400 font-extrabold uppercase tracking-wider border-b border-slate-200/80">
                   <tr>
                     <th className="p-4">Transaction / Session ID</th>
                     <th className="p-4">User Email</th>
@@ -236,16 +250,16 @@ export default function AdminFinancialsPage(): React.JSX.Element {
                     </tr>
                   ) : (
                     transactions.map((tx) => (
-                      <tr key={tx.transactionId} className="hover:bg-slate-50/50">
+                      <tr key={tx.transactionId} className="hover:bg-slate-50/50 transition-colors">
                         <td className="p-4 font-mono text-slate-500">{tx.transactionId}</td>
                         <td className="p-4 font-medium text-slate-900">{tx.userEmail}</td>
                         <td className="p-4 font-bold text-blue-600">{tx.amount}</td>
                         <td className="p-4">
-                          <span className={`flex items-center gap-1.5 font-semibold ${tx.status.toLowerCase() === 'succeeded' || tx.status.toLowerCase() === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                            <CheckCircle size={14} /> {tx.status}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold ${tx.status.toLowerCase() === 'succeeded' || tx.status.toLowerCase() === 'paid' ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-amber-700 bg-amber-50 border border-amber-200'}`}>
+                            <CheckCircle size={12} /> {tx.status}
                           </span>
                         </td>
-                        <td className="p-4 text-slate-500">{new Date(tx.timestamp).toLocaleString()}</td>
+                        <td className="p-4 text-slate-500 font-medium">{new Date(tx.timestamp).toLocaleString()}</td>
                       </tr>
                     ))
                   )}

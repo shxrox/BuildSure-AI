@@ -28,6 +28,7 @@ import AdminFinancialsPage from "../pages/admin/AdminFinancialsPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminProjectsPage from "../pages/admin/AdminProjectsPage";
 import AdminHealthPage from "../pages/admin/AdminHealthPage";
+import NotFound from "../pages/NotFound";
 
 function AppRoutes() {
   return (
@@ -104,6 +105,7 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
+        <Route path="*" element={<NotFound />} />
 
       </Routes>
     </BrowserRouter>

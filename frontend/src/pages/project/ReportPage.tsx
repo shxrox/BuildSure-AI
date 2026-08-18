@@ -40,7 +40,13 @@ function ReportPage() {
           );
           metrics = boq.metrics;
           materials = boq.materials;
-          financial = calculateSriLankanCost(boq.materials, boq.metrics.totalFloorAreaSqm);
+          financial = calculateSriLankanCost(// Change parameter object keys to match:
+{
+  bricksCount: materials.bricks,
+  cementBags: materials.cementBags,
+  sandCubes: materials.sandCubes,
+  tileAreaSqm: materials.floorTiles
+}, boq.metrics.totalFloorAreaSqm);
         }
 
         setReportData({

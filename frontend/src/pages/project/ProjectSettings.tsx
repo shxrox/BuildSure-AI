@@ -1,6 +1,9 @@
+
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProjectById, updateProject, deleteProject } from "../../services/project.service";
+import { Settings, Trash2, Save, Sparkles, CheckCircle2, AlertTriangle, Building2, MapPin, FileText } from "lucide-react";
 
 function ProjectSettings() {
   const { id } = useParams();
@@ -74,52 +77,78 @@ function ProjectSettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500 font-medium">
-        Loading project configuration settings...
+      <div className="h-screen flex items-center justify-center bg-slate-50 text-xs font-semibold text-slate-500">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center animate-spin text-blue-600">
+            <Sparkles size={16} />
+          </div>
+          <span>Loading project configuration settings...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">⚙️ Project Settings & Configuration</h2>
-        <p className="text-gray-600">
-          Update core project parameters, architectural status, or delete the workspace.
-        </p>
+    <div className="max-w-6xl mx-auto space-y-8 font-sans pb-12 selection:bg-blue-500/20">
+      
+      {/* Banner Card Header */}
+      <div className="rounded-3xl bg-white border border-slate-200/80 p-8 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-1.5 text-xs font-semibold text-blue-700">
+            <Settings size={13} className="text-blue-600" /> Workspace Settings
+          </div>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Project Configuration
+          </h2>
+          <p className="text-slate-500 text-xs max-w-xl leading-relaxed">
+            Update core project parameters, architectural lifecycle status, or manage workspace deletion parameters.
+          </p>
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">General Information</h3>
-        <form onSubmit={handleUpdate} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Project Name</label>
-            <input
-              type="text"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      {/* General Information Form */}
+      <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
+        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <Building2 size={15} className="text-blue-600" /> General Information
+        </h3>
+
+        <form onSubmit={handleUpdate} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Project Name</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none focus:border-blue-500 text-slate-800"
+                />
+                <Building2 size={14} className="absolute left-3 top-3 text-slate-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Location / City</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none focus:border-blue-500 text-slate-800"
+                />
+                <MapPin size={14} className="absolute left-3 top-3 text-slate-400" />
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Location / City</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Current Construction Status</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Current Construction Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs bg-white focus:outline-none focus:border-blue-500 text-slate-800 cursor-pointer"
             >
               <option value="PLANNING">Planning</option>
               <option value="FOUNDATION">Foundation</option>
@@ -131,12 +160,14 @@ function ProjectSettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Description</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+              <FileText size={13} className="text-slate-400" /> Description
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs focus:outline-none focus:border-blue-500 text-slate-800 leading-relaxed"
             />
           </div>
 
@@ -144,27 +175,35 @@ function ProjectSettings() {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 cursor-pointer disabled:opacity-50 transition-colors"
+              className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-slate-900/20 disabled:opacity-50 cursor-pointer flex items-center gap-2"
             >
-              {saving ? "Saving Changes..." : "Save Changes"}
+              <Save size={14} /> {saving ? "Saving Changes..." : "Save Changes"}
             </button>
-            {message && <span className="text-xs font-semibold text-green-600">{message}</span>}
+            {message && (
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl">
+                <CheckCircle2 size={14} /> {message}
+              </div>
+            )}
           </div>
         </form>
       </div>
 
-      <div className="bg-red-50 p-6 rounded-xl border border-red-200">
-        <h3 className="text-lg font-semibold text-red-900 mb-2">Danger Zone</h3>
-        <p className="text-xs text-red-700 mb-4">
-          Permanently remove this construction project workspace, floor plans, and financial tracking data. This action cannot be undone.
+      {/* Danger Zone */}
+      <div className="bg-red-50/60 p-6 md:p-8 rounded-2xl border border-red-200 space-y-4">
+        <h3 className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-2">
+          <AlertTriangle size={15} className="text-red-600" /> Danger Zone
+        </h3>
+        <p className="text-xs text-red-700 max-w-2xl leading-relaxed">
+          Permanently remove this construction project workspace, floor plans, blueprints, and financial tracking data. This action cannot be undone.
         </p>
         <button
           onClick={handleDeleteProject}
-          className="px-5 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 cursor-pointer transition-colors"
+          className="px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-red-600/20 cursor-pointer flex items-center gap-2"
         >
-          Delete Project Workspace
+          <Trash2 size={14} /> Delete Project Workspace
         </button>
       </div>
+
     </div>
   );
 }

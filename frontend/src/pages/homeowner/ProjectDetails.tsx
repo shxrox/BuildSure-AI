@@ -15,17 +15,17 @@ import api from "../../services/api";
 
 interface Project {
 
-  _id:string;
+  _id: string;
 
-  projectName:string;
+  projectName: string;
 
-  location:string;
+  location: string;
 
-  description:string;
+  description: string;
 
-  status:string;
+  status: string;
 
-  createdAt:string;
+  createdAt: string;
 
 }
 
@@ -68,56 +68,56 @@ function ProjectDetails() {
 
 
     const loadProject =
-    async () => {
+      async () => {
 
 
-      try {
+        try {
 
 
-        const response =
-          await api.get(
-            `/projects/${id}`
+          const response =
+            await api.get(
+              `/projects/${id}`
+            );
+
+
+
+          setProject(
+            response.data.data
           );
 
 
 
-        setProject(
-          response.data.data
-        );
+        } catch (error) {
+
+
+          console.log(
+            "Failed to load project",
+            error
+          );
 
 
 
-      } catch(error) {
+        } finally {
 
 
-        console.log(
-          "Failed to load project",
-          error
-        );
+          setLoading(false);
 
 
-
-      } finally {
-
-
-        setLoading(false);
+        }
 
 
-      }
-
-
-    };
+      };
 
 
 
-    if(id) {
+    if (id) {
 
       loadProject();
 
     }
 
 
-  },[id]);
+  }, [id]);
 
 
 
@@ -126,7 +126,7 @@ function ProjectDetails() {
 
 
 
-  if(loading) {
+  if (loading) {
 
 
     return (
@@ -150,7 +150,7 @@ function ProjectDetails() {
 
 
 
-  if(!project) {
+  if (!project) {
 
 
     return (

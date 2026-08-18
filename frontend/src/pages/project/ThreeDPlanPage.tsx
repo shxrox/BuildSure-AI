@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { getDigitalPlan } from '../../services/project.service';
-import { ArrowLeft, Eye, Grid, Box as BoxIcon, Compass } from 'lucide-react';
+import { ArrowLeft, Eye, Grid, Box as BoxIcon, Compass, Sparkles } from 'lucide-react';
 
 interface Point { x: number; y: number; }
 interface Wall { id: string; startX: number; startY: number; endX: number; endY: number; thickness: number; height: number; }
@@ -126,14 +126,12 @@ function Furniture3D({ item, wireframe }: { item: FurnitureItem; wireframe: bool
   );
 }
 
-// Component to automatically center and frame the scene based on plan dimensions
 function SceneController({ plan }: { plan: any }) {
   const controlsRef = useRef<any>(null);
 
   useEffect(() => {
     if (!plan || !controlsRef.current) return;
 
-    // Calculate bounding box center of all elements
     let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
 
     plan.walls.forEach((w: Wall) => {
@@ -148,7 +146,6 @@ function SceneController({ plan }: { plan: any }) {
     const centerX = (minX + maxX) / 2;
     const centerZ = (minZ + maxZ) / 2;
 
-    // Set orbit controls center target to the exact middle of the house plan
     controlsRef.current.target.set(centerX, 0, centerZ);
     controlsRef.current.update();
   }, [plan]);
@@ -162,7 +159,6 @@ const ThreeDPlanPage = () => {
   const [plan, setPlan] = useState<{ walls: Wall[]; rooms: Room[]; doors: Door[]; windows: Window[]; furniture: FurnitureItem[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // View Mode States
   const [wireframe, setWireframe] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
@@ -184,7 +180,6 @@ const ThreeDPlanPage = () => {
     });
   }, [id]);
 
-  // Compute center offset point for group translation centering
   const centerOffset = useMemo(() => {
     if (!plan || plan.walls.length === 0) return { x: 0, z: 0 };
     let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
@@ -200,7 +195,12 @@ const ThreeDPlanPage = () => {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-900 text-slate-300 font-semibold text-xs">
-        Loading 3D Spatial Environment...
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center animate-spin text-blue-400">
+            <Sparkles size={16} />
+          </div>
+          <span>Loading 3D Spatial Environment...</span>
+        </div>
       </div>
     );
   }
@@ -219,46 +219,46 @@ const ThreeDPlanPage = () => {
       <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
         <button
           onClick={() => navigate(`/projects/${id}/floor-plan`)}
-          className="pointer-events-auto px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-md"
+          className="pointer-events-auto group px-4 py-2.5 bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md border border-slate-700/80 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-slate-900/40"
         >
-          <ArrowLeft size={14} /> Back to 2D Editor
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" /> Back to 2D Editor
         </button>
 
         {/* View Controls Toolbar */}
-        <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/60 p-1.5 rounded-2xl shadow-xl flex items-center gap-1.5 text-xs text-white">
+        <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-1.5 rounded-2xl shadow-xl flex items-center gap-1.5 text-xs text-white">
           <button
             onClick={() => setCameraAngle('iso')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${cameraAngle === 'iso' ? 'bg-blue-600 text-white shadow-xs' : 'hover:bg-slate-800 text-slate-400'}`}
+            className={`px-3.5 py-2 rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${cameraAngle === 'iso' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'hover:bg-slate-800 text-slate-400'}`}
           >
             <Compass size={13} /> Isometric
           </button>
           <button
             onClick={() => setCameraAngle('top')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${cameraAngle === 'top' ? 'bg-blue-600 text-white shadow-xs' : 'hover:bg-slate-800 text-slate-400'}`}
+            className={`px-3.5 py-2 rounded-xl font-semibold transition-all cursor-pointer ${cameraAngle === 'top' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'hover:bg-slate-800 text-slate-400'}`}
           >
             Top-Down View
           </button>
           
-          <div className="h-4 w-[1px] bg-slate-700 mx-1" />
+          <div className="h-4 w-[1px] bg-slate-700/80 mx-1" />
 
           <button
             onClick={() => setWireframe(!wireframe)}
             title="Toggle Wireframe Mode"
-            className={`p-2 rounded-xl transition-all cursor-pointer ${wireframe ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
+            className={`p-2.5 rounded-xl transition-all cursor-pointer ${wireframe ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
           >
             <BoxIcon size={14} />
           </button>
           <button
             onClick={() => setShowLabels(!showLabels)}
             title="Toggle Room Labels"
-            className={`p-2 rounded-xl transition-all cursor-pointer ${showLabels ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
+            className={`p-2.5 rounded-xl transition-all cursor-pointer ${showLabels ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
           >
             <Eye size={14} />
           </button>
           <button
             onClick={() => setShowGrid(!showGrid)}
             title="Toggle Ground Grid"
-            className={`p-2 rounded-xl transition-all cursor-pointer ${showGrid ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
+            className={`p-2.5 rounded-xl transition-all cursor-pointer ${showGrid ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
           >
             <Grid size={14} />
           </button>
@@ -312,8 +312,8 @@ const ThreeDPlanPage = () => {
       </Canvas>
 
       {/* Footer Navigation Help Badge */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none bg-slate-900/90 backdrop-blur border border-slate-800 px-4 py-2 rounded-xl text-[11px] font-medium text-slate-400 shadow-xl">
-        🖱️ Left-Click + Drag to Rotate · Right-Click + Drag to Pan · Scroll to Zoom
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-4 py-2.5 rounded-2xl text-[11px] font-semibold text-slate-300 shadow-2xl flex items-center gap-2">
+        <span>🖱️ Left-Click + Drag to Rotate</span> · <span>Right-Click + Drag to Pan</span> · <span>Scroll to Zoom</span>
       </div>
     </div>
   );

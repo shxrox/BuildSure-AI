@@ -60,8 +60,10 @@ function ProjectLayout({
     { id: "cost", label: "Cost & Tracking", path: `/projects/${id}/cost`, icon: DollarSign },
     { id: "timeline", label: "Timeline", path: `/projects/${id}/timeline`, icon: Calendar },
     { id: "sharing", label: "Sharing", path: `/projects/${id}/sharing`, icon: Share2 },
-    { id: "pricing", label: "Pricing", path: `/pricing`, icon: CreditCard },
+    // { id: "pricing", label: "Pricing", path: `/pricing`, icon: CreditCard },
+    { id: "pricing", label: "Pricing", path: `/projects/${id}/pricing`, icon: CreditCard },
     { id: "settings", label: "Settings", path: `/projects/${id}/settings`, icon: Settings },
+    
   ];
 
   const filteredNavItems = navItems.filter(item =>

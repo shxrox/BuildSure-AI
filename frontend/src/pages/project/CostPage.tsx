@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getDigitalPlan, saveCostSettings, getCostSettings } from "../../services/project.service";
 import { calculateMaterials } from "../../utils/volumetricEngine";
 import { calculateSriLankanCost } from "../../utils/pricingEngine";
+import { Sparkles, X, Calculator, Settings, Edit3, DollarSign } from "lucide-react";
 
 function CostPage() {
   const { id } = useParams();
@@ -13,6 +14,9 @@ function CostPage() {
   const [loading, setLoading] = useState(true);
   const [isCheckingSub, setIsCheckingSub] = useState<boolean>(true); // Subscription loading state
   
+  // Modal State for Subscription Upgrade Notice
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+
   const [costData, setCostData] = useState<any>(null);
   const [actualSpent, setActualSpent] = useState<number>(0);
   const [isEditingSpent, setIsEditingSpent] = useState(false);
@@ -50,19 +54,18 @@ function CostPage() {
         const hasNotExpired = userData.subscriptionExpiresAt && new Date(userData.subscriptionExpiresAt) > new Date();
 
         if (!isPro || !hasNotExpired) {
-          alert("This financial costing module requires an active PRO subscription.");
-          navigate("/pricing"); // Kick free users back to pricing page
+          setShowSubscriptionModal(true);
         }
       } catch (err) {
         console.error("Subscription validation error:", err);
-        navigate("/pricing");
+        setShowSubscriptionModal(true);
       } finally {
         setIsCheckingSub(false);
       }
     };
 
     checkSubscription();
-  }, [navigate]);
+  }, []);
 
   const fetchCosts = async () => {
     if (!id) return;
@@ -110,10 +113,10 @@ function CostPage() {
   };
 
   useEffect(() => {
-    if (!isCheckingSub) {
+    if (!isCheckingSub && !showSubscriptionModal) {
       fetchCosts();
     }
-  }, [id, isCheckingSub]);
+  }, [id, isCheckingSub, showSubscriptionModal]);
 
   const handleSaveSpent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,10 +160,15 @@ function CostPage() {
   };
 
   // Show a loading screen while validating the subscription
-  if (isCheckingSub || loading) {
+  if (isCheckingSub || (loading && !showSubscriptionModal)) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-400 font-medium text-xs">
-        {isCheckingSub ? "Verifying Pro Subscription access..." : "Loading cost metrics…"}
+      <div className="h-screen flex items-center justify-center bg-slate-50 text-xs font-semibold text-slate-500">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center animate-spin text-blue-600">
+            <Sparkles size={16} />
+          </div>
+          <span>{isCheckingSub ? "Verifying Pro Subscription access..." : "Loading cost metrics…"}</span>
+        </div>
       </div>
     );
   }
@@ -180,7 +188,7 @@ function CostPage() {
   const remainingBudget = grandTotal - actualSpent;
 
   return (
-    <div className="p-8 max-w-5xl mx-auto font-sans">
+    <div className="p-8 max-w-5xl mx-auto font-sans relative selection:bg-blue-500/20">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-900">💰 Sri Lankan Construction Costing & Rates</h1>
@@ -299,6 +307,60 @@ function CostPage() {
           </tbody>
         </table>
       </div>
+
+      {/* ====================================================
+          SUBSCRIPTION REQUIRED MODAL POPUP
+      ==================================================== */}
+      {showSubscriptionModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative flex flex-col items-center text-center">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowSubscriptionModal(false);
+                navigate(-1);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full cursor-pointer transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Icon Header */}
+            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4 border border-amber-100 shadow-inner">
+              <Sparkles size={28} />
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              PRO Subscription Required
+            </h3>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+              The financial costing module requires an active <span className="font-semibold text-slate-700">PRO subscription</span> to access advanced budget estimation tools.
+            </p>
+
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => {
+                  setShowSubscriptionModal(false);
+                  navigate(-1);
+                }}
+                className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl cursor-pointer transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={() => {
+                  setShowSubscriptionModal(false);
+                  navigate("/projects/{id}/pricing");
+                }}
+                className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all shadow-md shadow-blue-600/20"
+              >
+                View Plans
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

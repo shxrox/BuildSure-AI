@@ -28,6 +28,7 @@ import AdminFinancialsPage from "../pages/admin/AdminFinancialsPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminProjectsPage from "../pages/admin/AdminProjectsPage";
 import AdminHealthPage from "../pages/admin/AdminHealthPage";
+
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -57,11 +58,10 @@ function AppRoutes() {
           <Route path="sharing" element={<SharingPage />} />
           <Route path="settings" element={<ProjectSettings />} />
           <Route path="blueprint" element={<BlueprintPage />} />
-          <Route path="/projects/:id/3d-plan" element={<ThreeDPlanPage />} />
+          <Route path="3d-plan" element={<ThreeDPlanPage />} />
           <Route path="ai-render" element={<AiRenderStudio />} />
+          <Route path="pricing" element={<PricingPage />} />
         </Route>
-
-        <Route path="/pricing" element={<PricingPage />} />
 
         {/* Protected Admin Routes */}
         <Route
@@ -72,7 +72,6 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
-
         <Route
           path="/admin/financials"
           element={
@@ -105,7 +104,6 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
-
 
       </Routes>
     </BrowserRouter>

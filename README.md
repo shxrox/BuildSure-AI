@@ -4,6 +4,12 @@
 
 **Status**: Active Development | **Version**: 1.0.0 | **Last Updated**: 2026-08-18
 
+### Platform Showcase
+
+![Screenshot 1](./frontend/src/assets/1.png)
+![Screenshot 2](./frontend/src/assets/2.png)
+![Screenshot 3](./frontend/src/assets/3.png)
+
 ---
 
 ## 📋 Table of Contents
@@ -673,11 +679,23 @@ Error responses:
 
 ### Subscription Tiers
 
-| Tier | Cost | Features | Limits |
-|------|------|----------|--------|
-| **Free** | $0/month | Basic project creation, 1 project | 1 active project, 2 collaborators |
-| **Pro** | $9.99/month | AI rendering, unlimited projects, advanced BOQ | Unlimited projects, 10 collaborators |
-| **Enterprise** | Custom | All Pro features + dedicated support | Unlimited everything, API access |
+| Tier | Cost | Duration | Features |
+|------|------|----------|----------|
+| **Trial Pass** | $5 | Per Day (24-hour access) | Full Workspace Access: 2D Drawing Canvas, Smart Area Calculator, IQSSL Material Takeoffs, Live Cost Estimation & BOQ, Team Collaboration, File Management, Milestone Tracking, Custom Unit Rates, Instant Checkout, Priority Support |
+| **Extended Pro Plan** | $25 | Every 6 Months ⭐ Best Value | Full Workspace Access: 2D Drawing Canvas, Smart Area Calculator, IQSSL Material Takeoffs, Live Cost Estimation & BOQ, Team Collaboration, File Management, Milestone Tracking, Custom Unit Rates, Instant Checkout, Priority Support |
+| **Annual Plan** | $50 | Per Year | Full Workspace Access: 2D Drawing Canvas, Smart Area Calculator, IQSSL Material Takeoffs, Live Cost Estimation & BOQ, Team Collaboration, File Management, Milestone Tracking, Custom Unit Rates, Instant Checkout, Priority Support |
+
+**All plans include:**
+- Precision 2D Drawing Canvas with intelligent snapping
+- Smart Wall & Room Area Calculator
+- IQSSL Standard Material Takeoffs
+- Live Cost Estimation & BOQ
+- Collaborative Team & Contractor Sharing
+- Blueprint & Document File Management
+- Milestone & Project Phase Tracking
+- Customizable Unit Rate Settings (LKR)
+- Instant Stripe Checkout Integration
+- Priority Support & Updates
 
 ### Authorization Middleware
 
@@ -846,7 +864,7 @@ const response = await fetch(`${process.env.AI_SERVICE_URL}/render`, {
   role: Enum ['HOMEOWNER', 'CONTRACTOR', 'ADMIN'],
   
   subscription: {
-    tier: Enum ['free', 'pro', 'enterprise'],
+    tier: Enum ['trial', 'pro', 'annual'],
     status: Enum ['active', 'cancelled', 'expired'],
     startDate: Date,
     endDate: Date,
@@ -1190,4 +1208,4 @@ For technical support, feature requests, or bug reports:
 **Last Updated**: August 18, 2026  
 **Project Status**: Active Development  
 **Version**: 1.0.0-alpha  
-**Maintainers**: ICBT Final Project Team
+
